@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>v💩be coded sh💩t — stop wasting the planet on to-do apps</title>
+
+  <!-- Favicon: poop emoji via SVG data URI -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💩</text></svg>">
+
+  <!-- OpenGraph -->
+  <meta property="og:title" content="v💩be coded sh💩t">
+  <meta property="og:description" content="The world didn't need another AI-generated to-do app. But here we are, burning energy and wasting water for it.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://vibecodedshit.com">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="v💩be coded sh💩t">
+  <meta name="twitter:description" content="The world didn't need another AI-generated to-do app. But here we are, burning energy and wasting water for it.">
+
+  <meta name="description" content="An awareness campaign about wasting planetary resources to vibe-code things that already exist.">
+
+  <!-- Google Font: Space Grotesk -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg: #CEA5C7;
+      --fg: #471044;
+      --fg-muted: rgba(71, 16, 68, 0.6);
+    }
+
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--fg);
+      font-family: 'Space Grotesk', system-ui, sans-serif;
+      overflow-x: hidden;
+      line-height: 1.6;
+    }
+
+    canvas#spoon-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+    }
+
+    main {
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ---- Hero ---- */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      align-items: center;
+      padding: 2rem;
+      text-align: center;
+    }
+
+    .hero h1 {
+      font-size: clamp(2.5rem, 8vw, 6rem);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1.05;
+      margin-bottom: 1.5rem;
+      max-width: 900px;
+    }
+
+    .hero h1 .emoji {
+      display: inline-block;
+      vertical-align: baseline;
+      font-style: normal;
+      line-height: 1;
+    }
+
+    .hero .copy {
+      margin-top: auto;
+      padding-bottom: 4rem;
+      text-align: center;
+      max-width: 800px;
+    }
+
+    .hero .headline {
+      font-size: clamp(1rem, 2.5vw, 1.35rem);
+      color: var(--fg);
+      line-height: 1.7;
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+    }
+
+    .hero .tagline {
+      font-size: clamp(1rem, 2.5vw, 1.35rem);
+      color: var(--fg-muted);
+      line-height: 1.7;
+      font-weight: 400;
+    }
+
+    .hero .scroll-hint {
+      margin-top: 3rem;
+      font-size: 0.85rem;
+      color: var(--fg-muted);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.4; }
+      50% { opacity: 1; }
+    }
+
+    /* ---- Coming Soon (hidden for now) ---- */
+    .coming-soon {
+      display: none;
+    }
+
+    /* ---- Hero title hidden ---- */
+    .hero h1 {
+      display: none;
+    }
+
+    /* ---- Footer ---- */
+    footer {
+      text-align: center;
+      padding: 3rem 2rem;
+      font-size: 0.85rem;
+      color: var(--bg);
+      background: var(--fg);
+      margin: 0;
+      max-width: none;
+    }
+
+    footer .no-frameworks {
+      font-style: italic;
+      margin-bottom: 0.5rem;
+      opacity: 0.75;
+    }
+
+    /* ---- Responsive ---- */
+    @media (max-width: 600px) {
+      .hero {
+        padding: 1.5rem;
+      }
+
+      .coming-soon {
+        padding: 3rem 1.5rem 4rem;
+      }
+
+      .cards {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <canvas id="spoon-canvas"></canvas>
+
+  <main>
+    <section class="hero">
+      <h1>v<span class="emoji">💩</span>be coded sh<span class="emoji">💩</span>t</h1>
+      <div class="copy">
+        <p class="headline">Vibe coded apps are the modern equivalent of single-use plastic.</p>
+        <p class="tagline">
+          The world didn't need another AI-generated to-do app.<br>
+          But here we are, burning energy and wasting water for it.
+        </p>
+      </div>
+      <!-- scroll hint hidden until more content is added -->
+      <!-- <div class="scroll-hint">↓ scroll</div> -->
+    </section>
+
+    <section class="coming-soon">
+      <h2>com<span class="emoji">💩</span>ng soon</h2>
+      <div class="cards">
+        <div class="card">
+          <span class="card-icon">🧱</span>
+          <h3>The Wall of Shame</h3>
+          <p>Curated vibe-coded duplicates of things that already exist — with receipts on the carbon footprint.</p>
+        </div>
+        <div class="card">
+          <span class="card-icon">🧮</span>
+          <h3>The Calculator</h3>
+          <p>How much water did your evening of prompting cost the planet? Spoiler: more than you think.</p>
+        </div>
+        <div class="card">
+          <span class="card-icon">✅</span>
+          <h3>The Alternatives</h3>
+          <p>For every vibe-coded app, we'll show you what already exists. Just use it.</p>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <div class="no-frameworks">No frameworks were harmed in the making of this site.</div>
+      <div>&copy; 2026 vibecodedshit.com — Plain HTML, CSS, and JS. That's the point.</div>
+    </footer>
+  </main>
+
+  <script>
+    (function () {
+      'use strict';
+
+      const canvas = document.getElementById('spoon-canvas');
+      const ctx = canvas.getContext('2d');
+      const dpr = window.devicePixelRatio || 1;
+
+      let width, height;
+      let particles = [];
+      let mouse = { x: -9999, y: -9999 };
+      let isMobile = window.innerWidth < 768;
+
+      const PARTICLE_COUNT_DESKTOP = 1400;
+      const PARTICLE_COUNT_MOBILE = 700;
+      const SPRING = 0.06;
+      const DAMPING = 0.85;
+      const MOUSE_RADIUS = 100;
+      const MOUSE_FORCE = 5;
+      // 3D shading colors: highlight (warm light) to shadow (deep purple)
+      var COLOR_HIGHLIGHT = [200, 165, 190]; // warm highlight, close to bg
+      var COLOR_MID = [120, 55, 110];        // mid-tone purple
+      var COLOR_SHADOW = [35, 5, 32];        // deep shadow
+
+      // ---- Resize ----
+      function resize() {
+        isMobile = window.innerWidth < 768;
+        width = window.innerWidth;
+        height = window.innerHeight;
+        canvas.width = width * dpr;
+        canvas.height = height * dpr;
+        canvas.style.width = width + 'px';
+        canvas.style.height = height + 'px';
+        ctx.scale(dpr, dpr);
+
+        if (particles.length > 0) {
+          const targets = generateSpoonPoints(getParticleCount());
+          if (particles.length !== targets.length) {
+            initParticles();
+          } else {
+            for (let i = 0; i < particles.length; i++) {
+              if (i < targets.length) {
+                particles[i].targetX = targets[i][0];
+                particles[i].targetY = targets[i][1];
+                var color = calcParticleColor(targets[i][2], targets[i][3]);
+                particles[i].color = color;
+              }
+            }
+          }
+        }
+      }
+
+      let resizeTimeout;
+      window.addEventListener('resize', function () {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(function () {
+          resize();
+        }, 150);
+      });
+
+      // ---- Mouse tracking ----
+      document.addEventListener('mousemove', function (e) {
+        mouse.x = e.clientX;
+        mouse.y = e.clientY;
+      });
+
+      document.addEventListener('mouseleave', function () {
+        mouse.x = -9999;
+        mouse.y = -9999;
+      });
+
+      // ---- Spoon shape generation ----
+      // Reference: classic disposable plastic spoon — wide oval bowl,
+      // narrowing neck, long thin flat handle with squared-off end.
+      // Oriented with handle top-right, bowl bottom-left (like the reference photo).
+
+      function drawSpoonPath(tempCtx, cx, cy, scale, angle) {
+        var s = scale;
+        tempCtx.save();
+        tempCtx.translate(cx, cy);
+        tempCtx.rotate(angle);
+
+        tempCtx.beginPath();
+
+        // --- Handle (top, going upward from center) — extended ---
+        // Flat squared-off top end
+        tempCtx.moveTo(-3 * s, -100 * s);
+        tempCtx.lineTo(3 * s, -100 * s);
+
+        // Handle right side going down — slight taper, widens toward neck
+        tempCtx.lineTo(3.5 * s, -85 * s);
+        tempCtx.lineTo(4 * s, -30 * s);
+        tempCtx.lineTo(4.5 * s, -10 * s);
+
+        // --- Neck transition (handle widens into bowl) ---
+        tempCtx.quadraticCurveTo(6 * s, 0, 10 * s, 8 * s);
+
+        // --- Bowl (taller oval, elongated vertically) ---
+        // Right side of bowl
+        tempCtx.bezierCurveTo(18 * s, 16 * s, 22 * s, 28 * s, 20 * s, 40 * s);
+
+        // Bottom of bowl — elongated, taller
+        tempCtx.bezierCurveTo(18 * s, 54 * s, 8 * s, 62 * s, 0, 63 * s);
+        tempCtx.bezierCurveTo(-8 * s, 62 * s, -18 * s, 54 * s, -20 * s, 40 * s);
+
+        // Left side of bowl
+        tempCtx.bezierCurveTo(-22 * s, 28 * s, -18 * s, 16 * s, -10 * s, 8 * s);
+
+        // --- Neck left side ---
+        tempCtx.quadraticCurveTo(-6 * s, 0, -4.5 * s, -10 * s);
+
+        // Handle left side going up
+        tempCtx.lineTo(-4 * s, -30 * s);
+        tempCtx.lineTo(-3.5 * s, -85 * s);
+        tempCtx.lineTo(-3 * s, -100 * s);
+
+        tempCtx.closePath();
+        tempCtx.restore();
+      }
+
+      function generateSpoonPoints(count) {
+        // Spoon is now the centerpiece — centered on page
+        var spoonCX, spoonCY, spoonScale, spoonAngle;
+
+        if (isMobile) {
+          spoonCX = width * 0.5;
+          spoonCY = height * 0.42;
+          spoonScale = Math.min(width, height) * 0.0026;
+          spoonAngle = 0.58; // handle pointing top-right
+        } else {
+          spoonCX = width * 0.5;
+          spoonCY = height * 0.42;
+          spoonScale = Math.min(width, height) * 0.0033;
+          spoonAngle = 0.58;
+        }
+
+        // Use offscreen canvas for hit-testing
+        var offCanvas = document.createElement('canvas');
+        offCanvas.width = width;
+        offCanvas.height = height;
+        var offCtx = offCanvas.getContext('2d');
+
+        drawSpoonPath(offCtx, spoonCX, spoonCY, spoonScale, spoonAngle);
+        offCtx.fill();
+
+        // Bounding box for rejection sampling (generous)
+        var maxExtent = 105 * spoonScale;
+        var bounds = {
+          x: spoonCX - maxExtent,
+          y: spoonCY - maxExtent,
+          w: maxExtent * 2,
+          h: maxExtent * 2
+        };
+
+        // Rejection sampling
+        var points = [];
+        var maxAttempts = count * 30;
+        var attempts = 0;
+        var cosA = Math.cos(-spoonAngle);
+        var sinA = Math.sin(-spoonAngle);
+
+        while (points.length < count && attempts < maxAttempts) {
+          var px = bounds.x + Math.random() * bounds.w;
+          var py = bounds.y + Math.random() * bounds.h;
+
+          drawSpoonPath(offCtx, spoonCX, spoonCY, spoonScale, spoonAngle);
+          if (offCtx.isPointInPath(px, py)) {
+            // Calculate local (un-rotated) position relative to spoon center
+            var relX = px - spoonCX;
+            var relY = py - spoonCY;
+            var localX = (relX * cosA - relY * sinA) / spoonScale;
+            var localY = (relX * sinA + relY * cosA) / spoonScale;
+            points.push([px, py, localX, localY]);
+          }
+          attempts++;
+        }
+
+        return points;
+      }
+
+      function getParticleCount() {
+        return isMobile ? PARTICLE_COUNT_MOBILE : PARTICLE_COUNT_DESKTOP;
+      }
+
+      // ---- 3D shading calculation ----
+      function calcParticleColor(localX, localY) {
+        // Light source: top-left (-0.7, -0.8) matching reference photo
+        // localX: negative=left, positive=right
+        // localY: negative=handle(top), positive=bowl(bottom)
+
+        var inBowl = localY > 5;
+        var shade;
+
+        if (inBowl) {
+          // Bowl is concave — highlight spot shifted toward light (top-left)
+          // Bowl center ~(0, 33), highlight center shifted to (-6, 25)
+          var hlX = -6, hlY = 25;
+          var distFromHL = Math.sqrt(
+            Math.pow((localX - hlX) / 18, 2) +
+            Math.pow((localY - hlY) / 20, 2)
+          );
+
+          // Strong concave highlight in center-left, dark edges
+          shade = distFromHL * 0.7;
+
+          // Extra darkening on right and bottom edges
+          var edgeRight = Math.max(0, localX / 22);
+          var edgeBottom = Math.max(0, (localY - 35) / 20);
+          shade += edgeRight * 0.25 + edgeBottom * 0.15;
+
+          shade = Math.max(0, Math.min(1, shade));
+        } else {
+          // Handle: cylindrical lighting
+          // Left side = highlight, right side = shadow (light from top-left)
+          var handleWidth = 4.5;
+          var crossSection = localX / handleWidth; // -1 to 1 across handle
+
+          // Cylindrical falloff — rounded highlight
+          shade = crossSection * 0.5 + 0.45;
+
+          // Slight highlight gradient along the handle length (top = lighter)
+          var lengthFactor = (localY + 100) / 90; // 0 at top, ~1 at neck
+          shade += lengthFactor * 0.08;
+
+          shade = Math.max(0.05, Math.min(0.95, shade));
+        }
+
+        // Interpolate: 0 = highlight, 1 = shadow
+        var r, g, b;
+        if (shade < 0.5) {
+          var t = shade * 2;
+          r = COLOR_HIGHLIGHT[0] + (COLOR_MID[0] - COLOR_HIGHLIGHT[0]) * t;
+          g = COLOR_HIGHLIGHT[1] + (COLOR_MID[1] - COLOR_HIGHLIGHT[1]) * t;
+          b = COLOR_HIGHLIGHT[2] + (COLOR_MID[2] - COLOR_HIGHLIGHT[2]) * t;
+        } else {
+          var t = (shade - 0.5) * 2;
+          r = COLOR_MID[0] + (COLOR_SHADOW[0] - COLOR_MID[0]) * t;
+          g = COLOR_MID[1] + (COLOR_SHADOW[1] - COLOR_MID[1]) * t;
+          b = COLOR_MID[2] + (COLOR_SHADOW[2] - COLOR_MID[2]) * t;
+        }
+
+        return [Math.round(r), Math.round(g), Math.round(b)];
+      }
+
+      // ---- Particles ----
+      function initParticles() {
+        var count = getParticleCount();
+        var targets = generateSpoonPoints(count);
+        particles = [];
+
+        for (var i = 0; i < targets.length; i++) {
+          var localX = targets[i][2];
+          var localY = targets[i][3];
+          var color = calcParticleColor(localX, localY);
+
+          particles.push({
+            x: Math.random() * width,
+            y: Math.random() * height,
+            targetX: targets[i][0],
+            targetY: targets[i][1],
+            vx: 0,
+            vy: 0,
+            radius: 0.8 + Math.random() * 1.8,
+            phase: Math.random() * Math.PI * 2,
+            alpha: 0.6 + Math.random() * 0.4,
+            color: color
+          });
+        }
+      }
+
+      // ---- Animation ----
+      var BREATH_AMP = 0.8; // very subtle
+
+      function animate(time) {
+        // Clear
+        ctx.clearRect(0, 0, width, height);
+
+        // Skip if tab is hidden
+        if (document.hidden) {
+          requestAnimationFrame(animate);
+          return;
+        }
+
+        for (var i = 0; i < particles.length; i++) {
+          var p = particles[i];
+
+          // Very subtle idle breathing
+          var breathX = Math.sin(time * 0.0005 + p.phase) * BREATH_AMP;
+          var breathY = Math.cos(time * 0.0006 + p.phase * 1.3) * BREATH_AMP;
+
+          // Spring back to target with subtle breathing offset
+          var ax = (p.targetX + breathX - p.x) * SPRING;
+          var ay = (p.targetY + breathY - p.y) * SPRING;
+
+          p.vx += ax;
+          p.vy += ay;
+
+          // Mouse repulsion — only interaction that moves particles
+          var dx = p.x - mouse.x;
+          var dy = p.y - mouse.y;
+          var dist = Math.sqrt(dx * dx + dy * dy);
+
+          if (dist < MOUSE_RADIUS && dist > 0) {
+            var force = (MOUSE_RADIUS - dist) / MOUSE_RADIUS * MOUSE_FORCE;
+            p.vx += (dx / dist) * force;
+            p.vy += (dy / dist) * force;
+          }
+
+          p.vx *= DAMPING;
+          p.vy *= DAMPING;
+          p.x += p.vx;
+          p.y += p.vy;
+
+          // Draw with 3D shading color
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(' + p.color[0] + ',' + p.color[1] + ',' + p.color[2] + ',' + p.alpha + ')';
+          ctx.fill();
+        }
+
+        requestAnimationFrame(animate);
+      }
+
+      // ---- Init ----
+      resize();
+      initParticles();
+      requestAnimationFrame(animate);
+    })();
+  </script>
+</body>
+</html>
