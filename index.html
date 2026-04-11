@@ -199,6 +199,154 @@
       color: var(--fg-muted);
     }
 
+    /* ---- Wall of Shame ---- */
+    .wall {
+      padding: 5rem 2rem 6rem;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .wall-header h2 {
+      font-size: clamp(1.8rem, 4vw, 2.8rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+      margin-bottom: 0.5rem;
+    }
+
+    .wall-header .lede {
+      font-size: 1.05rem;
+      color: var(--fg-muted);
+      max-width: 75ch;
+    }
+
+    .wall-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 1rem;
+      margin-top: 2rem;
+    }
+
+    .wall-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(8px);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .shot {
+      position: relative;
+      padding: 1rem;
+      border-bottom: 1px solid var(--border);
+      background: linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.04));
+      min-height: 210px;
+    }
+
+    .shot-top {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 0.25rem 0.55rem;
+      font-size: 0.72rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--fg);
+      background: var(--surface-strong);
+      border: 1px solid var(--border);
+    }
+
+    .shot-body {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .bar {
+      height: 10px;
+      border-radius: 999px;
+      background: rgba(71, 16, 68, 0.14);
+      border: 1px solid rgba(71, 16, 68, 0.10);
+    }
+
+    .w-40 { width: 40%; }
+    .w-45 { width: 45%; }
+    .w-50 { width: 50%; }
+    .w-55 { width: 55%; }
+    .w-60 { width: 60%; }
+    .w-65 { width: 65%; }
+    .w-70 { width: 70%; }
+    .w-75 { width: 75%; }
+    .w-80 { width: 80%; }
+    .w-85 { width: 85%; }
+    .w-90 { width: 90%; }
+    .w-95 { width: 95%; }
+
+    .redactions {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .redactions .blk {
+      position: absolute;
+      background: rgba(0,0,0,0.82);
+      border-radius: 6px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+    }
+
+    .redactions .blk:nth-child(1) { width: 55%; height: 18px; left: 1rem; top: 3.8rem; }
+    .redactions .blk:nth-child(2) { width: 38%; height: 18px; right: 1rem; top: 6.3rem; }
+    .redactions .blk:nth-child(3) { width: 62%; height: 18px; left: 1rem; bottom: 1.2rem; }
+    .redactions .blk:nth-child(4) { width: 30%; height: 18px; right: 1rem; bottom: 3.2rem; }
+
+    .wall-copy {
+      padding: 1.1rem 1.2rem 1.25rem;
+    }
+
+    .wall-copy h3 {
+      font-size: 1.05rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      margin-bottom: 0.35rem;
+    }
+
+    .wall-copy p {
+      font-size: 0.98rem;
+      color: var(--fg-muted);
+      margin-bottom: 0.9rem;
+    }
+
+    a.read {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-weight: 700;
+      color: var(--fg);
+      text-decoration: none;
+      padding: 0.55rem 0.75rem;
+      border-radius: 999px;
+      background: var(--surface-strong);
+      border: 1px solid var(--border);
+      transition: transform 120ms ease, filter 120ms ease;
+    }
+
+    a.read:hover { transform: translateY(-1px); filter: brightness(1.03); }
+
+    @media (max-width: 900px) {
+      .cards { grid-template-columns: 1fr; }
+      .wall-grid { grid-template-columns: 1fr; }
+    }
+
     /* ---- Hero title hidden ---- */
     .hero h1 {
       display: none;
@@ -255,26 +403,114 @@
       <!-- <div class="scroll-hint">↓ scroll</div> -->
     </section>
 
-    <section class="coming-soon">
-      <h2>com<span class="emoji">💩</span>ng soon</h2>
-      <div class="cards">
-        <div class="card">
-          <span class="card-icon">🧱</span>
-          <h3>The Wall of Shame</h3>
-          <p>Curated vibe-coded duplicates of things that already exist — with receipts on the carbon footprint.</p>
-        </div>
-        <div class="card">
-          <span class="card-icon">🧮</span>
-          <h3>The Calculator</h3>
-          <p>How much water did your evening of prompting cost the planet? Spoiler: more than you think.</p>
-        </div>
-        <div class="card">
-          <span class="card-icon">✅</span>
-          <h3>The Alternatives</h3>
-          <p>For every vibe-coded app, we'll show you what already exists. Just use it.</p>
-        </div>
-      </div>
-    </section>
+	    <section class="coming-soon" id="deliverables">
+	      <h2>com<span class="emoji">💩</span>ng soon</h2>
+	      <div class="cards">
+	        <div class="card">
+	          <span class="card-icon">🧱</span>
+	          <h3>The Wall of Shame</h3>
+	          <p>Redacted screenshots only, no links to the original posts.</p>
+	        </div>
+	        <div class="card">
+	          <span class="card-icon">🖼️</span>
+	          <h3>3 entries (v1)</h3>
+	          <p>Just three to start, each with one point and one restorative.dev link.</p>
+	        </div>
+	        <div class="card">
+	          <span class="card-icon">↗️</span>
+	          <h3>Read more</h3>
+	          <p>Every entry leads to a restorative.dev article, the “why” behind the roast.</p>
+	        </div>
+	      </div>
+	    </section>
+
+	    <section class="wall" id="wall">
+	      <div class="wall-header">
+	        <h2>Wall of Shame</h2>
+	        <p class="lede">Redacted screenshots of “I vibe-coded X in a weekend” posts.
+	          Anonymous, trace-free, and actually educational.</p>
+	      </div>
+
+	      <div class="wall-grid">
+	        <article class="wall-item">
+	          <div class="shot" aria-label="Redacted screenshot placeholder">
+	            <div class="shot-top">
+	              <span class="pill">redacted</span>
+	              <span class="pill">screenshot</span>
+	            </div>
+	            <div class="shot-body">
+	              <div class="bar w-70"></div>
+	              <div class="bar w-55"></div>
+	              <div class="bar w-85"></div>
+	              <div class="bar w-40"></div>
+	            </div>
+	            <div class="redactions">
+	              <span class="blk"></span>
+	              <span class="blk"></span>
+	              <span class="blk"></span>
+	            </div>
+	          </div>
+	          <div class="wall-copy">
+	            <h3>“Built a to-do app with AI”</h3>
+	            <p>Congrats. You rebuilt a solved problem and called it innovation.
+	              Let’s talk about what that habit trains in teams.</p>
+	            <a class="read" href="https://restorative.dev" target="_blank" rel="noreferrer">Read on restorative.dev →</a>
+	          </div>
+	        </article>
+
+	        <article class="wall-item">
+	          <div class="shot" aria-label="Redacted screenshot placeholder">
+	            <div class="shot-top">
+	              <span class="pill">redacted</span>
+	              <span class="pill">screenshot</span>
+	            </div>
+	            <div class="shot-body">
+	              <div class="bar w-60"></div>
+	              <div class="bar w-90"></div>
+	              <div class="bar w-45"></div>
+	              <div class="bar w-75"></div>
+	            </div>
+	            <div class="redactions">
+	              <span class="blk"></span>
+	              <span class="blk"></span>
+	            </div>
+	          </div>
+	          <div class="wall-copy">
+	            <h3>“Shipped a clone in 6 hours”</h3>
+	            <p>Speed is not the flex when the output is unreviewable noise.
+	              What matters is judgement, constraints, and follow-through.</p>
+	            <a class="read" href="https://restorative.dev" target="_blank" rel="noreferrer">Read on restorative.dev →</a>
+	          </div>
+	        </article>
+
+	        <article class="wall-item">
+	          <div class="shot" aria-label="Redacted screenshot placeholder">
+	            <div class="shot-top">
+	              <span class="pill">redacted</span>
+	              <span class="pill">screenshot</span>
+	            </div>
+	            <div class="shot-body">
+	              <div class="bar w-80"></div>
+	              <div class="bar w-50"></div>
+	              <div class="bar w-65"></div>
+	              <div class="bar w-95"></div>
+	            </div>
+	            <div class="redactions">
+	              <span class="blk"></span>
+	              <span class="blk"></span>
+	              <span class="blk"></span>
+	              <span class="blk"></span>
+	            </div>
+	          </div>
+	          <div class="wall-copy">
+	            <h3>“AI did the strategy for me”</h3>
+	            <p>If the model is your strategist, you’re not building a business.
+	              You’re outsourcing agency and calling it clarity.</p>
+	            <a class="read" href="https://restorative.dev" target="_blank" rel="noreferrer">Read on restorative.dev →</a>
+	          </div>
+	        </article>
+	      </div>
+	    </section>
 
     <footer>
       <div class="no-frameworks">No frameworks were harmed in the making of this site.</div>
