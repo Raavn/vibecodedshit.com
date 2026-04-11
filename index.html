@@ -31,6 +31,14 @@
       --bg: #CEA5C7;
       --fg: #471044;
       --fg-muted: rgba(71, 16, 68, 0.6);
+
+      /* Supporting design tokens (keep minimal, no framework) */
+      --surface: rgba(255, 255, 255, 0.22);
+      --surface-strong: rgba(255, 255, 255, 0.35);
+      --border: rgba(71, 16, 68, 0.18);
+      --shadow: 0 18px 60px rgba(71, 16, 68, 0.18);
+      --radius-lg: 20px;
+      --radius-md: 14px;
     }
 
     *, *::before, *::after {
@@ -128,9 +136,67 @@
       50% { opacity: 1; }
     }
 
-    /* ---- Coming Soon (hidden for now) ---- */
+    /* ---- Coming Soon (now visible) ---- */
     .coming-soon {
-      display: none;
+      padding: 5rem 2rem 6rem;
+      max-width: 980px;
+      margin: 0 auto;
+      text-align: left;
+    }
+
+    .coming-soon h2 {
+      font-size: clamp(1.6rem, 3.6vw, 2.4rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+      margin-bottom: 0.75rem;
+    }
+
+    .coming-soon p.lede {
+      font-size: 1.05rem;
+      color: var(--fg-muted);
+      max-width: 70ch;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 1rem;
+      margin-top: 2rem;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1.25rem 1.25rem 1.35rem;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(8px);
+    }
+
+    .card-icon {
+      display: inline-flex;
+      width: 44px;
+      height: 44px;
+      align-items: center;
+      justify-content: center;
+      border-radius: var(--radius-md);
+      background: var(--surface-strong);
+      border: 1px solid var(--border);
+      margin-bottom: 0.75rem;
+      font-size: 1.25rem;
+    }
+
+    .card h3 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      margin-bottom: 0.35rem;
+    }
+
+    .card p {
+      font-size: 0.98rem;
+      color: var(--fg-muted);
     }
 
     /* ---- Hero title hidden ---- */
