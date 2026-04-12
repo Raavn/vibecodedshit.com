@@ -84,14 +84,34 @@
       text-align: center;
     }
 
-    .hero h1 {
-      font-size: clamp(2.5rem, 8vw, 6rem);
-      font-weight: 700;
-      letter-spacing: -0.03em;
-      line-height: 1.05;
-      margin-bottom: 1.5rem;
-      max-width: 900px;
-    }
+	    .hero h1 {
+	      font-size: clamp(2.5rem, 8vw, 6rem);
+	      font-weight: 700;
+	      letter-spacing: -0.03em;
+	      line-height: 1.05;
+	      margin-bottom: 1.5rem;
+	      max-width: 900px;
+	      display: inline-flex;
+	      align-items: center;
+	      justify-content: center;
+	      gap: clamp(0.7rem, 1.6vw, 1.2rem);
+	    }
+
+	    .hero h1 .spoon-icon {
+	      width: clamp(42px, 6.2vw, 92px);
+	      height: auto;
+	      flex: 0 0 auto;
+	      opacity: 0.95;
+	    }
+
+	    .hero h1 .spoon-icon path,
+	    .hero h1 .spoon-icon ellipse {
+	      stroke: var(--fg);
+	      stroke-width: 10;
+	      stroke-linecap: round;
+	      stroke-linejoin: round;
+	      fill: none;
+	    }
 
     .hero h1 .emoji {
       display: inline-block;
@@ -136,34 +156,12 @@
       50% { opacity: 1; }
     }
 
-    /* ---- Coming Soon (now visible) ---- */
-    .coming-soon {
-      padding: 5rem 2rem 6rem;
-      max-width: 980px;
-      margin: 0 auto;
-      text-align: left;
-    }
-
-    .coming-soon h2 {
-      font-size: clamp(1.6rem, 3.6vw, 2.4rem);
-      font-weight: 700;
-      letter-spacing: -0.02em;
-      line-height: 1.15;
-      margin-bottom: 0.75rem;
-    }
-
-    .coming-soon p.lede {
-      font-size: 1.05rem;
-      color: var(--fg-muted);
-      max-width: 70ch;
-    }
-
-    .cards {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 1rem;
-      margin-top: 2rem;
-    }
+	    .cards {
+	      display: grid;
+	      grid-template-columns: repeat(3, minmax(0, 1fr));
+	      gap: 1rem;
+	      margin-top: 2rem;
+	    }
 
     .card {
       background: var(--surface);
@@ -204,6 +202,97 @@
       padding: 5rem 2rem 6rem;
       max-width: 1100px;
       margin: 0 auto;
+    }
+
+    /* ---- Top nav ---- */
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      padding: 1rem 1.25rem;
+      background: rgba(206, 165, 199, 0.72);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .topbar-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .brand {
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      text-decoration: none;
+      color: var(--fg);
+      white-space: nowrap;
+    }
+
+    .nav {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .nav a {
+      text-decoration: none;
+      color: var(--fg);
+      font-weight: 700;
+      font-size: 0.95rem;
+      padding: 0.45rem 0.7rem;
+      border-radius: var(--radius-md);
+    }
+
+    .nav a:hover {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: calc(0.45rem - 1px) calc(0.7rem - 1px);
+    }
+
+    /* ---- Buttons ---- */
+    .actions {
+      margin-top: 1.35rem;
+      display: flex;
+      gap: 0.75rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      padding: 0.85rem 1.1rem;
+      border-radius: var(--radius-md);
+      font-weight: 700;
+      text-decoration: none;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--fg);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(8px);
+      transition: transform 120ms ease, background 120ms ease;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      background: var(--surface-strong);
+    }
+
+    .btn.primary {
+      background: var(--fg);
+      color: var(--bg);
+      border-color: rgba(71, 16, 68, 0.35);
+    }
+
+    .btn.primary:hover {
+      background: rgba(71, 16, 68, 0.92);
     }
 
     .wall-header h2 {
@@ -347,11 +436,6 @@
       .wall-grid { grid-template-columns: 1fr; }
     }
 
-    /* ---- Hero title hidden ---- */
-    .hero h1 {
-      display: none;
-    }
-
     /* ---- Footer ---- */
     footer {
       text-align: center;
@@ -369,59 +453,67 @@
       opacity: 0.75;
     }
 
-    /* ---- Responsive ---- */
-    @media (max-width: 600px) {
-      .hero {
-        padding: 1.5rem;
-      }
+	    /* ---- Responsive ---- */
+	    @media (max-width: 600px) {
+	      .topbar {
+	        padding: 0.85rem 1rem;
+	      }
 
-      .coming-soon {
-        padding: 3rem 1.5rem 4rem;
-      }
+	      .nav a {
+	        font-size: 0.9rem;
+	      }
 
-      .cards {
-        grid-template-columns: 1fr;
-      }
-    }
-  </style>
-</head>
-<body>
+	      .hero {
+	        padding: 1.5rem;
+	      }
+
+	      .cards {
+	        grid-template-columns: 1fr;
+	      }
+	    }
+	  </style>
+	</head>
+	<body>
 
   <canvas id="spoon-canvas"></canvas>
 
-  <main>
-    <section class="hero">
-      <h1>v<span class="emoji">💩</span>be coded sh<span class="emoji">💩</span>t</h1>
-      <div class="copy">
-        <p class="headline">Vibe coded apps are the modern equivalent of single-use plastic.</p>
-        <p class="tagline">
-          The world didn't need another AI-generated to-do app.<br>
-          But here we are, burning energy and wasting water for it.
-        </p>
-      </div>
-      <!-- scroll hint hidden until more content is added -->
-      <!-- <div class="scroll-hint">↓ scroll</div> -->
-    </section>
 
-	    <section class="coming-soon" id="deliverables">
-	      <h2>com<span class="emoji">💩</span>ng soon</h2>
-	      <div class="cards">
-	        <div class="card">
-	          <span class="card-icon">🧱</span>
-	          <h3>The Wall of Shame</h3>
-	          <p>Redacted screenshots only, no links to the original posts.</p>
-	        </div>
-	        <div class="card">
-	          <span class="card-icon">🖼️</span>
-	          <h3>3 entries (v1)</h3>
-	          <p>Just three to start, each with one point and one restorative.dev link.</p>
-	        </div>
-	        <div class="card">
-	          <span class="card-icon">↗️</span>
-	          <h3>Read more</h3>
-	          <p>Every entry leads to a restorative.dev article, the “why” behind the roast.</p>
+	  <main>
+	    <header class="topbar">
+	      <div class="topbar-inner">
+	        <a class="brand" href="#top">vibecodedsh*t</a>
+	        <nav class="nav" aria-label="Primary">
+	          <a href="#wall">Wall of Shame</a>
+	          <a href="https://restorative.dev" target="_blank" rel="noreferrer">Why</a>
+	        </nav>
+	      </div>
+	    </header>
+	    <section class="hero">
+	      <a id="top"></a>
+	      <h1>
+	        <span>VIBE CODED SH*T</span>
+	        <!-- decorative icon: single-use plastic spoon silhouette (transparent background) -->
+	        <svg class="spoon-icon" viewBox="0 0 220 220" aria-hidden="true" focusable="false">
+	          <!-- bowl -->
+	          <ellipse cx="160" cy="75" rx="38" ry="28" />
+	          <!-- neck -->
+	          <path d="M135 92 C120 112, 105 126, 78 136" />
+	          <!-- handle -->
+	          <path d="M78 136 C50 148, 35 162, 22 190" />
+	        </svg>
+	      </h1>
+	      <div class="copy">
+	        <p class="headline">Vibe coded apps are the modern equivalent of single-use plastic.</p>
+	        <p class="tagline">
+	          The world didn't need another AI-generated to-do app.<br>
+	          But here we are, burning energy and wasting water for it.
+	        </p>
+	        <div class="actions">
+	          <a class="btn primary" href="#wall">See the Wall of Shame</a>
 	        </div>
 	      </div>
+	      <!-- scroll hint hidden until more content is added -->
+	      <!-- <div class="scroll-hint">↓ scroll</div> -->
 	    </section>
 
 	    <section class="wall" id="wall">
