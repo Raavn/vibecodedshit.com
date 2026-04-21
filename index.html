@@ -441,6 +441,110 @@
       .wall-grid { grid-template-columns: 1fr; }
     }
 
+    /* ---- Hide Restorative.dev CTAs (kept in markup for easy un-hiding) ---- */
+    .wall-item .read { display: none; }
+
+    /* ---- Subscribe modal ---- */
+    #subscribe-modal {
+      border: none;
+      padding: 0;
+      background: transparent;
+      max-width: 460px;
+      width: calc(100% - 2rem);
+      color: var(--fg);
+      margin: auto;
+    }
+
+    #subscribe-modal::backdrop {
+      background: rgba(71, 16, 68, 0.45);
+      backdrop-filter: blur(6px);
+    }
+
+    .modal-panel {
+      background: var(--surface-strong);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(14px);
+      padding: 1.5rem 1.4rem 1.3rem;
+      position: relative;
+    }
+
+    .modal-panel h3 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      margin-bottom: 0.4rem;
+      padding-right: 2rem;
+    }
+
+    .modal-panel p.modal-lede {
+      font-size: 0.98rem;
+      color: var(--fg-muted);
+      margin-bottom: 1rem;
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 0.6rem;
+      right: 0.6rem;
+      width: 2rem;
+      height: 2rem;
+      border-radius: 999px;
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--fg);
+      cursor: pointer;
+      font-size: 1.2rem;
+      line-height: 1;
+    }
+
+    .modal-close:hover { background: var(--surface); border-color: var(--border); }
+
+    #subscribe-form { display: flex; flex-direction: column; gap: 0.75rem; }
+
+    #subscribe-form label { font-size: 0.85rem; font-weight: 700; }
+
+    #subscribe-form input[type="email"] {
+      font: inherit;
+      color: var(--fg);
+      padding: 0.75rem 0.9rem;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.55);
+      outline: none;
+    }
+
+    #subscribe-form input[type="email"]:focus {
+      border-color: var(--fg);
+      background: rgba(255, 255, 255, 0.8);
+    }
+
+    /* Honeypot: offscreen, not display:none */
+    .hp-field {
+      position: absolute !important;
+      left: -9999px !important;
+      top: auto !important;
+      width: 1px !important;
+      height: 1px !important;
+      overflow: hidden !important;
+    }
+
+    #subscribe-form button[type="submit"] {
+      margin-top: 0.25rem;
+      font: inherit;
+      cursor: pointer;
+    }
+
+    #subscribe-form button[type="submit"]:disabled {
+      opacity: 0.6;
+      cursor: wait;
+    }
+
+    .form-status { font-size: 0.9rem; min-height: 1.2em; }
+    .form-status.error { color: #7a1a1a; }
+    .form-status.success { color: var(--fg); font-weight: 700; }
+
     /* ---- Footer ---- */
     footer {
       text-align: center;
@@ -514,7 +618,7 @@
 	          But here we are, burning energy and wasting water for it.
 	        </p>
 	        <div class="actions">
-	          <a class="btn primary" href="#wall">See the Wall of Shame</a>
+	          <button class="btn primary" id="subscribe-open" type="button">Let me know as soon as I make the list</button>
 	        </div>
 	      </div>
 	      <!-- scroll hint hidden until more content is added -->
@@ -614,6 +718,24 @@
       <div>&copy; 2026 vibecodedshit.com — Plain HTML, CSS, and JS. That's the point.</div>
     </footer>
   </main>
+
+  <dialog id="subscribe-modal" aria-labelledby="subscribe-title">
+    <div class="modal-panel">
+      <button type="button" class="modal-close" id="subscribe-close" aria-label="Close">&times;</button>
+      <h3 id="subscribe-title">Join the list</h3>
+      <p class="modal-lede">Drop your email and we'll let you know as soon as the Wall of Shame opens up.</p>
+      <form id="subscribe-form" novalidate>
+        <label for="subscribe-email">Email</label>
+        <input id="subscribe-email" name="email" type="email" required maxlength="254" autocomplete="email" inputmode="email" placeholder="you@example.com">
+        <div class="hp-field" aria-hidden="true">
+          <label for="subscribe-company">Company (leave empty)</label>
+          <input id="subscribe-company" name="company" type="text" tabindex="-1" autocomplete="off">
+        </div>
+        <button class="btn primary" type="submit" id="subscribe-submit">Notify me</button>
+        <div class="form-status" id="subscribe-status" role="status" aria-live="polite"></div>
+      </form>
+    </div>
+  </dialog>
 
   <script>
     (function () {
@@ -942,6 +1064,101 @@
       resize();
       initParticles();
       requestAnimationFrame(animate);
+    })();
+
+    // ---- Subscribe modal ----
+    (function () {
+      'use strict';
+
+      const AIMEKO_API_BASE = 'https://os.aimeko.com';
+
+      const openBtn = document.getElementById('subscribe-open');
+      const modal = document.getElementById('subscribe-modal');
+      const closeBtn = document.getElementById('subscribe-close');
+      const form = document.getElementById('subscribe-form');
+      const emailInput = document.getElementById('subscribe-email');
+      const companyInput = document.getElementById('subscribe-company');
+      const submitBtn = document.getElementById('subscribe-submit');
+      const statusEl = document.getElementById('subscribe-status');
+
+      if (!openBtn || !modal || !form) return;
+
+      let renderedAt = 0;
+
+      function setStatus(text, kind) {
+        statusEl.textContent = text || '';
+        statusEl.classList.remove('error', 'success');
+        if (kind) statusEl.classList.add(kind);
+      }
+
+      function openModal() {
+        renderedAt = Date.now();
+        setStatus('', null);
+        form.reset();
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Notify me';
+        if (typeof modal.showModal === 'function') {
+          modal.showModal();
+        } else {
+          modal.setAttribute('open', '');
+        }
+        setTimeout(function () { emailInput.focus(); }, 30);
+      }
+
+      function closeModal() {
+        if (typeof modal.close === 'function') {
+          modal.close();
+        } else {
+          modal.removeAttribute('open');
+        }
+      }
+
+      openBtn.addEventListener('click', openModal);
+      closeBtn.addEventListener('click', closeModal);
+
+      // Backdrop click (click outside .modal-panel)
+      modal.addEventListener('click', function (e) {
+        if (e.target === modal) closeModal();
+      });
+
+      form.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const email = (emailInput.value || '').trim();
+        if (!email) {
+          setStatus('Please enter an email.', 'error');
+          return;
+        }
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Sending…';
+        setStatus('', null);
+
+        try {
+          const res = await fetch(AIMEKO_API_BASE + '/api/public/subscribe/vibecodedshit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              email: email,
+              company: companyInput.value || '',
+              renderedAt: renderedAt,
+            }),
+          });
+          if (!res.ok) {
+            let msg = 'Something went wrong. Try again in a moment.';
+            if (res.status === 400) msg = 'That email looks off. Try again?';
+            setStatus(msg, 'error');
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Notify me';
+            return;
+          }
+          setStatus("You're on the list. We'll be in touch.", 'success');
+          submitBtn.textContent = 'Done';
+          setTimeout(closeModal, 2200);
+        } catch (err) {
+          setStatus('Network error. Try again?', 'error');
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Notify me';
+        }
+      });
     })();
   </script>
 </body>
