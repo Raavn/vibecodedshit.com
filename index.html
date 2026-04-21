@@ -40,9 +40,16 @@
       --surface: rgba(255, 255, 255, 0.22);
       --surface-strong: rgba(255, 255, 255, 0.35);
       --border: rgba(71, 16, 68, 0.18);
-      --shadow: 0 18px 60px rgba(71, 16, 68, 0.18);
-      --radius-lg: 20px;
-      --radius-md: 14px;
+      /* Editorial Shadow (DESIGN.md) */
+      --shadow: 0 24px 48px rgba(44, 17, 43, 0.06);
+      --radius-sm: 0.5rem;
+      --radius-md: 1rem;
+      --radius-lg: 2rem;
+      --radius-full: 9999px;
+
+      --page-margin: 3rem;
+      --section-gap: 6rem;
+      --container-max: 1440px;
     }
 
     *, *::before, *::after {
@@ -82,68 +89,60 @@
       min-height: 100vh;
       display: flex;
       flex-direction: column;
-      justify-content: flex-end;
-      align-items: center;
-      padding: 2rem;
-      text-align: center;
+      justify-content: center;
+      align-items: flex-start;
+      padding: var(--page-margin);
+      text-align: left;
+      max-width: var(--container-max);
+      margin: 0 auto;
+      gap: 2rem;
     }
 
-	    .hero h1 {
-	      font-size: clamp(2.5rem, 8vw, 6rem);
-	      font-weight: 700;
-	      letter-spacing: -0.03em;
-	      line-height: 1.05;
-	      margin-bottom: 1.5rem;
-	      max-width: 900px;
-	      display: inline-flex;
-	      align-items: center;
-	      justify-content: center;
-	      gap: clamp(0.7rem, 1.6vw, 1.2rem);
-	    }
+    .hero h1 {
+      font-size: clamp(3rem, 11vw, 8rem);
+      font-weight: 700;
+      letter-spacing: -0.05em;
+      line-height: 0.9;
+      text-transform: uppercase;
+      max-width: 14ch;
+    }
 
-	    .hero h1 .spoon-icon {
-	      width: clamp(42px, 6.2vw, 92px);
-	      height: auto;
-	      flex: 0 0 auto;
-	      opacity: 0.95;
-	    }
+    /* Kept for the stashed spoon-icon component (see <template id="spoon-icon-template">) */
+    .hero h1 .spoon-icon {
+      width: clamp(42px, 6.2vw, 92px);
+      height: auto;
+      flex: 0 0 auto;
+      opacity: 0.95;
+    }
 
-	    .hero h1 .spoon-icon path,
-	    .hero h1 .spoon-icon ellipse {
-	      stroke: var(--fg);
-	      stroke-width: 10;
-	      stroke-linecap: round;
-	      stroke-linejoin: round;
-	      fill: none;
-	    }
-
-    .hero h1 .emoji {
-      display: inline-block;
-      vertical-align: baseline;
-      font-style: normal;
-      line-height: 1;
+    .hero h1 .spoon-icon path,
+    .hero h1 .spoon-icon ellipse {
+      stroke: var(--fg);
+      stroke-width: 10;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      fill: none;
     }
 
     .hero .copy {
-      margin-top: auto;
-      padding-bottom: 4rem;
-      text-align: center;
+      text-align: left;
       max-width: 800px;
     }
 
     .hero .headline {
       font-size: clamp(1.1rem, 2.8vw, 1.55rem);
       color: var(--fg);
-      line-height: 1.7;
+      line-height: 1.6;
       font-weight: 700;
       text-transform: uppercase;
+      letter-spacing: 0.02em;
       margin-bottom: 0.75rem;
     }
 
     .hero .tagline {
       font-size: clamp(1rem, 2.5vw, 1.35rem);
       color: var(--fg-muted);
-      line-height: 1.7;
+      line-height: 1.6;
       font-weight: 400;
     }
 
@@ -151,8 +150,9 @@
       margin-top: 3rem;
       font-size: 0.85rem;
       color: var(--fg-muted);
-      letter-spacing: 0.1em;
+      letter-spacing: 0.2em;
       text-transform: uppercase;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
       animation: pulse 2s ease-in-out infinite;
     }
 
@@ -204,9 +204,14 @@
 
     /* ---- Wall of Shame ---- */
     .wall {
-      padding: 5rem 2rem 6rem;
-      max-width: 1100px;
+      padding: var(--section-gap) var(--page-margin);
+      max-width: var(--container-max);
       margin: 0 auto;
+    }
+
+    .wall-header h2 {
+      text-transform: uppercase;
+      letter-spacing: -0.03em;
     }
 
     /* ---- Top nav ---- */
@@ -221,12 +226,13 @@
     }
 
     .topbar-inner {
-      max-width: 1100px;
+      max-width: var(--container-max);
       margin: 0 auto;
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 1rem;
+      padding: 0 var(--page-margin);
     }
 
     .brand {
@@ -247,24 +253,24 @@
     .nav a {
       text-decoration: none;
       color: var(--fg);
+      opacity: 0.6;
       font-weight: 700;
       font-size: 0.95rem;
       padding: 0.45rem 0.7rem;
-      border-radius: var(--radius-md);
+      border-radius: var(--radius-sm);
+      transition: opacity 120ms ease;
     }
 
     .nav a:hover {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      padding: calc(0.45rem - 1px) calc(0.7rem - 1px);
+      opacity: 1;
     }
 
     /* ---- Buttons ---- */
     .actions {
-      margin-top: 1.35rem;
+      margin-top: 0.5rem;
       display: flex;
       gap: 0.75rem;
-      justify-content: center;
+      justify-content: flex-start;
       flex-wrap: wrap;
     }
 
@@ -273,8 +279,8 @@
       align-items: center;
       justify-content: center;
       gap: 0.4rem;
-      padding: 0.85rem 1.1rem;
-      border-radius: var(--radius-md);
+      padding: 1rem 1.75rem;
+      border-radius: var(--radius-full);
       font-weight: 700;
       text-decoration: none;
       border: 1px solid var(--border);
@@ -286,7 +292,7 @@
     }
 
     .btn:hover {
-      transform: translateY(-1px);
+      transform: scale(0.95);
       background: var(--surface-strong);
     }
 
@@ -298,6 +304,7 @@
 
     .btn.primary:hover {
       background: rgba(71, 16, 68, 0.92);
+      transform: scale(0.95);
     }
 
     .wall-header h2 {
@@ -349,11 +356,12 @@
     .pill {
       display: inline-flex;
       align-items: center;
-      border-radius: 999px;
-      padding: 0.25rem 0.55rem;
+      border-radius: var(--radius-full);
+      padding: 0.25rem 0.6rem;
       font-size: 0.72rem;
-      letter-spacing: 0.06em;
+      letter-spacing: 0.2em;
       text-transform: uppercase;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
       color: var(--fg);
       background: var(--surface-strong);
       border: 1px solid var(--border);
@@ -427,14 +435,14 @@
       font-weight: 700;
       color: var(--fg);
       text-decoration: none;
-      padding: 0.55rem 0.75rem;
-      border-radius: 999px;
+      padding: 0.55rem 0.9rem;
+      border-radius: var(--radius-full);
       background: var(--surface-strong);
       border: 1px solid var(--border);
       transition: transform 120ms ease, filter 120ms ease;
     }
 
-    a.read:hover { transform: translateY(-1px); filter: brightness(1.03); }
+    a.read:hover { transform: scale(0.95); filter: brightness(1.03); }
 
     @media (max-width: 900px) {
       .cards { grid-template-columns: 1fr; }
@@ -563,9 +571,23 @@
     }
 
 	    /* ---- Responsive ---- */
+	    @media (max-width: 900px) {
+	      .wall {
+	        padding: 4rem 1.5rem 4rem;
+	      }
+
+	      .topbar-inner {
+	        padding: 0 1.5rem;
+	      }
+	    }
+
 	    @media (max-width: 600px) {
 	      .topbar {
 	        padding: 0.85rem 1rem;
+	      }
+
+	      .topbar-inner {
+	        padding: 0;
 	      }
 
 	      .nav a {
@@ -574,6 +596,7 @@
 
 	      .hero {
 	        padding: 1.5rem;
+	        gap: 1.5rem;
 	      }
 
 	      .cards {
@@ -601,15 +624,6 @@
 	      <a id="top"></a>
 	      <h1>
 	        <span>VIBE CODED SH*T</span>
-	        <!-- decorative icon: single-use plastic spoon silhouette (transparent background) -->
-	        <svg class="spoon-icon" viewBox="0 0 220 220" aria-hidden="true" focusable="false">
-	          <!-- bowl -->
-	          <ellipse cx="160" cy="75" rx="38" ry="28" />
-	          <!-- neck -->
-	          <path d="M135 92 C120 112, 105 126, 78 136" />
-	          <!-- handle -->
-	          <path d="M78 136 C50 148, 35 162, 22 190" />
-	        </svg>
 	      </h1>
 	      <div class="copy">
 	        <p class="headline">We're cataloguing the AI equivalent of single-use plastic, and there's a lot of it.</p>
@@ -718,6 +732,18 @@
       <div>&copy; 2026 vibecodedshit.com — Plain HTML, CSS, and JS. That's the point.</div>
     </footer>
   </main>
+
+  <!-- Reusable spoon icon component — clone this template's content to reinsert. -->
+  <template id="spoon-icon-template">
+    <svg class="spoon-icon" viewBox="0 0 220 220" aria-hidden="true" focusable="false">
+      <!-- bowl -->
+      <ellipse cx="160" cy="75" rx="38" ry="28" />
+      <!-- neck -->
+      <path d="M135 92 C120 112, 105 126, 78 136" />
+      <!-- handle -->
+      <path d="M78 136 C50 148, 35 162, 22 190" />
+    </svg>
+  </template>
 
   <dialog id="subscribe-modal" aria-labelledby="subscribe-title">
     <div class="modal-panel">
