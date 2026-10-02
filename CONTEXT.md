@@ -1,15 +1,19 @@
 # vibecodedshit.com
 
 ## Vision
-Awareness campaign about people wasting planetary resources (energy, water for server cooling) to vibe-code apps that already exist — to-do lists, habit trackers, expense splitters, etc.
+An open benchmark for codebase health. Health = how safely and cheaply someone with no memory of a codebase, whether a contractor or an AI agent, can make a correct change. Anyone can score their repository with a free Claude Code skill. Low scorers are offered Peter's help to fix their codebase.
+
+Replaced the earlier vision (an awareness campaign about vibe-coding apps that already exist) on 2026-10-02.
 
 ## Tone
 Snappy, sarcastic, slightly controversial — but always educative. Not preachy. Think "the friend who roasts you but has a point."
 
 ## Approach
-1. **Wall of Shame**: Curate screenshots from X.com and LinkedIn of people bragging about vibe-coded clones of existing tools. Redact all personal data. Pair each with carbon footprint stats and existing alternatives.
-2. **The Calculator**: Let visitors input "I spent one evening vibe coding" and show them how much water, energy, and CO2 that cost — with real (sourced) or reasonable estimates.
-3. **The Alternatives**: For every vibe-coded thing, show what already exists. "You built a to-do app? Here are 347 of them."
+1. **The methodology**: Six dimensions, 30 parameters, fixed rubrics, one health score and a band (Vibe-coded, Fragile, Stable, Agent-ready). Published under CC BY 4.0. Source: `~/ServerRoot/vibevibevibe.com/methodology/v1.0/`.
+2. **The skill**: A Claude Code plugin with `/codebase-health` (code under MIT). It runs the pinned scoring tool, then Claude explains the result. Without Docker it runs a static-only preview that is marked "not comparable" and cannot be submitted.
+3. **Submissions**: With the user's consent, the skill sends the scores to app.vibecodedshit.com. The repo name is off by default; a hash of the git remote URL is sent instead. An email is optional. The user sees the exact payload before anything is sent.
+4. **The average**: The site shows the average score of submitted projects, counting each repo once (its latest full run, per methodology version). There is no public leaderboard.
+5. **Lead generation**: Vibe-coded and Fragile results end with one line offering Peter's help.
 
 ## Brand Identity
 - The letter "i" is always replaced with the poop emoji in brand text
@@ -18,3 +22,5 @@ Snappy, sarcastic, slightly controversial — but always educative. Not preachy.
 
 ## Tech Stance
 The site itself uses zero build tools, zero frameworks, zero npm packages. Plain HTML, CSS, and JavaScript. That's the point.
+
+This rule applies to vibecodedshit.com only. app.vibecodedshit.com (the submission app) may use npm packages and a framework.
