@@ -1,0 +1,14 @@
+{
+  "name": "d5-outdated",
+  "version": "1.0.0",
+  "dependencies": {
+    "major": "^1.0.0",
+    "zerominor": "0.2.1",
+    "zeropatch": "0.2.1",
+    "current": "^3.1.0",
+    "preonly": "^1.0.0",
+    "late": "^1.0.0",
+    "alias": "npm:other@1.0.0",
+    "gone": "^1.0.0"
+  }
+}

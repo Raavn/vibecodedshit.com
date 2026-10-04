@@ -1,0 +1,6 @@
+[packages]
+requests = ">=2.0"
+flask = "*"
+
+[dev-packages]
+pytest = "*"

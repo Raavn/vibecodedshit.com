@@ -1,0 +1,3 @@
+{
+  "note": "The fixture holds no secret. The test writes src/config.js (tracked) with a generated AWS-style key. A fake gitleaks names that file, so the one finding counts 1 for the root package (score 0). test:tools runs the real gitleaks."
+}

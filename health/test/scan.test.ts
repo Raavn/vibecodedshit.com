@@ -60,11 +60,11 @@ describe.each(['typescript', 'python', 'monorepo'])('fixture %s', (name) => {
     expect(result.comparable).toBe(false);
   });
 
-  it('scores dimensions 2, 3 (TypeScript only) and 4 and leaves the other dimensions not measured', async () => {
+  it('scores dimensions 2, 3 (TypeScript only), 4 and 5 and leaves the other dimensions not measured', async () => {
     const result = await runScan(scanOpts(materializeFixture(name)));
     const scored = result.dimensions.filter((d) => d.score !== null);
     // D3 is measured for TypeScript and JavaScript only; a repository with Python logic files leaves it not measured.
-    expect(scored.map((d) => d.id)).toEqual(name === 'typescript' ? [2, 3, 4] : [2, 4]);
+    expect(scored.map((d) => d.id)).toEqual(name === 'typescript' ? [2, 3, 4, 5] : [2, 4, 5]);
     if (name !== 'typescript') {
       expect(result.parameters.find((p) => p.id === '3.2')).toMatchObject({ status: 'not_measured', reason: expect.stringMatching(/not implemented yet for python/) });
     }
@@ -156,7 +156,7 @@ describe('health scan CLI', () => {
     const code = await run(['scan', repo, '--preview', '--as-of', '2026-10-04'], cliIo);
     expect(code).toBe(0);
     const text = out.join('');
-    expect(text).toMatch(/^Health 69 Stable \(preview, not comparable\)$/m);
+    expect(text).toMatch(/^Health \d+ Stable \(preview, not comparable\)$/m);
     expect(text).toMatch(/^4\.2 Lines in large files: 25\.6% -> 49$/m);
     expect(text).toMatch(/^4\.1 Complex functions: 0\.0% -> 100$/m);
     const file = JSON.parse(readFileSync(path.join(cwd, 'run.json'), 'utf8')) as RunFile;

@@ -1,0 +1,10 @@
+{
+  "name": "pnpm9",
+  "version": "1.0.0",
+  "dependencies": {
+    "alpha": "^1.0.0"
+  },
+  "devDependencies": {
+    "beta": "~2.1.0"
+  }
+}

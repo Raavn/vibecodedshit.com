@@ -1,0 +1,8 @@
+{
+  "name": "npm-missing",
+  "version": "1.0.0",
+  "dependencies": {
+    "alpha": "^1.0.0",
+    "gamma": "^3.0.0"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "name": "d5-vuln",
+  "version": "1.0.0",
+  "dependencies": {
+    "lodash": "4.17.20"
+  },
+  "devDependencies": {
+    "minimist": "1.2.0"
+  }
+}
