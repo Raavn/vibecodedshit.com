@@ -1,0 +1,13 @@
+{
+  "name": "web",
+  "version": "1.0.0",
+  "main": "index.js",
+  "dependencies": {
+    "used-lib": "^1.0.0",
+    "stale-one": "^1.0.0",
+    "stale-two": "^1.0.0"
+  },
+  "devDependencies": {
+    "stale-dev": "^1.0.0"
+  }
+}

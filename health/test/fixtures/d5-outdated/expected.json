@@ -1,0 +1,25 @@
+{
+  "note": "Registry data is faked in the test. TS direct dependencies: major 1.5.0 vs 2.0.0 (behind), zerominor 0.2.1 vs 0.3.0 (0.x minor, behind), zeropatch 0.2.1 vs 0.2.5 (not behind), current 3.1.0 vs 3.1.0, preonly 1.0.0 vs 1.9.0 and 2.0.0-beta.1 (prerelease ignored), late 1.0.0 vs 2.0.0 published 2025-05-01 (behind only on or after that date), alias is an npm: alias (excluded), gone is a 404 (excluded, warning). Python: requests 2.0.0, 3.0.0 is yanked, 2.5.0 is the latest, so 0 of 1.",
+  "asOf": {
+    "2026-10-04": {
+      "ts": [
+        3,
+        6
+      ],
+      "py": [
+        0,
+        1
+      ]
+    },
+    "2025-01-01": {
+      "ts": [
+        2,
+        6
+      ],
+      "py": [
+        0,
+        1
+      ]
+    }
+  }
+}

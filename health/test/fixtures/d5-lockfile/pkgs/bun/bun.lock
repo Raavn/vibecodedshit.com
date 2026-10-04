@@ -1,0 +1,14 @@
+{
+  "lockfileVersion": 1,
+  "workspaces": {
+    "": {
+      "name": "bun",
+      "dependencies": {
+        "alpha": "^1.0.0",
+      },
+    },
+  },
+  "packages": {
+    "alpha": ["alpha@1.4.2", "", {}, "sha512-aaa"],
+  },
+}

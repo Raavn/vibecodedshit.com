@@ -1,0 +1,8 @@
+{
+  "name": "nonreg",
+  "version": "1.0.0",
+  "dependencies": {
+    "alpha": "^1.0.0",
+    "local-lib": "file:../local-lib"
+  }
+}

@@ -1,0 +1,17 @@
+lockfileVersion: '9.0'
+
+importers:
+
+  .:
+    dependencies:
+      alpha:
+        specifier: ^1.0.0
+        version: 1.4.2
+    devDependencies:
+      beta:
+        specifier: ~2.1.0
+        version: 2.1.9(peer@1.0.0)
+
+packages:
+  alpha@1.4.2:
+    resolution: {integrity: sha512-aaa}

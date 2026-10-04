@@ -1,0 +1,8 @@
+{
+  "note": "Hand counts for lodash 4.17.20. GHSA-aaaa-0001 (HIGH label) and its alias CVE-2021-0001 (CVSS 9.8) are one advisory: 5. GHSA-bbbb-0002 CVSS 3.1 6.1 = moderate 2. GHSA-cccc-0003 no severity = moderate 2. GHSA-dddd-0004 CVSS v4 only = moderate 2. GHSA-eeee-0005 is withdrawn and never counts. GHSA-ffff-0006 (CRITICAL 10) was published 2023-06-01. As of 2022-01-01: 5+2+2+2 = 11. As of 2026-10-04: 21. minimist is dev only: LOW 0.5.",
+  "production": {
+    "2022-01-01": 11,
+    "2026-10-04": 21
+  },
+  "devPoints": 0.5
+}

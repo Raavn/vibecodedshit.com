@@ -28,6 +28,7 @@
     "jscpd": "5.4.0",
     "knip": "6.39.0",
     "picomatch": "^4.0.7",
+    "semver": "7.8.5",
     "smol-toml": "1.9.0",
     "typescript": "^5.9.3",
     "typescript-eslint": "8.71.0",
@@ -37,6 +38,7 @@
   "devDependencies": {
     "@types/node": "^26.6.4",
     "@types/picomatch": "^4.0.3",
+    "@types/semver": "^7.8.0",
     "tsx": "^4.23.15",
     "vitest": "^4.1.11"
   }

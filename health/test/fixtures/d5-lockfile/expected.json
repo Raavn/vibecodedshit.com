@@ -1,0 +1,16 @@
+{
+  "note": "Hand-counted lockfile levels, one package per case. Each package has one logic file of 3 lines. npm-missing declares gamma, which the lockfile lacks. npm-range declares alpha ^2.0.0 but the lockfile holds 1.4.2. poetry: flask ^2.0 is >=2.0,<3.0 and the lockfile holds 3.0.0. nonreg: file:../local-lib only has to be present. yarn-berry keys are alpha@npm:^1.0.0.",
+  "levels": {
+    "npm-sync": "in_sync",
+    "npm-missing": "out_of_sync",
+    "npm-range": "out_of_sync",
+    "nolock": "none",
+    "pnpm9": "in_sync",
+    "yarn-classic": "in_sync",
+    "yarn-berry": "in_sync",
+    "bun": "in_sync",
+    "nonreg": "in_sync",
+    "uv": "in_sync",
+    "poetry": "out_of_sync"
+  }
+}

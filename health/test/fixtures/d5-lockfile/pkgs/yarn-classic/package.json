@@ -1,0 +1,8 @@
+{
+  "name": "yarn-classic",
+  "version": "1.0.0",
+  "dependencies": {
+    "alpha": "^1.0.0",
+    "@scope/beta": "~2.1.0"
+  }
+}

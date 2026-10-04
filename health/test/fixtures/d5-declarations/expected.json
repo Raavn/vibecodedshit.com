@@ -1,0 +1,11 @@
+{
+  "note": "web (knip, real): stale-one, stale-two (dependencies) and stale-dev (devDependencies) are never imported = 3 unused; undeclared-lib is imported but not declared = 1 unlisted. Numerator 4, denominator 4 (used-lib, stale-one, stale-two, stale-dev). api (canned deptry): DEP002 flask, DEP001 numpy, DEP003 urllib3 count = 3; DEP004 pytest is dropped. Denominator 4 (requests, flask, attrs, pytest).",
+  "web": {
+    "numerator": 4,
+    "denominator": 4
+  },
+  "api": {
+    "numerator": 3,
+    "denominator": 4
+  }
+}
