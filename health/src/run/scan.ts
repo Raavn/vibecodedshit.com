@@ -7,6 +7,7 @@ import { runExecution } from '../exec/run.js';
 import type { ExecRunner, ExecutionResults } from '../exec/types.js';
 import { measurers as allMeasurers } from '../measure/registry.js';
 import type { Measurement, Measurer } from '../measure/types.js';
+import { computeHotspots, type FileComplexitySum } from '../report-only/hotspots.js';
 import { loadMethodology, packageRoot, type Methodology } from '../methodology/load.js';
 import { buildScope } from '../scope/build.js';
 import { poolParameter } from '../scoring/pool.js';
@@ -153,6 +154,13 @@ export async function runScan(opts: ScanOptions, preloaded?: Methodology): Promi
         parameters.push({ id: def.id, status: 'not_applicable', reason: measurement.reason, weight: def.weight });
       }
     }
+  }
+
+  const complexityByFile = reportOnly.complexityByFile;
+  if (Array.isArray(complexityByFile)) {
+    const hotspots = computeHotspots(repoPath, opts.asOf, complexityByFile as FileComplexitySum[]);
+    reportOnly.hotspots = hotspots.hotspots;
+    warnings.push(...hotspots.warnings);
   }
 
   const dimensions = dimensionScores(methodology, parameters);

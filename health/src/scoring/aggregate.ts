@@ -33,8 +33,11 @@ export function healthScore(dimensionScores: (number | null)[], capMargin: numbe
   return Math.min(mean, Math.min(...scores) + capMargin);
 }
 
-export function roundHalfUp(value: number): number {
-  return Math.floor(value + 0.5 + 1e-9);
+/** Round half up to `digits` decimals. The tolerance makes a value written as x.x5 round as written; negative zero becomes 0. */
+export function roundHalfUp(value: number, digits = 0): number {
+  const factor = 10 ** digits;
+  const rounded = Math.floor(value * factor + 0.5 + 1e-9) / factor;
+  return rounded === 0 ? 0 : rounded;
 }
 
 export function bandFor(displayedHealth: number, bands: BandDef[]): BandDef {

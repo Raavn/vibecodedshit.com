@@ -15,6 +15,8 @@ Run commands from this directory (`npm --prefix health <cmd>` from the repositor
 - `npm run verify` runs all three. Run it before every commit.
 - `npm run build` emits `dist/`
 - `npm run health -- scan <path> --preview` runs a preview scan and writes `./run.json`. Without `--preview` it is a full run: the execution steps run in the `health:1.0` image (Docker needed).
+- `npm run health -- report <run.json> [--out <file>]` writes one self-contained HTML file (default `./health-report.html`, git-ignored) and prints its absolute path
+- `npm run health -- diff <before.json> <after.json> [--json]` compares two runs (after minus before); `--json` prints one object, schema in `src/diff/compare.ts`
 
 ## Layout
 
@@ -30,7 +32,9 @@ Run commands from this directory (`npm --prefix health <cmd>` from the repositor
 - `src/exec/` (6.1, 2.1, 2.5): the execution layer. The host orchestrates and the static layer stays on the host; only install, build, typecheck and lint run in the image, one `docker run` each (`docker.ts`, via an injected `spawn`; tests pass `fakeRunner` from `test/helpers/exec.ts`). `plan.ts` picks install roots and typecheck units, `steps/<name>.ts` has one step per file, `run.ts` runs them on a temp copy of the tracked files and reads the reports into `ExecutionResults` (`ctx.exec`). `p6-1.ts`, `p2-1.ts` and `p2-5.ts` are pure functions of `ctx.exec` and never start Docker. `reports.ts` parses tsc, pyright, mypy, eslint and ruff output. A docker, image or exit 125-127 failure is a `ToolError` (invalid run); a timeout or a checker with no usable report is a repository failure (score 0).
 - `docker/`: `Dockerfile` for `health:1.0` (every tool pinned), `config/` with the methodology's pinned `eslint.config.mjs` and `ruff.toml` (baked into the image, a repository's own lint config is never used), `bin/` with the small wrappers the steps call (`health-capture`, `health-venv`, `health-tsc`).
 - `src/scoring/`: pure scoring, pooling and aggregation.
-- `src/run/`: `scan.ts` builds run.json, `recompute.ts` re-derives scores from stored raw values.
+- `src/run/`: `scan.ts` builds run.json, `recompute.ts` re-derives scores from stored raw values, `read.ts` reads and validates a run.json (zod) for `report` and `diff`.
+- `src/commands/`: `report.ts` and `diff.ts` (`scan` is still in `cli.ts`). `report` and `diff` read run.json only and never recompute: the report renders in `src/report/` (template literals, `escapeHtml` for every dynamic string, no script, no external request, no clock); the diff is `src/diff/` (`conditions.ts` the five refusal conditions, `compare.ts` deltas and the regression flag, `format.ts` human output).
+- `src/report-only/hotspots.ts`: churn (12 months, `git log`) times the per-file cognitive complexity 4.1 stores in `reportOnly.complexityByFile`. `scan.ts` stores the top 20 as `reportOnly.hotspots`; report-only values never enter scoring, `recompute` or the diff.
 
 Adding a parameter: add `src/measure/p<d>-<n>.ts` and a test beside it, add one import and one entry to `registry.ts`, extend a fixture's `expected.json`. Do not change scoring, pooling, aggregation or the run.json shape (full runs add `tools.image`, the image tag and digest).
 
@@ -40,4 +44,4 @@ Adding a parameter: add `src/measure/p<d>-<n>.ts` and a test beside it, add one 
 
 ## Exit codes
 
-0 ok, 1 usage error, 2 methodology error (no run.json), 3 no logic file (no run.json), 4 tool error (run.json with `valid: false`).
+0 ok, 1 usage error or unreadable input, 2 methodology error (no run.json), 3 no logic file (no run.json), 4 tool error (run.json with `valid: false`), 5 `diff` refused (the runs are not comparable). A regression flag never changes the exit code.

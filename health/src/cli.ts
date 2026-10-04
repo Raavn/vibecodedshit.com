@@ -1,5 +1,8 @@
 import path from 'node:path';
 import { parseArgs } from 'node:util';
+import { EXIT, type CliIo } from './commands/common.js';
+import { runDiff } from './commands/diff.js';
+import { runReport } from './commands/report.js';
 import { loadMethodology, MethodologyError, type Methodology } from './methodology/load.js';
 import type { RunFile } from './run/schema.js';
 import { invalidRun, NoLogicFilesError, runScan, type ScanOptions } from './run/scan.js';
@@ -7,15 +10,13 @@ import { writeRun } from './run/write.js';
 import { NotAGitRepositoryError } from './scope/build.js';
 import { ToolError } from './scope/types.js';
 
-export interface CliIo {
-  stdout: (text: string) => void;
-  stderr: (text: string) => void;
-  cwd: string;
-}
-
-export const EXIT = { ok: 0, usage: 1, methodology: 2, noLogic: 3, tool: 4 } as const;
+export { EXIT, type CliIo } from './commands/common.js';
 
 const USAGE = `Usage: health scan <path> [--preview] [--as-of YYYY-MM-DD] [--out <file>] [--methodology <version>]
+       health report <run.json> [--out <file>]
+       health diff <before.json> <after.json> [--json]
+
+Exit codes: 0 ok, 1 usage or unreadable input, 2 methodology error, 3 no logic file, 4 tool error, 5 diff refused.
 `;
 
 function round1(value: number): string {
@@ -57,6 +58,8 @@ export function summarize(run: RunFile, methodology: Methodology): string {
 export type CliDeps = Pick<ScanOptions, 'execRunner' | 'imageDigest' | 'tools' | 'measurers'>;
 
 export async function run(argv: string[], io: CliIo, deps: CliDeps = {}): Promise<number> {
+  if (argv[0] === 'report') return runReport(argv.slice(1), io);
+  if (argv[0] === 'diff') return runDiff(argv.slice(1), io);
   let parsed;
   try {
     parsed = parseArgs({
