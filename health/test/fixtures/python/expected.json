@@ -1,0 +1,7 @@
+{
+  "note": "Hand counts. big.py is 128 four-line functions (512 lines), mid*.py are 125 four-line functions. util.py is 9 logic lines (docstrings and the comment are not counted; the multi-line string is code). tests/test_util.py is 3 lines and conftest.py is 1 line. setup.py is a config file and __init__.py defines nothing.",
+  "logicFiles": 5,
+  "logicLines": 2021,
+  "sourceLines": 2025,
+  "p42": { "numerator": 512, "denominator": 2021, "rawPercent": 25.3340, "score": 49.3319 }
+}

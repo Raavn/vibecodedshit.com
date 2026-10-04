@@ -1,0 +1,14 @@
+{
+  "note": "Hand counts. packages/web has one 520-line file, packages/lib has 3 lines, packages/api (Python, own pyproject.toml) has three 500-line files, and the root package has tools/helper.js with 2 lines.",
+  "logicFiles": 6,
+  "logicLines": 2025,
+  "sourceLines": 2025,
+  "packages": [".", "packages/api", "packages/lib", "packages/web"],
+  "p42": { "numerator": 520, "denominator": 2025, "rawPercent": 25.6790, "score": 48.6420 },
+  "units": [
+    { "package": ".", "group": "typescript_javascript", "numerator": 0, "denominator": 2 },
+    { "package": "packages/api", "group": "python", "numerator": 0, "denominator": 1500 },
+    { "package": "packages/lib", "group": "typescript_javascript", "numerator": 0, "denominator": 3 },
+    { "package": "packages/web", "group": "typescript_javascript", "numerator": 520, "denominator": 520 }
+  ]
+}

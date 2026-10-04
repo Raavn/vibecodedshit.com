@@ -1,0 +1,7 @@
+{
+  "note": "Hand counts. big.ts is 130 four-line functions, mid*.ts are 125 four-line functions (500 lines is not large). small.ts is 13 logic lines (the two template-literal text lines are code). test/small.test.ts is 4 source lines. barrel.ts, types.ts, types.d.ts, gen.ts, dist/out.js and vite.config.ts add no logic or source lines.",
+  "logicFiles": 5,
+  "logicLines": 2033,
+  "sourceLines": 2037,
+  "p42": { "numerator": 520, "denominator": 2033, "rawPercent": 25.5779, "score": 48.8442 }
+}
