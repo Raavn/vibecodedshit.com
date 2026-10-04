@@ -152,3 +152,14 @@ export function unitConfigs(repoPath: string, packageDir: string, logicFiles: st
   const covering = nested.filter((c) => !c.solution && covers(c, files));
   return { configs: covering.length > 0 ? covering : [top], read };
 }
+
+/** The nearest `tsconfig.json`, else `jsconfig.json`, from `dir` up to the repository root. Absolute path. */
+export function nearestTsConfig(repoPath: string, dir: string): string | undefined {
+  const root = path.resolve(repoPath);
+  for (let current = path.resolve(root, dir); current.length >= root.length; current = path.dirname(current)) {
+    const found = configIn(current);
+    if (found) return found;
+    if (current === root) break;
+  }
+  return undefined;
+}

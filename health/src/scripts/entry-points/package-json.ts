@@ -1,0 +1,18 @@
+import path from 'node:path';
+import { readPackageJson } from '../../manifest/package-json.js';
+import type { EntryPointKind } from '../types.js';
+
+/** `scripts` of the `package.json` in `dir`, else the nearest ancestor within the repository. */
+export const packageJsonEntryPoints: EntryPointKind = {
+  id: 'package-json',
+  lookup(repoPath, dir, name) {
+    for (let current = path.posix.normalize(dir === '' ? '.' : dir); ; current = path.posix.dirname(current)) {
+      const manifest = readPackageJson(repoPath, current);
+      if (manifest) {
+        const body = manifest.scripts[name];
+        return body === undefined ? undefined : { file: path.posix.join(current, 'package.json'), bodies: [body] };
+      }
+      if (current === '.' || current === '' || current.startsWith('..')) return undefined;
+    }
+  },
+};

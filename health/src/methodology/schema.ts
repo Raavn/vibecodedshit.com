@@ -27,11 +27,41 @@ export const parameterSchema = z.object({
   pooling: z.enum(['ratio', 'unit_weighted']),
   raw: z.object({ unit: z.string(), when_empty: z.number() }),
   scoring,
+  /** Prose per language or topic, for example the 3.5 forbidden-import lists. */
+  measure: z.record(z.string(), z.string()).optional(),
+  not_applicable_when: z.string().nullable().optional(),
 });
 
 export const dimensionFileSchema = z.object({
   dimension: z.object({ id: z.number(), key: z.string(), name: z.string() }),
   parameters: z.array(parameterSchema).min(1),
+  presets: z.object({ files: z.array(z.string()) }).optional(),
+});
+
+const stringList = z.array(z.string());
+const presetRule = z.object({
+  name: z.string(),
+  description: z.string(),
+  from: z.object({ in: stringList.optional(), not_in: stringList.optional() }),
+  to: z.object({ in: stringList.optional(), packages: stringList.optional() }),
+  severity: z.enum(['error', 'warn', 'info']),
+  type_only_imports: z.enum(['included', 'excluded']),
+});
+
+export const presetFileSchema = z.object({
+  preset: z.object({
+    key: z.enum(['nextjs', 'express', 'django', 'fastapi', 'generic']),
+    name: z.string(),
+    languages: stringList,
+  }),
+  conventions: z.string().optional(),
+  /** Glob lists, or prose for content layers (nextjs `server_only` and `client`). */
+  layers: z.record(z.string(), z.union([stringList, z.string()])),
+  modules: z.object({
+    roots: z.union([stringList, z.string()]),
+    public_entry: z.union([z.string(), stringList, z.record(z.string(), z.string())]),
+  }),
+  rules: z.array(presetRule),
 });
 
 export const methodologyFileSchema = z.object({
@@ -75,3 +105,15 @@ export type LevelEntry = z.infer<typeof levelEntry>;
 export type ComponentDef = z.infer<typeof component>;
 export type ScopeConfig = z.infer<typeof scopeFileSchema>;
 export type BandDef = z.infer<typeof methodologyFileSchema>['bands'][number];
+
+export type PresetRule = z.infer<typeof presetRule>;
+export type PresetKey = z.infer<typeof presetFileSchema>['preset']['key'];
+export interface Preset {
+  preset: PresetKey;
+  name: string;
+  conventions?: string;
+  languages: string[];
+  layers: Record<string, string[] | string>;
+  modules: z.infer<typeof presetFileSchema>['modules'];
+  rules: PresetRule[];
+}

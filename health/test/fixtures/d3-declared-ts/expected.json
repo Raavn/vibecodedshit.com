@@ -1,0 +1,27 @@
+{
+  "note": "Hand counts. The rules file has the 18.5.0 default template rules plus core-not-to-ui (forbidden, a direction rule) and an allowed list that uses dependencyTypes (skipped, with a warning). CI runs make check > npm run verify > npm run arch > depcruise: three bodies, enforced. engine>view breaks core-not-to-ui; engine<>view is a cycle.",
+  "3.1": {
+    ".": "enforced"
+  },
+  "3.2": {
+    ".": {
+      "numerator": 1,
+      "denominator": 2,
+      "violating": [
+        "src/core/engine.ts -> src/ui/view.ts (core-not-to-ui)"
+      ]
+    }
+  },
+  "3.3": {
+    ".": {
+      "numerator": 2,
+      "denominator": 2,
+      "files": [
+        "src/core/engine.ts",
+        "src/ui/view.ts"
+      ]
+    }
+  },
+  "3.4": "not_applicable",
+  "3.5": "not_applicable"
+}

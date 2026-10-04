@@ -1,0 +1,34 @@
+{
+  "note": "Hand counts. 7 domain files (the test file under domain/ is ignored). Impure: order (node:fs), pricing (react), files (fs/promises), repo (imports src/infra/db-client.ts), net (global fetch). Clean: local-fetch (declares its own fetch) and pure.",
+  "3.1": {
+    ".": "none"
+  },
+  "3.2": {
+    ".": {
+      "numerator": 0,
+      "denominator": 1,
+      "violating": []
+    }
+  },
+  "3.3": {
+    ".": {
+      "numerator": 0,
+      "denominator": 8,
+      "files": []
+    }
+  },
+  "3.4": "not_applicable",
+  "3.5": {
+    ".": {
+      "numerator": 5,
+      "denominator": 7,
+      "files": [
+        "src/domain/files.ts",
+        "src/domain/net.ts",
+        "src/domain/order.ts",
+        "src/domain/pricing.tsx",
+        "src/domain/repo.ts"
+      ]
+    }
+  }
+}

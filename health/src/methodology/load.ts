@@ -6,9 +6,12 @@ import type { z } from 'zod';
 import {
   dimensionFileSchema,
   methodologyFileSchema,
+  presetFileSchema,
   scopeFileSchema,
   type BandDef,
   type ParameterDef,
+  type Preset,
+  type PresetKey,
   type ScopeConfig,
 } from './schema.js';
 
@@ -26,8 +29,17 @@ export interface DimensionDef {
   parameters: ParameterDef[];
 }
 
+/** Lists the 3.5 YAML states in prose, parsed once here. */
+export interface D3Lists {
+  /** Package names, `node:` folded away. */
+  forbiddenImports: { typescript_javascript: string[]; python: string[] };
+  infrastructureDirectories: string[];
+}
+
 export interface Methodology {
   version: string;
+  presets: Partial<Record<PresetKey, Preset>>;
+  d3: D3Lists;
   dimensions: DimensionDef[];
   capMargin: number;
   bands: BandDef[];
@@ -53,6 +65,30 @@ function readYaml<T extends z.ZodType>(file: string, schema: T): z.infer<T> {
   return result.data;
 }
 
+function commaList(text: string): string[] {
+  return text
+    .split(',')
+    .map((entry) => entry.trim().replace(/^node:/, ''))
+    .filter((entry) => entry !== '');
+}
+
+export function parseD3Lists(def: ParameterDef | undefined, file = 'dimension 3'): D3Lists {
+  const lists: D3Lists = { forbiddenImports: { typescript_javascript: [], python: [] }, infrastructureDirectories: [] };
+  if (!def) return lists;
+  const measure = def.measure ?? {};
+  for (const group of ['typescript_javascript', 'python'] as const) {
+    const match = /Forbidden imports:\s*(.+?)\.(?:\s|$)/s.exec(measure[group] ?? '');
+    if (!match?.[1]) throw new MethodologyError(`${file}: parameter ${def.id} measure.${group} has no "Forbidden imports:" list`);
+    lists.forbiddenImports[group] = [...new Set(commaList(match[1]))];
+  }
+  const infra = (measure.infrastructure_directories ?? '').replace(/\.\s*$/, '');
+  lists.infrastructureDirectories = commaList(infra);
+  if (lists.infrastructureDirectories.length === 0) {
+    throw new MethodologyError(`${file}: parameter ${def.id} measure.infrastructure_directories is empty`);
+  }
+  return lists;
+}
+
 export function loadMethodology(version: string, rootDir: string = packageRoot): Methodology {
   if (!/^\d+\.\d+$/.test(version)) {
     throw new MethodologyError(`Unknown methodology version "${version}"`);
@@ -70,6 +106,7 @@ export function loadMethodology(version: string, rootDir: string = packageRoot):
   }
   const scope = readYaml(path.join(dir, 'scope.yaml'), scopeFileSchema);
 
+  const presets: Partial<Record<PresetKey, Preset>> = {};
   const dimensions: DimensionDef[] = main.dimensions.map((entry) => {
     const file = path.join(dir, entry.file);
     const parsed = readYaml(file, dimensionFileSchema);
@@ -80,6 +117,18 @@ export function loadMethodology(version: string, rootDir: string = packageRoot):
     if (Math.abs(total - 100) > 1e-9) {
       throw new MethodologyError(`${file}: parameter weights sum to ${total}, expected 100`);
     }
+    for (const presetFile of parsed.presets?.files ?? []) {
+      const loaded = readYaml(path.join(dir, presetFile), presetFileSchema);
+      presets[loaded.preset.key] = {
+        preset: loaded.preset.key,
+        name: loaded.preset.name,
+        ...(loaded.conventions === undefined ? {} : { conventions: loaded.conventions }),
+        languages: loaded.preset.languages,
+        layers: loaded.layers,
+        modules: loaded.modules,
+        rules: loaded.rules,
+      };
+    }
     return {
       id: parsed.dimension.id,
       key: parsed.dimension.key,
@@ -88,8 +137,11 @@ export function loadMethodology(version: string, rootDir: string = packageRoot):
     };
   });
 
+  const d3Def = dimensions.find((d) => d.id === 3)?.parameters.find((p) => p.id === '3.5');
   return {
     version,
+    presets,
+    d3: parseD3Lists(d3Def, path.join(dir, 'dimensions')),
     dimensions,
     capMargin: main.aggregation.dimension_to_health.cap_margin,
     bands: main.bands,
