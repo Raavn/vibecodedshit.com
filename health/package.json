@@ -1,0 +1,36 @@
+{
+  "name": "health",
+  "version": "0.1.0",
+  "description": "Codebase Health benchmark CLI",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "bin": {
+    "health": "dist/bin.js"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "verify": "npm run typecheck && npm run lint && npm run test",
+    "build": "tsc -p tsconfig.build.json",
+    "health": "tsx src/bin.ts"
+  },
+  "dependencies": {
+    "ignore": "^7.0.12",
+    "picomatch": "^4.0.7",
+    "typescript": "^5.9.3",
+    "yaml": "^2.9.1",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.4",
+    "@types/picomatch": "^4.0.3",
+    "eslint": "^9.39.5",
+    "tsx": "^4.23.15",
+    "typescript-eslint": "^8.71.0",
+    "vitest": "^4.1.11"
+  }
+}
