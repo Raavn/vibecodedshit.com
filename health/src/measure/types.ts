@@ -4,7 +4,7 @@ import type { Scope, Group } from '../scope/types.js';
 import type { ToolKit } from '../tools/kit.js';
 
 export type Raw =
-  | { kind: 'ratio'; numerator: number; denominator: number; scale: number }
+  | { kind: 'ratio'; numerator: number; denominator: number; scale: number; emptyScore?: number }
   | { kind: 'level'; level: string }
   | { kind: 'number'; value: number }
   | { kind: 'components'; components: Record<string, Raw> };

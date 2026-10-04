@@ -26,7 +26,27 @@ export interface DimensionDef {
   id: number;
   key: string;
   name: string;
+  scriptResolution?: string;
   parameters: ParameterDef[];
+}
+
+/** What dimension 6 states in prose (`script_resolution`, 6.5 component measures), parsed once here. */
+export interface D6Lists {
+  typecheckers: string[];
+  linters: string[];
+  /** Two-word entries (`node --test`, `python -m unittest`) are kept whole. */
+  testRunners: string[];
+  prefixes: string[];
+  /** Env var names excluded from 6.5. */
+  envExcludedNames: string[];
+  /** Env var name prefixes excluded from 6.5 (`NETLIFY` and `RENDER_` as written). */
+  envExcludedPrefixes: string[];
+  /** Example file names, in the order written. */
+  envExampleFiles: string[];
+  /** Runtime pin files named in the 6.5 `runtime_pinned` measure text. */
+  runtimePinFiles: string[];
+  /** Package manager words a documented command may start with (6.6 `measure`). */
+  docPackageManagers: string[];
 }
 
 /** Lists the 3.5 YAML states in prose, parsed once here. */
@@ -40,6 +60,7 @@ export interface Methodology {
   version: string;
   presets: Partial<Record<PresetKey, Preset>>;
   d3: D3Lists;
+  d6: D6Lists;
   dimensions: DimensionDef[];
   capMargin: number;
   bands: BandDef[];
@@ -89,6 +110,50 @@ export function parseD3Lists(def: ParameterDef | undefined, file = 'dimension 3'
   return lists;
 }
 
+function words(text: string): string[] {
+  return text
+    .replace(/\s+/g, ' ')
+    .replace(/,?\s+(?:and|or)\s+/g, ', ')
+    .split(/[,;]/)
+    .map((entry) => entry.trim())
+    .filter((entry) => entry !== '');
+}
+
+export function parseD6Lists(scriptResolution: string | undefined, defs: ParameterDef | undefined, defs6x: ParameterDef | undefined, file = 'dimension 6'): D6Lists {
+  const text = (scriptResolution ?? '').replace(/\s+/g, ' ');
+  const pick = (re: RegExp, what: string): string[] => {
+    const match = re.exec(text);
+    if (!match?.[1]) throw new MethodologyError(`${file}: script_resolution has no ${what} list`);
+    return words(match[1]);
+  };
+  const typecheckers = pick(/typecheckers (.+?);/, 'typecheckers');
+  const linters = pick(/linters (.+?);/, 'linters');
+  const testRunners = pick(/test runners (.+?)\. The prefixes/, 'test runners');
+  const prefixes = pick(/The prefixes (.+?) are removed/, 'prefixes');
+  const env = defs?.scoring.method === 'mean_of_components' ? defs.scoring.components.find((c) => c.key === 'env_documented') : undefined;
+  const runtime = defs?.scoring.method === 'mean_of_components' ? defs.scoring.components.find((c) => c.key === 'runtime_pinned') : undefined;
+  const envMeasure = (env?.measure ?? '').replace(/\s+/g, ' ');
+  const examples = /Example files: (.+?)\. Reads:/.exec(envMeasure)?.[1];
+  const excluded = /Excluded names: (.+?), and names starting with (.+?)\.?$/.exec(envMeasure);
+  if (!examples || !excluded?.[1] || !excluded[2]) throw new MethodologyError(`${file}: parameter 6.5 env_documented measure has no example files or excluded names`);
+  const pins = /^Any of (.+?)\.?$/.exec((runtime?.measure ?? '').replace(/\s+/g, ' '))?.[1];
+  if (!pins) throw new MethodologyError(`${file}: parameter 6.5 runtime_pinned measure has no file list`);
+  const docMeasure = (defs6x?.measure?.all_languages ?? '').replace(/\s+/g, ' ');
+  const managers = /starts with a package manager \((.+?)\)/.exec(docMeasure)?.[1];
+  if (!managers) throw new MethodologyError(`${file}: parameter 6.6 measure has no package manager list`);
+  return {
+    typecheckers,
+    linters,
+    testRunners,
+    prefixes,
+    envExcludedNames: words(excluded[1]),
+    envExcludedPrefixes: words(excluded[2]),
+    envExampleFiles: words(examples),
+    runtimePinFiles: words(pins),
+    docPackageManagers: words(managers),
+  };
+}
+
 export function loadMethodology(version: string, rootDir: string = packageRoot): Methodology {
   if (!/^\d+\.\d+$/.test(version)) {
     throw new MethodologyError(`Unknown methodology version "${version}"`);
@@ -133,15 +198,18 @@ export function loadMethodology(version: string, rootDir: string = packageRoot):
       id: parsed.dimension.id,
       key: parsed.dimension.key,
       name: parsed.dimension.name,
+      ...(parsed.script_resolution === undefined ? {} : { scriptResolution: parsed.script_resolution }),
       parameters: parsed.parameters,
     };
   });
 
   const d3Def = dimensions.find((d) => d.id === 3)?.parameters.find((p) => p.id === '3.5');
+  const d6Dim = dimensions.find((d) => d.id === 6);
   return {
     version,
     presets,
     d3: parseD3Lists(d3Def, path.join(dir, 'dimensions')),
+    d6: parseD6Lists(d6Dim?.scriptResolution, d6Dim?.parameters.find((p) => p.id === '6.5'), d6Dim?.parameters.find((p) => p.id === '6.6'), path.join(dir, 'dimensions')),
     dimensions,
     capMargin: main.aggregation.dimension_to_health.cap_margin,
     bands: main.bands,

@@ -60,10 +60,10 @@ describe.each(['typescript', 'python', 'monorepo'])('fixture %s', (name) => {
     expect(result.comparable).toBe(false);
   });
 
-  it('scores dimensions 2, 3 and 4 and leaves the other dimensions not measured', async () => {
+  it('scores dimensions 1, 2, 3, 4 and 6 and leaves dimension 5 not measured', async () => {
     const result = await runScan(scanOpts(materializeFixture(name)));
     const scored = result.dimensions.filter((d) => d.score !== null);
-    expect(scored.map((d) => d.id)).toEqual([2, 3, 4]);
+    expect(scored.map((d) => d.id)).toEqual([1, 2, 3, 4, 6]);
     if (name !== 'typescript') {
       // import-linter is not installed on the test host: 3.2 to 3.5 are not_measured, 3.1 needs no tool and still measures.
       expect(result.parameters.find((p) => p.id === '3.2')).toMatchObject({ status: 'not_measured', reason: expect.stringMatching(/import-linter not found/) });
@@ -157,7 +157,7 @@ describe('health scan CLI', () => {
     const code = await run(['scan', repo, '--preview', '--as-of', '2026-10-04'], cliIo);
     expect(code).toBe(0);
     const text = out.join('');
-    expect(text).toMatch(/^Health 69 Stable \(preview, not comparable\)$/m);
+    expect(text).toMatch(/^Health 42 Fragile \(preview, not comparable\)$/m);
     expect(text).toMatch(/^4\.2 Lines in large files: 25\.6% -> 49$/m);
     expect(text).toMatch(/^4\.1 Complex functions: 0\.0% -> 100$/m);
     const file = JSON.parse(readFileSync(path.join(cwd, 'run.json'), 'utf8')) as RunFile;

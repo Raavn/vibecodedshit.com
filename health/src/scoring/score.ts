@@ -66,7 +66,8 @@ export function scoreRaw(def: ParameterDef, raw: Raw, group?: Group): number {
           return levelScore(component.levels, part.level);
         }
         const value = rawValue(part);
-        return value === null ? def.raw.when_empty : clamp(value, 0, 100);
+        if (value === null) return part.kind === 'ratio' ? (part.emptyScore ?? def.raw.when_empty) : def.raw.when_empty;
+        return clamp(value, 0, 100);
       });
       return scores.reduce((sum, s) => sum + s, 0) / scores.length;
     }
