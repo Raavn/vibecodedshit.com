@@ -1,3 +1,4 @@
+import type { ExecutionResults } from '../exec/types.js';
 import type { Methodology } from '../methodology/load.js';
 import type { ParameterDef } from '../methodology/schema.js';
 import type { Scope, Group } from '../scope/types.js';
@@ -38,7 +39,8 @@ export interface MeasureContext {
   asOf: string;
   mode: 'preview' | 'full';
   tools: ToolKit;
-  exec?: unknown;
+  /** Results of the execution layer, set in full mode only. Execution measurers are pure functions of this. */
+  exec?: ExecutionResults;
 }
 
 export interface Measurer {

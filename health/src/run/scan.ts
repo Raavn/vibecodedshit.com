@@ -2,9 +2,12 @@ import { spawnSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import ts from 'typescript';
-import { measurers } from '../measure/registry.js';
+import { createDockerRunner, imageDigest } from '../exec/docker.js';
+import { runExecution } from '../exec/run.js';
+import type { ExecRunner, ExecutionResults } from '../exec/types.js';
+import { measurers as allMeasurers } from '../measure/registry.js';
+import type { Measurement, Measurer } from '../measure/types.js';
 import { computeHotspots, type FileComplexitySum } from '../report-only/hotspots.js';
-import type { Measurement } from '../measure/types.js';
 import { loadMethodology, packageRoot, type Methodology } from '../methodology/load.js';
 import { buildScope } from '../scope/build.js';
 import { poolParameter } from '../scoring/pool.js';
@@ -28,6 +31,12 @@ export interface ScanOptions {
   rootDir?: string;
   /** Tool kit for static tools. Defaults to the real one; tests pass fakes. */
   tools?: ToolKit;
+  /** Full mode: runs the execution steps. Defaults to Docker; tests pass a fake. */
+  execRunner?: ExecRunner;
+  /** Full mode: the image digest. Defaults to `docker image inspect`; tests pass a value. */
+  imageDigest?: string;
+  /** Parameters to measure. Defaults to the whole registry; tests narrow it. */
+  measurers?: Measurer[];
 }
 
 function git(repoPath: string, args: string[]): string | null {
@@ -83,6 +92,18 @@ export async function runScan(opts: ScanOptions, preloaded?: Methodology): Promi
   const scope = await buildScope(repoPath, methodology);
   if (scope.logicFiles === 0) throw new NoLogicFilesError();
 
+  let exec: ExecutionResults | undefined;
+  if (opts.mode === 'full') {
+    const tag = methodology.execution.runner.image;
+    exec = await runExecution({
+      repoPath,
+      methodology,
+      scope,
+      runner: opts.execRunner ?? createDockerRunner(methodology.execution.runner),
+      image: { tag, digest: opts.imageDigest ?? (await imageDigest(tag)) },
+    });
+  }
+
   const tools = opts.tools ?? createToolKit();
   const warnings = [...scope.warnings];
   const reportOnly: Record<string, unknown> = {};
@@ -98,7 +119,7 @@ export async function runScan(opts: ScanOptions, preloaded?: Methodology): Promi
         });
         continue;
       }
-      const measurer = measurers.find((m) => m.id === def.id);
+      const measurer = (opts.measurers ?? allMeasurers).find((m) => m.id === def.id);
       if (!measurer) {
         parameters.push({ id: def.id, status: 'not_measured', reason: 'not implemented yet', weight: def.weight });
         continue;
@@ -111,6 +132,7 @@ export async function runScan(opts: ScanOptions, preloaded?: Methodology): Promi
         asOf: opts.asOf,
         mode: opts.mode,
         tools,
+        ...(exec ? { exec } : {}),
       });
       if (measurement.status === 'measured') {
         Object.assign(reportOnly, measurement.reportOnly);
@@ -143,11 +165,20 @@ export async function runScan(opts: ScanOptions, preloaded?: Methodology): Promi
 
   const dimensions = dimensionScores(methodology, parameters);
   const base = baseRun(opts);
+  const unmeasured = parameters.filter((p) => p.status === 'not_measured').map((p) => p.id);
   return {
     ...base,
+    ...(opts.mode === 'full'
+      ? {
+          layers: ['static', 'execution'] as RunFile['layers'],
+          comparable: unmeasured.length === 0,
+          comparableReason: unmeasured.length === 0 ? 'all parameters measured' : `not comparable, not measured: ${unmeasured.join(', ')}`,
+        }
+      : {}),
     warnings,
     tools: {
       ...base.tools,
+      ...(exec ? { image: exec.image } : {}),
       ...(scope.pythonVersion === undefined ? {} : { python: scope.pythonVersion }),
       ...(Object.keys(tools.versions()).length === 0 ? {} : { static: tools.versions() }),
     },

@@ -10,9 +10,11 @@ Run commands from this directory (`npm --prefix health <cmd>` from the repositor
 - `npm run lint` runs `eslint .`
 - `npm run test` runs `vitest run`
 - `npm run test:tools` runs the real Python tools (`pipx install complexipy vulture deptry import-linter && brew install osv-scanner gitleaks` first). Not part of `verify`. `HEALTH_UPDATE_FIXTURES=1 npm run test:tools` rewrites the `helper-out.json` files of the D3 Python fixtures from the real helper.
+- `npm run test:docker` runs the Docker integration tests in `test/docker/` against the real image (`HEALTH_DOCKER=1`). Skipped otherwise, not part of `verify`. Build the image first with `npm run image:build`.
+- `npm run image:build` builds `health:1.0` from `docker/Dockerfile`.
 - `npm run verify` runs all three. Run it before every commit.
 - `npm run build` emits `dist/`
-- `npm run health -- scan <path> --preview` runs a preview scan and writes `./run.json`
+- `npm run health -- scan <path> --preview` runs a preview scan and writes `./run.json`. Without `--preview` it is a full run: the execution steps run in the `health:1.0` image (Docker needed).
 - `npm run health -- report <run.json> [--out <file>]` writes one self-contained HTML file (default `./health-report.html`, git-ignored) and prints its absolute path
 - `npm run health -- diff <before.json> <after.json> [--json]` compares two runs (after minus before); `--json` prints one object, schema in `src/diff/compare.ts`
 
@@ -27,16 +29,18 @@ Run commands from this directory (`npm --prefix health <cmd>` from the repositor
 - `src/scripts/`, `src/manifest/`, `src/scope/tracked.ts`: shared readers for CI files, entry points and tracked files. `scripts/entry-points/` has one kind per file (package.json, Makefile, justfile, tox, nox, pyproject tables); `expand.ts` follows calls up to 3 levels (3.1, 6.2, 6.4, 6.6); `checks.ts` turns a resolved command into typecheck, lint or test using the lists parsed from dimension 6 (`methodology.d6`); `triggers.ts` decides whether a CI job runs on pull requests or non-default pushes (6.4).
 - `src/measure/safety/` (1.4, 1.5): TS import facts, module resolution against tracked files only, barrel following, test-case and assertion counting, and the Python import resolution. `python/tests_helper.py` gives the Python facts.
 - `src/measure/ops/` (6.2, 6.5, 6.6): entry-point checks per directory, runtime pins, env reads (`python/env_helper.py` for Python), env example parsing, and the documented-command extraction and resolution. `python/nox_helper.py` reads `noxfile.py` sessions.
+- `src/exec/` (6.1, 2.1, 2.5): the execution layer. The host orchestrates and the static layer stays on the host; only install, build, typecheck and lint run in the image, one `docker run` each (`docker.ts`, via an injected `spawn`; tests pass `fakeRunner` from `test/helpers/exec.ts`). `plan.ts` picks install roots and typecheck units, `steps/<name>.ts` has one step per file, `run.ts` runs them on a temp copy of the tracked files and reads the reports into `ExecutionResults` (`ctx.exec`). `p6-1.ts`, `p2-1.ts` and `p2-5.ts` are pure functions of `ctx.exec` and never start Docker. `reports.ts` parses tsc, pyright, mypy, eslint and ruff output. A docker, image or exit 125-127 failure is a `ToolError` (invalid run); a timeout or a checker with no usable report is a repository failure (score 0).
+- `docker/`: `Dockerfile` for `health:1.0` (every tool pinned), `config/` with the methodology's pinned `eslint.config.mjs` and `ruff.toml` (baked into the image, a repository's own lint config is never used), `bin/` with the small wrappers the steps call (`health-capture`, `health-venv`, `health-tsc`).
 - `src/scoring/`: pure scoring, pooling and aggregation.
 - `src/run/`: `scan.ts` builds run.json, `recompute.ts` re-derives scores from stored raw values, `read.ts` reads and validates a run.json (zod) for `report` and `diff`.
 - `src/commands/`: `report.ts` and `diff.ts` (`scan` is still in `cli.ts`). `report` and `diff` read run.json only and never recompute: the report renders in `src/report/` (template literals, `escapeHtml` for every dynamic string, no script, no external request, no clock); the diff is `src/diff/` (`conditions.ts` the five refusal conditions, `compare.ts` deltas and the regression flag, `format.ts` human output).
 - `src/report-only/hotspots.ts`: churn (12 months, `git log`) times the per-file cognitive complexity 4.1 stores in `reportOnly.complexityByFile`. `scan.ts` stores the top 20 as `reportOnly.hotspots`; report-only values never enter scoring, `recompute` or the diff.
 
-Adding a parameter: add `src/measure/p<d>-<n>.ts` and a test beside it, add one import and one entry to `registry.ts`, extend a fixture's `expected.json`. Do not change scoring, pooling, aggregation or the run.json shape.
+Adding a parameter: add `src/measure/p<d>-<n>.ts` and a test beside it, add one import and one entry to `registry.ts`, extend a fixture's `expected.json`. Do not change scoring, pooling, aggregation or the run.json shape (full runs add `tools.image`, the image tag and digest).
 
 ## Fixtures
 
-`test/fixtures/<name>/` hold hand-counted repositories with `expected.json`. They are not git repositories; `test/helpers/fixture.ts` copies one to a temp directory and runs `git init` and `git add`. Fixtures are excluded from tsc, eslint and vitest on purpose.
+`test/fixtures/<name>/` hold hand-counted repositories with `expected.json`. They are not git repositories; `test/helpers/fixture.ts` copies one to a temp directory and runs `git init` and `git add`. Fixtures are excluded from tsc, eslint and vitest on purpose. The `exec-*` fixtures are tiny repositories for the execution layer: each has a planted install failure, build failure, type error or lint finding and an `expected.json` that both the fake-runner tests (`test/exec.test.ts`) and the Docker tests read.
 
 ## Exit codes
 

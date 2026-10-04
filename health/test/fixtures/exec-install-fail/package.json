@@ -1,0 +1,8 @@
+{
+  "name": "exec-install-fail",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "health-fixture-package-that-does-not-exist": "1.0.0"
+  }
+}

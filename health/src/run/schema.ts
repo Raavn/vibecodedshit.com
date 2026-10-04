@@ -45,6 +45,8 @@ export interface RunFile {
     typescript: string;
     git: string;
     python?: string;
+    /** Full runs: the execution image and its digest (`docker image inspect --format '{{.Id}}'`). */
+    image?: { tag: string; digest: string };
     /** Static tools that ran (name to version). */
     static?: Record<string, string>;
   };

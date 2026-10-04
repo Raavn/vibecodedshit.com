@@ -1,0 +1,7 @@
+# The methodology's 2.5 Python ruleset: F (Pyflakes), B (flake8-bugbear), E9 (syntax and IO errors).
+# Used with `ruff check --config`, so a repository's own ruff config is never read.
+target-version = "py312"
+line-length = 88
+
+[lint]
+select = ["F", "B", "E9"]
