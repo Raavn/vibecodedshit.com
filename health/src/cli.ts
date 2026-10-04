@@ -41,7 +41,13 @@ export function summarize(run: RunFile, methodology: Methodology): string {
     }
     if (param.status !== 'measured') continue;
     const raw = param.raw;
-    const shown = raw && raw.kind === 'ratio' ? `${round1((raw.numerator / raw.denominator) * raw.scale)}%` : 'n/a';
+    const levels = [...new Set((param.units ?? []).flatMap((u) => (u.raw.kind === 'level' ? [u.raw.level] : [])))];
+    const shown =
+      raw && raw.kind === 'ratio'
+        ? `${round1((raw.numerator / raw.denominator) * raw.scale)}%`
+        : levels.length > 0
+          ? levels.join(', ')
+          : 'n/a';
     lines.push(`${param.id} ${names.get(param.id) ?? ''}: ${shown} -> ${Math.floor((param.score ?? 0) + 0.5 + 1e-9)}`);
   }
   return `${lines.join('\n')}\n`;

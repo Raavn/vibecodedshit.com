@@ -1,0 +1,6 @@
+{
+  "extends": "./tsconfig.mid.json",
+  "compilerOptions": {
+    "strictNullChecks": false
+  }
+}

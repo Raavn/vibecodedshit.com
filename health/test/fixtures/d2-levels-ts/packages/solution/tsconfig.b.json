@@ -1,0 +1,9 @@
+{
+  "compilerOptions": {
+    "noImplicitAny": true,
+    "composite": true
+  },
+  "include": [
+    "src/b"
+  ]
+}

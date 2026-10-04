@@ -1,0 +1,7 @@
+{
+  "note": "Hand counts, typed/total slots. __init__.py 14/28 (annotated 3/3, untyped 0/3, defaults 2/5, __init__ 1/1, run 1/2, classmethod build 1/2, staticmethod helper 0/2, __call__ 2/2, __new__ 0/2, conditional 2/2, outer 2/2, overload implementation 0/2; _private, _hidden, _PrivateClass, nested and Inner are not public). listed.py 5/8 (__all__ decides: _listed 2/2, Exposed.m 1/2, extra 2/2, more 0/2; unlisted and Hidden are not public). _util.py, __main__.py and _internal/ are excluded modules.",
+  "api": {
+    "numerator": 19,
+    "denominator": 36
+  }
+}
