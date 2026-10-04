@@ -1,0 +1,23 @@
+{
+  "app": {
+    "emptied": [],
+    "edges": [
+      {
+        "from": "app/domain/pure.py",
+        "to": "app/domain/util.py",
+        "lines": [
+          1
+        ]
+      },
+      {
+        "from": "app/domain/uses_infra.py",
+        "to": "app/infra/client.py",
+        "lines": [
+          1
+        ]
+      }
+    ],
+    "violations": [],
+    "skipped": []
+  }
+}

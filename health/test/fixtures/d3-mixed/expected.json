@@ -1,0 +1,65 @@
+{
+  "note": "Hand counts. Root TypeScript unit (next, nextjs preset: 2 logic files, 1 edge, nothing to report) and the Python workspace package api (the d3-fastapi tree, fastapi preset). Pooling: 3.1 is unit-weighted (both none); 3.2 to 3.5 are sums of numerators over sums of denominators. 3.4 and 3.5 pool over the Python unit only: the TypeScript unit has one module and no domain files.",
+  "3.1": {
+    ".": "none",
+    "api": "none"
+  },
+  "3.2": {
+    ".": {
+      "numerator": 0,
+      "denominator": 1,
+      "violating": []
+    },
+    "api": {
+      "numerator": 5,
+      "denominator": 9,
+      "violating": [
+        "api/app/items/crud.py -> api/app/items/router.py (data-does-not-import-up,routers-are-leaves)",
+        "api/app/models/user.py -> api/app/services/user_service.py (data-does-not-import-up)",
+        "api/app/services/db.py -> api/app/services/user_service.py (data-does-not-import-up)",
+        "api/app/services/user_service.py -> api/app/api/routes/users.py (routers-are-leaves,services-do-not-import-http)",
+        "api/app/services/user_service.py -> fastapi (services-do-not-import-http)"
+      ]
+    }
+  },
+  "3.3": {
+    ".": {
+      "numerator": 0,
+      "denominator": 2,
+      "files": []
+    },
+    "api": {
+      "numerator": 3,
+      "denominator": 11,
+      "files": [
+        "api/app/api/routes/users.py",
+        "api/app/models/user.py",
+        "api/app/services/user_service.py"
+      ]
+    }
+  },
+  "3.4": {
+    "api": {
+      "numerator": 1,
+      "denominator": 3
+    }
+  },
+  "3.5": "not_applicable",
+  "pooled": {
+    "3.2": {
+      "numerator": 5,
+      "denominator": 10,
+      "scale": 1000
+    },
+    "3.3": {
+      "numerator": 3,
+      "denominator": 13,
+      "scale": 100
+    },
+    "3.4": {
+      "numerator": 1,
+      "denominator": 3,
+      "scale": 100
+    }
+  }
+}

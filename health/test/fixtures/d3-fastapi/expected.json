@@ -1,0 +1,37 @@
+{
+  "note": "Hand counts. FastAPI preset. Layers by innermost segment (services/db.py is data). Modules: app/users and app/items (router.py), app/features/billing and app/features/ledger. 11 logic files, 9 internal edges. 5 violating edges: user_service imports fastapi (packages alternative) and a router (two rules, one edge), db and models/user import services, items/crud imports a router (two rules). main.py importing a router is allowed. Cycle: routes/users <> user_service <> models/user. 3.4: users/router and ledger/entry reach into internals, ledger/entry also uses billing's __init__.py.",
+  "3.1": {
+    ".": "none"
+  },
+  "3.2": {
+    ".": {
+      "numerator": 5,
+      "denominator": 9,
+      "violating": [
+        "app/items/crud.py -> app/items/router.py (data-does-not-import-up,routers-are-leaves)",
+        "app/models/user.py -> app/services/user_service.py (data-does-not-import-up)",
+        "app/services/db.py -> app/services/user_service.py (data-does-not-import-up)",
+        "app/services/user_service.py -> app/api/routes/users.py (routers-are-leaves,services-do-not-import-http)",
+        "app/services/user_service.py -> fastapi (services-do-not-import-http)"
+      ]
+    }
+  },
+  "3.3": {
+    ".": {
+      "numerator": 3,
+      "denominator": 11,
+      "files": [
+        "app/api/routes/users.py",
+        "app/models/user.py",
+        "app/services/user_service.py"
+      ]
+    }
+  },
+  "3.4": {
+    ".": {
+      "numerator": 1,
+      "denominator": 3
+    }
+  },
+  "3.5": "not_applicable"
+}

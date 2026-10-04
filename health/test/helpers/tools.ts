@@ -1,3 +1,6 @@
+import { chmodSync, mkdtempSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
 import { createToolKit, type ResolvedTool, type ToolKit, type ToolName, type ToolResult } from '../../src/tools/kit.js';
 
 export type FakeTool = (args: string[], cwd: string) => ToolResult | Promise<ToolResult>;
@@ -5,6 +8,17 @@ export type FakeTool = (args: string[], cwd: string) => ToolResult | Promise<Too
 export interface FakeKit extends ToolKit {
   /** Every tool name `resolve` was asked for, in order. */
   resolved: ToolName[];
+}
+
+/** The interpreter named by the shebang of the fake `lint-imports` script: a run with this command goes to the fake. */
+export const FAKE_INTERPRETER = '/fake/health-python';
+
+function fakeLintImports(): string {
+  const dir = mkdtempSync(path.join(tmpdir(), 'health-fake-il-'));
+  const file = path.join(dir, 'lint-imports');
+  writeFileSync(file, `#!${FAKE_INTERPRETER}\n`);
+  chmodSync(file, 0o755);
+  return file;
 }
 
 export const ok = (stdout = '', exitCode = 0): ToolResult => ({ exitCode, stdout, stderr: '', timedOut: false });
@@ -28,12 +42,13 @@ export function fakeToolKit(
       if (fake) {
         const version = opts.versions?.[name] ?? '0.0.0-fake';
         real.recordVersion(name, version);
-        return { name, command: `fake:${name}`, prefixArgs: [], version } satisfies ResolvedTool;
+        const command = name === 'import-linter' ? fakeLintImports() : `fake:${name}`;
+        return { name, command, prefixArgs: [], version } satisfies ResolvedTool;
       }
       return name === 'jscpd' || name === 'knip' ? real.resolve(name) : undefined;
     },
     async run(tool, args, runOpts) {
-      if (tool.command.startsWith('fake:')) {
+      if (tool.command.startsWith('fake:') || tool.command === FAKE_INTERPRETER) {
         const fake = fakes[tool.name];
         if (!fake) throw new Error(`no fake for ${tool.name}`);
         return fake(args, runOpts.cwd);

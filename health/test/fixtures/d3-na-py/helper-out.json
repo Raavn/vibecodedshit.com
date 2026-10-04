@@ -1,0 +1,16 @@
+{
+  "solo": {
+    "emptied": [],
+    "edges": [
+      {
+        "from": "solo/a.py",
+        "to": "solo/b.py",
+        "lines": [
+          1
+        ]
+      }
+    ],
+    "violations": [],
+    "skipped": []
+  }
+}

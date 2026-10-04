@@ -56,7 +56,9 @@ describe('loadMethodology', () => {
       'next', 'react', 'react-dom', 'express', '@prisma/client', 'drizzle-orm', 'pg', 'mysql2', 'mongoose', 'redis', 'ioredis', 'axios',
       'node-fetch', 'fs', 'http', 'https',
     ]);
-    expect(m.d3.forbiddenImports.python).toContain('sqlalchemy');
+    expect(m.d3.forbiddenImports.python).toEqual([
+      'django', 'fastapi', 'flask', 'starlette', 'sqlalchemy', 'requests', 'httpx', 'aiohttp', 'boto3', 'psycopg', 'psycopg2', 'redis', 'pymongo',
+    ]);
     expect(m.d3.forbiddenImports.python).not.toContain('A call to the builtin open also counts');
     expect(m.d3.infrastructureDirectories).toEqual(['infrastructure', 'infra', 'db', 'adapters']);
   });

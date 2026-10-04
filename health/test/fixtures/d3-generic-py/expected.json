@@ -1,0 +1,29 @@
+{
+  "note": "Hand counts. Generic preset, package app (globs match with the app/ prefix). 5 logic files (shared/test_clock.py is a test), 3 internal edges. shared/fmt.py imports features: 1 violation. Modules app/features/cart and app/features/orders: orders/order.py reaches into cart/cart.py, orders/report.py uses cart's __init__.py.",
+  "3.1": {
+    ".": "none"
+  },
+  "3.2": {
+    ".": {
+      "numerator": 1,
+      "denominator": 3,
+      "violating": [
+        "app/shared/fmt.py -> app/features/cart/cart.py (shared-does-not-import-features)"
+      ]
+    }
+  },
+  "3.3": {
+    ".": {
+      "numerator": 0,
+      "denominator": 5,
+      "files": []
+    }
+  },
+  "3.4": {
+    ".": {
+      "numerator": 1,
+      "denominator": 2
+    }
+  },
+  "3.5": "not_applicable"
+}

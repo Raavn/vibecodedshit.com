@@ -1,0 +1,31 @@
+{
+  "note": "Hand counts. .importlinter declares layers (ui over core), forbidden (core must not import requests), a forbidden contract naming a module that does not exist (skipped with a warning) and a custom contract type (ignored). CI runs make check > uv run lint-imports: enforced. core/engine.py breaks both live contracts (ui/view.py and the external requests); engine<>view is a cycle. The generic preset has no module in this layout and there is no domain directory.",
+  "3.1": {
+    ".": "enforced"
+  },
+  "3.2": {
+    ".": {
+      "numerator": 2,
+      "denominator": 2,
+      "violating": [
+        "core/engine.py -> requests (No requests in core)",
+        "core/engine.py -> ui/view.py (Layers)"
+      ]
+    }
+  },
+  "3.3": {
+    ".": {
+      "numerator": 2,
+      "denominator": 2,
+      "files": [
+        "core/engine.py",
+        "ui/view.py"
+      ]
+    }
+  },
+  "3.4": "not_applicable",
+  "3.5": "not_applicable",
+  "warnings": [
+    ".: import-linter contract Ghost skipped (ValueError: Module 'nowhere' does not exist.)"
+  ]
+}
