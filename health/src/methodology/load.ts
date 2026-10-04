@@ -9,6 +9,7 @@ import {
   presetFileSchema,
   scopeFileSchema,
   type BandDef,
+  type ExecutionConfig,
   type ParameterDef,
   type Preset,
   type PresetKey,
@@ -65,6 +66,8 @@ export interface Methodology {
   capMargin: number;
   bands: BandDef[];
   scope: ScopeConfig;
+  /** Runner image, resources and per-step timeouts from methodology.yaml. */
+  execution: ExecutionConfig;
 }
 
 /** Package root: the directory holding `methodology/`, both from `src/` and from `dist/`. */
@@ -214,5 +217,6 @@ export function loadMethodology(version: string, rootDir: string = packageRoot):
     capMargin: main.aggregation.dimension_to_health.cap_margin,
     bands: main.bands,
     scope,
+    execution: main.execution,
   };
 }

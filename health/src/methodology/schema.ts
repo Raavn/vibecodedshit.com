@@ -77,6 +77,16 @@ export const methodologyFileSchema = z.object({
   bands: z
     .array(z.object({ key: z.string(), name: z.string(), min: z.number(), max: z.number() }))
     .min(1),
+  execution: z.object({
+    runner: z.object({ image: z.string(), cpus: z.number(), memory_gb: z.number() }),
+    timeouts_seconds: z.object({
+      install: z.number(),
+      build: z.number(),
+      typecheck: z.number(),
+      lint: z.number(),
+      tests: z.number(),
+    }),
+  }),
 });
 
 const globList = z.array(z.string());
@@ -108,6 +118,7 @@ export type ScoringDef = ParameterDef['scoring'];
 export type LevelEntry = z.infer<typeof levelEntry>;
 export type ComponentDef = z.infer<typeof component>;
 export type ScopeConfig = z.infer<typeof scopeFileSchema>;
+export type ExecutionConfig = z.infer<typeof methodologyFileSchema>['execution'];
 export type BandDef = z.infer<typeof methodologyFileSchema>['bands'][number];
 
 export type PresetRule = z.infer<typeof presetRule>;

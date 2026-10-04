@@ -194,13 +194,6 @@ describe('health scan CLI', () => {
     expect(existsSync(path.join(cwd, 'run.json'))).toBe(false);
   });
 
-  it('exits 1 without --preview', async () => {
-    const cwd = mkdtempSync(path.join(tmpdir(), 'health-cwd-'));
-    const { err, io: cliIo } = io(cwd);
-    expect(await run(['scan', materializeFixture('python')], cliIo)).toBe(1);
-    expect(err.join('')).toMatch(/health:1\.0/);
-  });
-
   it('exits 1 for a bad --as-of or an unknown command', async () => {
     const cwd = mkdtempSync(path.join(tmpdir(), 'health-cwd-'));
     const { io: cliIo } = io(cwd);

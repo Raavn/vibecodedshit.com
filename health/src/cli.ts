@@ -26,7 +26,7 @@ export function summarize(run: RunFile, methodology: Methodology): string {
   const lines: string[] = [];
   if (run.health) {
     const band = methodology.bands.find((b) => b.key === run.health?.band);
-    lines.push(`Health ${run.health.displayed} ${band?.name ?? run.health.band} (preview, not comparable)`);
+    lines.push(`Health ${run.health.displayed} ${band?.name ?? run.health.band} (${run.mode === 'preview' ? 'preview, ' : ''}${run.comparable ? 'comparable' : 'not comparable'})`);
   }
   for (const dimension of run.dimensions) {
     if (dimension.score === null) continue;
@@ -53,7 +53,10 @@ export function summarize(run: RunFile, methodology: Methodology): string {
   return `${lines.join('\n')}\n`;
 }
 
-export async function run(argv: string[], io: CliIo): Promise<number> {
+/** Test seams: the execution runner, image digest, static tool kit and parameters a scan uses. */
+export type CliDeps = Pick<ScanOptions, 'execRunner' | 'imageDigest' | 'tools' | 'measurers'>;
+
+export async function run(argv: string[], io: CliIo, deps: CliDeps = {}): Promise<number> {
   let parsed;
   try {
     parsed = parseArgs({
@@ -76,11 +79,6 @@ export async function run(argv: string[], io: CliIo): Promise<number> {
     io.stderr(USAGE);
     return EXIT.usage;
   }
-  if (!parsed.values.preview) {
-    io.stderr('Full runs need the health:1.0 image, which is not available yet. Use --preview.\n');
-    return EXIT.usage;
-  }
-
   const asOf = parsed.values['as-of'] ?? new Date().toISOString().slice(0, 10);
   if (!/^\d{4}-\d{2}-\d{2}$/.test(asOf) || Number.isNaN(Date.parse(asOf))) {
     io.stderr(`--as-of must be a date like 2026-10-04, got "${asOf}"\n`);
@@ -90,8 +88,9 @@ export async function run(argv: string[], io: CliIo): Promise<number> {
   const opts: ScanOptions = {
     repoPath: path.resolve(io.cwd, target),
     methodologyVersion: parsed.values.methodology ?? '1.0',
-    mode: 'preview',
+    mode: parsed.values.preview ? 'preview' : 'full',
     asOf,
+    ...deps,
   };
   const outFile = path.resolve(io.cwd, parsed.values.out ?? 'run.json');
 

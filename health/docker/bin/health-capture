@@ -1,0 +1,5 @@
+#!/bin/sh
+# health-capture <file> <command...>: run the command with stdout in <file>, keep its exit code.
+out="$1"
+shift
+exec "$@" > "$out"

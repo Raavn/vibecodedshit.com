@@ -1,0 +1,10 @@
+#!/bin/sh
+# health-tsc <tsc args...>: the repository's installed tsc (nearest node_modules/.bin/tsc), else the image's.
+d="$PWD"
+while [ "$d" != "/" ]; do
+  if [ -x "$d/node_modules/.bin/tsc" ]; then
+    exec "$d/node_modules/.bin/tsc" "$@"
+  fi
+  d=$(dirname "$d")
+done
+exec tsc "$@"

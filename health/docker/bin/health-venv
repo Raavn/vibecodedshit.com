@@ -1,0 +1,11 @@
+#!/bin/sh
+# health-venv <command...>: run the command with the nearest .venv (current directory or above) activated.
+d="$PWD"
+while [ "$d" != "/" ]; do
+  if [ -f "$d/.venv/bin/activate" ]; then
+    . "$d/.venv/bin/activate"
+    break
+  fi
+  d=$(dirname "$d")
+done
+exec "$@"
