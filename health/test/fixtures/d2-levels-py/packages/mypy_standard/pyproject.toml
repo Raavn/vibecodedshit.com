@@ -1,0 +1,7 @@
+[project]
+name = "x"
+version = "0.1.0"
+
+[tool.mypy]
+disallow_untyped_defs = true
+check_untyped_defs = true

@@ -1,0 +1,19 @@
+{
+  "note": "Hand counts. TS (knip): exported symbols: index.ts 2 (entry, alsoEntry; exports of the main entry count as used), mod.ts 4 (used, tested, unusedFn, UnusedType; tested is used by a test file), dead.ts 2 (unused file) = 8; unused = unusedFn, UnusedType, d1, d2 = 4. Python: symbols: core.py 7 (register, used_fn, unused_fn, UnusedClass, unused_method, decorated_fn, exported_fn), dead_module.py 2, __main__.py 1, app.py 1, cli.py 1 = 12. cli.py is a [project.scripts] target and __main__ an entry module, so only dead_module is an unused module. Canned vulture hits kept: unused_fn, UnusedClass, unused_method; dropped: decorated_fn (decorated), exported_fn (in __all__ of a distributed package). Unused = 3 + 2 (dead_module) = 5.",
+  "p44": {
+    "web": {
+      "numerator": 4,
+      "denominator": 8
+    },
+    "api": {
+      "numerator": 5,
+      "denominator": 12
+    },
+    "pooled": {
+      "numerator": 9,
+      "denominator": 20
+    },
+    "rawPercent": 45,
+    "score": 0
+  }
+}

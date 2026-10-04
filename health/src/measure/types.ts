@@ -1,6 +1,7 @@
 import type { Methodology } from '../methodology/load.js';
 import type { ParameterDef } from '../methodology/schema.js';
 import type { Scope, Group } from '../scope/types.js';
+import type { ToolKit } from '../tools/kit.js';
 
 export type Raw =
   | { kind: 'ratio'; numerator: number; denominator: number; scale: number }
@@ -17,7 +18,15 @@ export interface UnitRaw {
 }
 
 export type Measurement =
-  | { status: 'measured'; units: UnitRaw[] }
+  | {
+      status: 'measured';
+      units: UnitRaw[];
+      /** Copied into run.json top-level `reportOnly`, one key per entry. Never scored. */
+      reportOnly?: Record<string, unknown>;
+      /** Appended to run.json `warnings`. */
+      warnings?: string[];
+    }
+  | { status: 'not_measured'; reason: string }
   | { status: 'not_applicable'; reason: string }
   | { status: 'failed'; reason: string };
 
@@ -28,6 +37,7 @@ export interface MeasureContext {
   repoPath: string;
   asOf: string;
   mode: 'preview' | 'full';
+  tools: ToolKit;
   exec?: unknown;
 }
 

@@ -7,6 +7,7 @@ import type { Measurement } from '../measure/types.js';
 import { loadMethodology, packageRoot, type Methodology } from '../methodology/load.js';
 import { buildScope } from '../scope/build.js';
 import { poolParameter } from '../scoring/pool.js';
+import { createToolKit, type ToolKit } from '../tools/kit.js';
 import type { RunFile, RunParameter } from './schema.js';
 import { breakdownFor, dimensionScores, healthFrom } from './score-run.js';
 
@@ -24,6 +25,8 @@ export interface ScanOptions {
   asOf: string;
   /** Package root holding `methodology/`. Defaults to this package. */
   rootDir?: string;
+  /** Tool kit for static tools. Defaults to the real one; tests pass fakes. */
+  tools?: ToolKit;
 }
 
 function git(repoPath: string, args: string[]): string | null {
@@ -79,6 +82,9 @@ export async function runScan(opts: ScanOptions, preloaded?: Methodology): Promi
   const scope = await buildScope(repoPath, methodology);
   if (scope.logicFiles === 0) throw new NoLogicFilesError();
 
+  const tools = opts.tools ?? createToolKit();
+  const warnings = [...scope.warnings];
+  const reportOnly: Record<string, unknown> = {};
   const parameters: RunParameter[] = [];
   for (const dimension of methodology.dimensions) {
     for (const def of dimension.parameters) {
@@ -103,8 +109,11 @@ export async function runScan(opts: ScanOptions, preloaded?: Methodology): Promi
         repoPath,
         asOf: opts.asOf,
         mode: opts.mode,
+        tools,
       });
       if (measurement.status === 'measured') {
+        Object.assign(reportOnly, measurement.reportOnly);
+        warnings.push(...(measurement.warnings ?? []));
         const pooled = poolParameter(def, measurement.units);
         parameters.push({
           id: def.id,
@@ -114,6 +123,8 @@ export async function runScan(opts: ScanOptions, preloaded?: Methodology): Promi
           score: pooled.score,
           units: pooled.units,
         });
+      } else if (measurement.status === 'not_measured') {
+        parameters.push({ id: def.id, status: 'not_measured', reason: measurement.reason, weight: def.weight });
       } else if (measurement.status === 'failed') {
         parameters.push({ id: def.id, status: 'failed', reason: measurement.reason, weight: def.weight, score: 0 });
       } else {
@@ -126,8 +137,13 @@ export async function runScan(opts: ScanOptions, preloaded?: Methodology): Promi
   const base = baseRun(opts);
   return {
     ...base,
-    warnings: scope.warnings,
-    tools: { ...base.tools, ...(scope.pythonVersion === undefined ? {} : { python: scope.pythonVersion }) },
+    warnings,
+    tools: {
+      ...base.tools,
+      ...(scope.pythonVersion === undefined ? {} : { python: scope.pythonVersion }),
+      ...(Object.keys(tools.versions()).length === 0 ? {} : { static: tools.versions() }),
+    },
+    ...(Object.keys(reportOnly).length === 0 ? {} : { reportOnly }),
     ignoreSet: {
       healthignoreSha256: scope.healthignoreSha256,
       gitleaksignoreSha256: scope.gitleaksignoreSha256,

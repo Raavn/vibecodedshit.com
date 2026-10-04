@@ -9,9 +9,11 @@ import type { RunFile } from '../src/run/schema.js';
 import { runScan } from '../src/run/scan.js';
 import { buildScope } from '../src/scope/build.js';
 import { fixturesDir, materializeFixture } from './helpers/fixture.js';
+import { fakeToolKit } from './helpers/tools.js';
 
 const methodology = loadMethodology('1.0');
-const scanOpts = (repoPath: string) => ({ repoPath, methodologyVersion: '1.0', mode: 'preview' as const, asOf: '2026-10-04' });
+// A fresh kit per scan (the kit memoizes). No Python tool is installed in these tests, so they do not depend on the host.
+const scanOpts = (repoPath: string) => ({ repoPath, methodologyVersion: '1.0', mode: 'preview' as const, asOf: '2026-10-04', tools: fakeToolKit() });
 
 interface Expected {
   logicFiles: number;
@@ -58,15 +60,21 @@ describe.each(['typescript', 'python', 'monorepo'])('fixture %s', (name) => {
     expect(result.comparable).toBe(false);
   });
 
-  it('scores only dimension 4, from 4.2, and leaves the rest not measured', async () => {
+  it('scores dimensions 2 and 4 and leaves the other dimensions not measured', async () => {
     const result = await runScan(scanOpts(materializeFixture(name)));
     const scored = result.dimensions.filter((d) => d.score !== null);
-    expect(scored.map((d) => d.id)).toEqual([4]);
-    expect(scored[0]?.score).toBeCloseTo(want.p42.score, 2);
-    expect(result.health?.score).toBeCloseTo(want.p42.score, 2);
-    expect(result.parameters.filter((p) => p.status === 'measured').map((p) => p.id)).toEqual(['4.2']);
+    expect(scored.map((d) => d.id)).toEqual([2, 4]);
+    // D4 is the weight-redistributed mean of the parameters that were measured.
+    const weights = new Map(methodology.dimensions.flatMap((d) => d.parameters).map((def) => [def.id, def.weight]));
+    const measured = result.parameters.filter((p) => p.status === 'measured' && p.id.startsWith('4.'));
+    const total = measured.reduce((sum, p) => sum + (weights.get(p.id) ?? 0), 0);
+    const mean = measured.reduce((sum, p) => sum + (p.score ?? 0) * (weights.get(p.id) ?? 0), 0) / total;
+    expect(scored.find((d) => d.id === 4)?.score).toBeCloseTo(mean, 6);
+    // 2.1 and 2.5 are execution layer, so D2 is the mean of 2.2, 2.3 and 2.4.
+    expect(result.parameters.filter((p) => p.status === 'measured' && p.id.startsWith('2.')).map((p) => p.id)).toEqual(['2.2', '2.3', '2.4']);
+    expect(measured.map((p) => p.id)).toContain('4.2');
     expect(result.parameters.every((p) => p.status === 'measured' || p.status === 'not_measured')).toBe(true);
-    // 1.1-1.3 and 2.1 are execution layer, so they are not measured in preview.
+    // 1.1-1.3, 2.1 and 2.5 are execution layer, so they are not measured in preview.
     expect(result.parameters.find((p) => p.id === '1.2')?.reason).toMatch(/execution/);
   });
 
@@ -92,11 +100,10 @@ describe('monorepo breakdown', () => {
         denominator: u.raw.kind === 'ratio' ? u.raw.denominator : -1,
       })),
     ).toEqual(want.units);
-    expect(result.breakdown.byPackage['packages/web']?.['4']).toBe(0);
-    expect(result.breakdown.byPackage['packages/api']?.['4']).toBe(100);
+    expect(Object.keys(result.breakdown.byPackage).sort()).toEqual(['.', 'packages/api', 'packages/lib', 'packages/web']);
     expect(Object.keys(result.breakdown.byGroup).sort()).toEqual(['python', 'typescript_javascript']);
-    expect(result.breakdown.byGroup['python']?.['4']).toBe(100);
-    expect(result.breakdown.byGroup['typescript_javascript']?.['4']).toBe(0);
+    // packages/web has one 520-line file, so 4.2 is 100% there and the package scores below packages/lib.
+    expect(result.breakdown.byPackage['packages/web']?.['4']).toBeLessThan(result.breakdown.byPackage['packages/lib']?.['4'] ?? 0);
   });
 });
 
@@ -145,8 +152,9 @@ describe('health scan CLI', () => {
     const code = await run(['scan', repo, '--preview', '--as-of', '2026-10-04'], cliIo);
     expect(code).toBe(0);
     const text = out.join('');
-    expect(text).toMatch(/^Health 49 Fragile \(preview, not comparable\)$/m);
+    expect(text).toMatch(/^Health 64 Stable \(preview, not comparable\)$/m);
     expect(text).toMatch(/^4\.2 Lines in large files: 25\.6% -> 49$/m);
+    expect(text).toMatch(/^4\.1 Complex functions: 0\.0% -> 100$/m);
     const file = JSON.parse(readFileSync(path.join(cwd, 'run.json'), 'utf8')) as RunFile;
     expect(file.mode).toBe('preview');
     expect(file.comparable).toBe(false);

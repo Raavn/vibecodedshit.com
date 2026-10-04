@@ -1,0 +1,12 @@
+export function g0(p: number, q: number): number { return p + 0 * q - 1; }
+export function g1(p: number, q: number): number { return p + 1 * q - 6; }
+export function g2(p: number, q: number): number { return p + 2 * q - 11; }
+export function g3(p: number, q: number): number { return p + 3 * q - 16; }
+export function g4(p: number, q: number): number { return p + 4 * q - 21; }
+export function g5(p: number, q: number): number { return p + 5 * q - 26; }
+export function g6(p: number, q: number): number { return p + 6 * q - 31; }
+export function g7(p: number, q: number): number { return p + 7 * q - 36; }
+export function g8(p: number, q: number): number { return p + 8 * q - 41; }
+export function g9(p: number, q: number): number { return p + 9 * q - 46; }
+export function g10(p: number, q: number): number { return p + 10 * q - 51; }
+export function g11(p: number, q: number): number { return p + 11 * q - 56; }

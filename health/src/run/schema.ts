@@ -39,7 +39,17 @@ export interface RunFile {
   asOf: string;
   layers: ('static' | 'execution')[];
   repo: { path: string; headCommit: string | null; treeHash: string | null };
-  tools: { health: string; node: string; typescript: string; git: string; python?: string };
+  tools: {
+    health: string;
+    node: string;
+    typescript: string;
+    git: string;
+    python?: string;
+    /** Static tools that ran (name to version). */
+    static?: Record<string, string>;
+  };
+  /** Report-only values, never scored and ignored by recompute. */
+  reportOnly?: Record<string, unknown>;
   ignoreSet: {
     healthignoreSha256: string | null;
     gitleaksignoreSha256: string | null;
