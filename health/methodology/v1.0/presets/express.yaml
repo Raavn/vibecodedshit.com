@@ -1,0 +1,47 @@
+preset:
+  key: express
+  name: Express
+  languages: [typescript, javascript]
+  detect: The package declares express as a dependency and not next.
+
+conventions: >-
+  Globs are relative to the package root and match with or without a src/
+  prefix. When a file matches several layer globs, the innermost matching
+  directory decides its layer.
+
+layers:
+  http: ["routes/**", "controllers/**", "middleware/**", "middlewares/**"]
+  services: ["services/**"]
+  data: ["models/**", "repositories/**", "db/**", "dal/**"]
+  shared: ["utils/**", "lib/**", "helpers/**"]
+
+modules:
+  roots: ["features/*", "modules/*", "packages/*"]
+  public_entry: "index.{ts,js,mts,mjs,cjs}"
+
+rules:
+  - name: services-do-not-import-http
+    description: Services do not depend on the HTTP layer or on express.
+    from: { in: [services] }
+    to:
+      in: [http]
+      packages: [express]
+    severity: error
+    type_only_imports: included
+  - name: data-does-not-import-up
+    description: The data layer does not depend on services, the HTTP layer or express.
+    from: { in: [data] }
+    to:
+      in: [services, http]
+      packages: [express]
+    severity: error
+    type_only_imports: included
+  - name: shared-does-not-import-up
+    description: Shared helpers do not depend on the HTTP layer or services.
+    from: { in: [shared] }
+    to: { in: [http, services] }
+    severity: error
+    type_only_imports: included
+
+sources:
+  - "Cockburn, A. Hexagonal Architecture (Ports and Adapters), 2005. https://alistair.cockburn.us/hexagonal-architecture/"

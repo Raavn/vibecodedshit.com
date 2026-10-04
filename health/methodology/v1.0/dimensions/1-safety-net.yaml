@@ -1,0 +1,233 @@
+dimension:
+  id: 1
+  key: safety_net
+  name: Safety net
+  question: Will a change break something without anyone noticing?
+  agent_relevance: >-
+    An agent cannot remember how the system is supposed to behave. The test
+    suite is the only record of that behaviour it can check its change
+    against.
+
+parameters:
+  - id: "1.1"
+    key: suite_pass_rate
+    name: Suite pass rate
+    layer: execution
+    weight: 20
+    requires: [install, test_run]
+    pooling: ratio
+    raw:
+      unit: percent
+      definition: >-
+        passed / (passed + failed + errored) test cases. Skipped and
+        expected-failure tests are excluded from both numerator and
+        denominator. A test file that fails to load or collect counts as one
+        failed test case.
+      when_empty: 0
+    scoring:
+      method: piecewise_linear
+      anchors:
+        - raw: 80
+          score: 0
+          descriptor: The suite is red. Nobody can use it to check a change.
+        - raw: 95
+          score: 50
+          descriptor: Mostly green, with known failures people have learned to ignore.
+        - raw: 100
+          score: 100
+          descriptor: Green. A new failure means the change broke something.
+    measure:
+      typescript_javascript: >-
+        vitest, jest, mocha or node:test, detected from package.json
+        dependencies and the test script. Run once with a JSON reporter.
+        Playwright and Cypress suites are not run.
+      python: >-
+        pytest (also runs unittest suites), with
+        --continue-on-collection-errors and a JSON or JUnit report.
+    not_applicable_when: null
+    rationale: >-
+      A suite with known failures stops working as a check: a new failure
+      looks the same as the old ones. The curve is steep on purpose. 95% of a
+      200-test suite is 10 failing tests, which is already enough for people
+      to stop reading the output.
+    sources: []
+
+  - id: "1.2"
+    key: line_coverage
+    name: Line coverage
+    layer: execution
+    weight: 25
+    requires: [install, test_run]
+    pooling: ratio
+    raw:
+      unit: percent
+      definition: >-
+        Covered lines / coverable lines across all logic files, including
+        logic files no test loads. A file no test loads counts as 0%
+        covered.
+      when_empty: 0
+    scoring:
+      method: piecewise_linear
+      anchors:
+        - raw: 10
+          score: 0
+          descriptor: No safety net.
+        - raw: 40
+          score: 50
+          descriptor: Happy paths only.
+        - raw: 60
+          score: 75
+          descriptor: Acceptable.
+        - raw: 80
+          score: 100
+          descriptor: Well covered. No extra credit above this.
+    measure:
+      typescript_javascript: >-
+        v8 or istanbul coverage with the json-summary reporter (vitest
+        coverage.all, jest collectCoverageFrom over logic files, c8 for mocha
+        and node:test). Repository coverage thresholds are disabled so they
+        cannot fail the run.
+      python: >-
+        coverage.py through pytest-cov, with --cov set to every first-party
+        package so files no test imports are included.
+    not_applicable_when: null
+    rationale: >-
+      Coverage shows which code no test executes. It does not show that the
+      executed code is checked, which is why 1.5 exists. The 60% anchor
+      matches Google's "acceptable" level. The 100 anchor is 80%, which is
+      the coverage SonarQube's default quality gate requires on new code and
+      sits between Google's "commendable" (75%) and "exemplary" (90%).
+      Above 80% the methodology gives no extra credit, because the remaining
+      code is often glue that costs more to test than it returns.
+    sources:
+      - "Arguelles, Ivanković, Bender. Code Coverage Best Practices. Google Testing Blog, 2020. https://testing.googleblog.com/2020/08/code-coverage-best-practices.html"
+      - "SonarQube default quality gate (Sonar way): coverage on new code at least 80%."
+
+  - id: "1.3"
+    key: branch_coverage
+    name: Branch coverage
+    layer: execution
+    weight: 15
+    requires: [install, test_run]
+    pooling: ratio
+    raw:
+      unit: percent
+      definition: Covered branches / total branches across all logic files, including files no test loads.
+      when_empty: 0
+    scoring:
+      method: piecewise_linear
+      anchors:
+        - raw: 5
+          score: 0
+          descriptor: Only one path through each decision is ever run.
+        - raw: 30
+          score: 50
+          descriptor: Error and edge paths are mostly untested.
+        - raw: 50
+          score: 75
+          descriptor: Main error paths are tested.
+        - raw: 70
+          score: 100
+          descriptor: Most decisions are tested both ways.
+    measure:
+      typescript_javascript: Same coverage run as 1.2; branch totals from json-summary.
+      python: Same run as 1.2 with --cov-branch.
+    not_applicable_when: null
+    rationale: >-
+      Tests written quickly cover the happy path. Line coverage can be high
+      while every error branch is untested. Branch coverage shows that gap.
+      Branch percentages are lower than line percentages on the same code,
+      so the anchors sit about 10 points lower than 1.2's.
+    sources: []
+
+  - id: "1.4"
+    key: modules_with_tests
+    name: Modules with tests
+    layer: static
+    weight: 25
+    requires: []
+    pooling: ratio
+    raw:
+      unit: percent
+      definition: >-
+        Logic files directly imported by at least one test file / all logic
+        files. Imports are followed through barrel files and Python
+        __init__.py re-exports to the file that defines the imported name.
+        Transitive imports do not count.
+      when_empty: 0
+    scoring:
+      method: piecewise_linear
+      anchors:
+        - raw: 10
+          score: 0
+          descriptor: Almost nothing has a test.
+        - raw: 40
+          score: 50
+          descriptor: Some modules have tests; most do not.
+        - raw: 70
+          score: 75
+          descriptor: Most modules have a test.
+        - raw: 90
+          score: 100
+          descriptor: Nearly every module has a test.
+    measure:
+      typescript_javascript: >-
+        AST import graph from test files (static imports, require and dynamic
+        import with a literal path).
+      python: AST import graph from test files (import and from-import statements).
+    not_applicable_when: null
+    rationale: >-
+      This is the static counterpart to coverage. It still works when the
+      suite does not run, so a repository with tests that are broken gets
+      partial credit, and "make the existing tests run" shows up as a gain
+      in 1.1 to 1.3. Only direct imports count; otherwise one test that
+      imports the app entry point would mark every file as tested.
+    sources: []
+
+  - id: "1.5"
+    key: asserting_tests
+    name: Tests that assert something
+    layer: static
+    weight: 15
+    requires: []
+    pooling: ratio
+    raw:
+      unit: percent
+      definition: >-
+        Test cases containing at least one assertion / all test cases. An
+        assertion inside a helper function defined in the same file and
+        called by the test counts (one level deep).
+      when_empty: 0
+    scoring:
+      method: piecewise_linear
+      anchors:
+        - raw: 50
+          score: 0
+          descriptor: Many tests run code without checking anything.
+        - raw: 80
+          score: 50
+          descriptor: A noticeable share of tests check nothing.
+        - raw: 95
+          score: 75
+          descriptor: A few tests check nothing.
+        - raw: 100
+          score: 100
+          descriptor: Every test checks something.
+    measure:
+      typescript_javascript: >-
+        Test case: a call to it, test or their .each/.only/.concurrent
+        variants. Assertion: expect(...), assert(...), assert.*,
+        expectTypeOf(...), t.assert* / t.is / t.deepEqual (node:test and
+        ava contexts).
+      python: >-
+        Test case: a test_* function in a test module, or a test_* method of
+        a unittest.TestCase subclass. Assertion: an assert statement,
+        self.assert*, pytest.raises, pytest.warns, or a mock method call
+        starting with assert_.
+    not_applicable_when: null
+    rationale: >-
+      A test without an assertion raises coverage and checks nothing. This is
+      the cheapest way to game 1.2 and 1.3, and it is common in generated
+      tests. The anchors are strict because writing a test without an
+      assertion is almost never intentional.
+    sources: []

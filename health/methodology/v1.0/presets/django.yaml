@@ -1,0 +1,43 @@
+preset:
+  key: django
+  name: Django
+  languages: [python]
+  detect: The project declares django as a dependency.
+
+conventions: >-
+  Layers are matched by module name inside each Django app, either as a
+  module (views.py) or a package (views/__init__.py and its submodules).
+
+modules:
+  roots: Django apps (directories that contain apps.py).
+  public_entry: [__init__.py, models, services, selectors]
+
+layers:
+  models: [models]
+  http: [views, urls, forms, serializers, admin]
+  views: [views]
+  urls: [urls]
+  services: [services, selectors]
+
+rules:
+  - name: models-do-not-import-http
+    description: Models do not depend on views, urls, forms, serializers or admin.
+    from: { in: [models] }
+    to: { in: [http] }
+    severity: error
+    type_only_imports: included
+  - name: services-do-not-import-views
+    description: Services and selectors do not depend on views or urls.
+    from: { in: [services] }
+    to: { in: [views, urls] }
+    severity: error
+    type_only_imports: included
+  - name: only-urls-import-views
+    description: Views are imported only by urls modules.
+    from: { not_in: [urls] }
+    to: { in: [views] }
+    severity: error
+    type_only_imports: included
+
+sources:
+  - "HackSoft Django Styleguide. https://github.com/HackSoftware/Django-Styleguide"

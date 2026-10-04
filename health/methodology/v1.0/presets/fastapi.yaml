@@ -1,0 +1,52 @@
+preset:
+  key: fastapi
+  name: FastAPI
+  languages: [python]
+  detect: The project declares fastapi as a dependency and not django.
+
+conventions: >-
+  Layers are matched by module or package name anywhere under a first-party
+  package. When a module matches several layers, the innermost match
+  decides its layer.
+
+modules:
+  roots: >-
+    Subpackages that contain router.py, and the direct subpackages of any
+    features or modules package.
+  public_entry: [__init__.py]
+
+layers:
+  http: [routers, router, routes, api, endpoints]
+  services: [services, service]
+  data: [models, repositories, repository, db, crud]
+  schemas: [schemas, schema]
+  app_entry: [main, app]
+
+rules:
+  - name: services-do-not-import-http
+    description: Services do not depend on routers, fastapi or starlette.
+    from: { in: [services] }
+    to:
+      in: [http]
+      packages: [fastapi, starlette]
+    severity: error
+    type_only_imports: included
+  - name: data-does-not-import-up
+    description: >-
+      The data layer does not depend on the HTTP layer, services or fastapi.
+      Importing schemas is allowed.
+    from: { in: [data] }
+    to:
+      in: [http, services]
+      packages: [fastapi, starlette]
+    severity: error
+    type_only_imports: included
+  - name: routers-are-leaves
+    description: Only main.py and app.py import routers.
+    from: { not_in: [http, app_entry] }
+    to: { in: [http] }
+    severity: error
+    type_only_imports: included
+
+sources:
+  - "FastAPI: Bigger Applications - Multiple Files. https://fastapi.tiangolo.com/tutorial/bigger-applications/"

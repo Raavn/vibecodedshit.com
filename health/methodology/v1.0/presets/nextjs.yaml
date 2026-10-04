@@ -1,0 +1,50 @@
+preset:
+  key: nextjs
+  name: Next.js
+  languages: [typescript, javascript]
+  detect: The package declares next as a dependency.
+
+conventions: >-
+  Globs are relative to the package root and match with or without a src/
+  prefix. When a file matches several layer globs, the innermost matching
+  directory decides its layer.
+
+layers:
+  routes: ["app/**", "pages/**"]
+  components: ["components/**"]
+  lib: ["lib/**", "utils/**"]
+  server_only: >-
+    Files that import the server-only package, files whose name contains
+    .server., and files under server/**.
+  client: Files whose first statement is the "use client" directive.
+
+modules:
+  roots: ["features/*", "modules/*", "packages/*"]
+  public_entry: "index.{ts,tsx,js,jsx,mts,mjs}"
+
+rules:
+  - name: routes-are-leaves
+    description: Nothing outside the route directories imports from them.
+    from: { not_in: [routes] }
+    to: { in: [routes] }
+    severity: error
+    type_only_imports: included
+  - name: lib-does-not-import-ui
+    description: Shared code does not depend on components or routes.
+    from: { in: [lib] }
+    to: { in: [components, routes] }
+    severity: error
+    type_only_imports: included
+  - name: client-does-not-import-server
+    description: >-
+      A client component does not directly import a server-only file or a
+      database package.
+    from: { in: [client] }
+    to:
+      in: [server_only]
+      packages: ["@prisma/client", drizzle-orm, pg, mysql2, mongoose, redis, ioredis, server-only]
+    severity: error
+    type_only_imports: excluded
+
+sources:
+  - "Next.js: Server and Client Components, keeping server-only code out of the client environment. https://nextjs.org/docs/app/getting-started/server-and-client-components"

@@ -1,0 +1,288 @@
+dimension:
+  id: 2
+  key: type_static_rigor
+  name: Type & static rigor
+  question: Does the code tell you what it expects before you run it?
+  agent_relevance: >-
+    Type errors and lint findings are the fastest feedback an agent gets. A
+    strict typechecker catches a wrong change in seconds, before any test
+    runs, and the types document what each function accepts and returns.
+
+parameters:
+  - id: "2.1"
+    key: typecheck_errors
+    name: Typecheck errors
+    layer: execution
+    weight: 25
+    requires: [install, typecheck_run]
+    pooling: ratio
+    raw:
+      unit: errors per 1,000 source lines
+      definition: >-
+        Typechecker errors located in in-scope files (logic and test), divided
+        by source lines / 1,000. Errors in excluded files and in dependencies
+        are ignored. Warnings are ignored.
+      when_empty: 100
+    scoring:
+      method: piecewise_linear
+      anchors:
+        - raw: 0
+          score: 100
+          descriptor: Clean. A new error means the change introduced it.
+        - raw: 1
+          score: 75
+          descriptor: A few known errors.
+        - raw: 5
+          score: 50
+          descriptor: Errors are routine and people work around them.
+        - raw: 20
+          score: 0
+          descriptor: The typechecker is ignored.
+    measure:
+      typescript_javascript: >-
+        tsc --noEmit with the repository's tsconfig.json (each tsconfig that
+        a workspace package declares). JavaScript-only repositories without a
+        tsconfig or jsconfig are checked with a default config: allowJs,
+        checkJs, strict false.
+      python: >-
+        pyright with the repository's configuration (pyrightconfig.json or
+        [tool.pyright]). If only mypy is configured, mypy with its
+        configuration. If both are configured, pyright. If neither,
+        pyright in basic mode.
+    not_applicable_when: null
+    rationale: >-
+      The repository's own config is used so the count reflects what its
+      developers see. A config error, or a checker that cannot start, is a
+      repository failure and scores 0. Untyped code is checked with a
+      default config on purpose, so "add types" is visible as a score change.
+    sources:
+      - "TypeScript: Type checking JavaScript files (checkJs). https://www.typescriptlang.org/docs/handbook/type-checking-javascript-files.html"
+      - "Pyright configuration: typeCheckingMode. https://microsoft.github.io/pyright/#/configuration"
+
+  - id: "2.2"
+    key: declared_strictness
+    name: Declared strictness
+    layer: static
+    weight: 20
+    requires: []
+    pooling: unit_weighted
+    raw:
+      unit: level
+      definition: >-
+        The strictness the repository's typechecker configuration declares,
+        read from the config files without running anything.
+      when_empty: 0
+    scoring:
+      method: levels
+      levels:
+        typescript_javascript:
+          - level: none
+            score: 0
+            descriptor: >-
+              No strict-family flag is enabled, or JavaScript without
+              checkJs.
+          - level: partial
+            score: 40
+            descriptor: >-
+              Some strict-family flags are enabled, or strict is true with
+              one or more strict-family flags turned back off.
+          - level: strict
+            score: 75
+            descriptor: strict is true and no strict-family flag is turned off.
+          - level: strict_plus
+            score: 100
+            descriptor: strict plus noUncheckedIndexedAccess.
+        python:
+          - level: none
+            score: 0
+            descriptor: No pyright or mypy configuration.
+          - level: basic
+            score: 40
+            descriptor: pyright typeCheckingMode basic, or mypy with default settings.
+          - level: standard
+            score: 75
+            descriptor: >-
+              pyright typeCheckingMode standard (pyright's default when a
+              config exists), or mypy with disallow_untyped_defs and
+              check_untyped_defs.
+          - level: strict
+            score: 100
+            descriptor: pyright typeCheckingMode strict, or mypy strict = true.
+    measure:
+      typescript_javascript: >-
+        tsconfig.json with extends resolved. Strict-family flags: noImplicitAny,
+        strictNullChecks, strictFunctionTypes, strictBindCallApply,
+        strictPropertyInitialization, noImplicitThis, useUnknownInCatchVariables,
+        alwaysStrict.
+      python: >-
+        pyrightconfig.json, [tool.pyright] or [tool.basedpyright] in
+        pyproject.toml; mypy.ini, .mypy.ini, setup.cfg [mypy] or [tool.mypy]
+        in pyproject.toml. When both are configured, pyright's level is used.
+    not_applicable_when: null
+    rationale: >-
+      2.1 counts errors under whatever config the repository chose. Without
+      2.2, turning strictness off would raise the score. Strict null checks
+      catch access to null and undefined values, a common runtime error in
+      both languages. noUncheckedIndexedAccess
+      makes array and record lookups return possibly undefined values, which
+      is where strict TypeScript still lets runtime errors through.
+    sources:
+      - "TypeScript TSConfig reference: strict. https://www.typescriptlang.org/tsconfig#strict"
+      - "TypeScript TSConfig reference: noUncheckedIndexedAccess. https://www.typescriptlang.org/tsconfig#noUncheckedIndexedAccess"
+      - "Pyright configuration: typeCheckingMode. https://microsoft.github.io/pyright/#/configuration"
+      - "mypy command line: --strict. https://mypy.readthedocs.io/en/stable/command_line.html"
+
+  - id: "2.3"
+    key: escape_hatches
+    name: Escape hatches
+    layer: static
+    weight: 20
+    requires: []
+    pooling: ratio
+    raw:
+      unit: escape hatches per 1,000 logic lines
+      definition: >-
+        Points where code opts out of the typechecker, counted in logic
+        files, divided by logic lines / 1,000. A file-level opt-out counts
+        as 10.
+      when_empty: 100
+    scoring:
+      method: piecewise_linear
+      anchors:
+        - raw: 0
+          score: 100
+          descriptor: The types are trusted everywhere.
+        - raw: 2
+          score: 75
+          descriptor: A few documented exceptions.
+        - raw: 5
+          score: 50
+          descriptor: Casts are a common way to make errors go away.
+        - raw: 15
+          score: 0
+          descriptor: The types say little about what the code does.
+    measure:
+      typescript_javascript: >-
+        Each counts 1: an explicit any type; an as assertion (as const is
+        excluded; each as in "as unknown as T" counts separately); an
+        angle-bracket assertion <T>x; a non-null assertion x!; a definite
+        assignment assertion x!: T; @ts-ignore; @ts-expect-error. Counts 10:
+        @ts-nocheck.
+      python: >-
+        Each counts 1: Any in an annotation; typing.cast(...); # type: ignore
+        on a line; # pyright: ignore on a line. Counts 10: # type: ignore
+        before the first statement of a module; # mypy: ignore-errors.
+    not_applicable_when: null
+    rationale: >-
+      Each escape hatch is a place where the typechecker cannot help the next
+      person. A change that breaks a contract passes the typechecker silently
+      at that point. The typescript-eslint no-unsafe-* rules are not used in
+      2.5, so the same problem is not counted twice.
+    sources: []
+
+  - id: "2.4"
+    key: typed_public_surface
+    name: Typed public surface
+    layer: static
+    weight: 15
+    requires: []
+    pooling: ratio
+    raw:
+      unit: percent
+      definition: >-
+        Typed slots / all slots on the public surface of logic files. In
+        TypeScript and JavaScript a slot is a parameter. In Python a slot is
+        a parameter or a return type.
+      when_empty: 100
+    scoring:
+      method: piecewise_linear
+      anchors:
+        - raw: 20
+          score: 0
+          descriptor: The public surface is untyped.
+        - raw: 50
+          score: 50
+          descriptor: Half of what callers use is typed.
+        - raw: 80
+          score: 75
+          descriptor: Most of what callers use is typed.
+        - raw: 100
+          score: 100
+          descriptor: Every public function says what it accepts.
+    measure:
+      typescript_javascript: >-
+        Public surface: exported functions, exported arrow functions and
+        function expressions, default exports, and public methods of
+        exported classes. A parameter is typed if it has a type annotation,
+        a default value, a contextual type (for example a callback passed to
+        a typed function), or a JSDoc @param type in a file checked with
+        checkJs.
+      python: >-
+        Public surface: module-level functions and classes whose names do not
+        start with _, and their methods whose names do not start with _
+        (dunder methods are included). If __all__ is defined, it decides
+        what is public. Modules whose names start with _ are excluded. self
+        and cls are not slots. __init__ needs no return annotation.
+    not_applicable_when: null
+    rationale: >-
+      The public surface is what the next person calls without reading the
+      body. In TypeScript, inferred return types are reliable, so only
+      parameters are counted. In Python, an unannotated return is Any, so
+      both are counted. Untyped JavaScript and untyped Python score low on
+      purpose.
+    sources:
+      - "PEP 484: Type Hints. https://peps.python.org/pep-0484/"
+
+  - id: "2.5"
+    key: baseline_lint
+    name: Baseline lint findings
+    layer: execution
+    weight: 20
+    requires: [install, lint_run]
+    pooling: ratio
+    raw:
+      unit: findings per 1,000 source lines
+      definition: >-
+        Findings from the methodology's pinned correctness ruleset in
+        in-scope files (logic and test), divided by source lines / 1,000.
+        The repository's own lint config is not used. A file that cannot be
+        parsed counts as one finding.
+      when_empty: 100
+    scoring:
+      method: piecewise_linear
+      anchors:
+        - raw: 0
+          score: 100
+          descriptor: No known bug patterns.
+        - raw: 2
+          score: 75
+          descriptor: A few.
+        - raw: 5
+          score: 50
+          descriptor: Bug patterns are common.
+        - raw: 20
+          score: 0
+          descriptor: The code has never been linted for correctness.
+    measure:
+      typescript_javascript: >-
+        ESLint with the pinned ruleset. Core rules: no-unreachable,
+        no-dupe-keys, no-self-compare, no-unsafe-finally, no-fallthrough,
+        no-cond-assign, use-isnan, valid-typeof, no-unsafe-optional-chaining,
+        no-dupe-else-if, no-duplicate-case, no-self-assign, getter-return,
+        no-async-promise-executor, no-constant-binary-expression,
+        no-unused-vars (or @typescript-eslint/no-unused-vars on TypeScript
+        files). Type-aware rules on TypeScript files only:
+        @typescript-eslint/no-floating-promises, no-misused-promises,
+        await-thenable. react-hooks/rules-of-hooks when react is a
+        dependency.
+      python: ruff with the rule sets F (Pyflakes), B (flake8-bugbear) and E9 (syntax and IO errors).
+    not_applicable_when: null
+    rationale: >-
+      Each rule in the set catches a real bug pattern, such as an
+      unawaited promise or an unreachable branch. Style rules are excluded,
+      so formatting choices do not affect the score. The ruleset is pinned
+      so every repository is judged by the same rules, and so turning rules
+      off in the repository's own config does not raise the score.
+    sources:
+      - "typescript-eslint rules. https://typescript-eslint.io/rules/"
+      - "Ruff rules. https://docs.astral.sh/ruff/rules/"

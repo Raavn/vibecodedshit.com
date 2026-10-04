@@ -1,0 +1,279 @@
+dimension:
+  id: 6
+  key: operability_feedback_loop
+  name: Operability & feedback loop
+  question: Can someone new set it up, check a change and know they are done?
+  agent_relevance: >-
+    An agent needs a command that tells it whether its change is correct,
+    and it needs to find that command without asking. A slow or missing
+    check means the agent stops early or guesses.
+
+script_resolution: >-
+  Parameters 6.2, 6.4 and 6.6 follow package.json scripts, Makefile targets,
+  justfile recipes, tox and nox sessions, and pyproject.toml script tables up
+  to 3 levels deep. Recognised tools: typecheckers tsc, vue-tsc, pyright,
+  basedpyright, mypy; linters eslint, biome, oxlint, ruff, flake8, pylint;
+  test runners vitest, jest, mocha, node --test, pytest, python -m unittest,
+  tox, nox. The prefixes npx, bunx, pnpm exec, yarn, uv run, poetry run,
+  pdm run and python -m are removed before a command is matched.
+
+parameters:
+  - id: "6.1"
+    key: install_and_build
+    name: Clean install and build
+    layer: execution
+    weight: 25
+    requires: []
+    pooling: unit_weighted
+    raw:
+      unit: level
+      definition: >-
+        Result of a clean install from the lockfile, followed by the build
+        step, in the pinned runner.
+      when_empty: 0
+    scoring:
+      method: levels
+      levels:
+        - level: install_fails
+          score: 0
+          descriptor: The project does not install from a clean checkout.
+        - level: build_fails
+          score: 40
+          descriptor: It installs, but the build fails.
+        - level: works
+          score: 100
+          descriptor: >-
+            It installs and builds from a clean checkout. A project with no
+            build step scores 100 when the install succeeds.
+    measure:
+      typescript_javascript: >-
+        Install: npm ci, pnpm install --frozen-lockfile, yarn install
+        --immutable or bun install --frozen-lockfile, chosen by lockfile;
+        npm install when there is no lockfile. Build: the build script in
+        package.json, when one exists.
+      python: >-
+        Install: uv sync --frozen, poetry install --sync, pdm sync, pipenv
+        sync, or pip install -r on the requirements files, chosen by
+        lockfile; pip install . when there is only a pyproject.toml. Build:
+        python manage.py check for Django projects; otherwise importing
+        each first-party top-level package.
+    not_applicable_when: null
+    rationale: >-
+      Everything in the execution layer depends on this step. A project that
+      does not install from a clean checkout depends on someone's machine.
+    sources: []
+
+  - id: "6.2"
+    key: one_command_verify
+    name: One-command verify
+    layer: static
+    weight: 15
+    requires: []
+    pooling: unit_weighted
+    raw:
+      unit: count of checks (0-3)
+      definition: >-
+        The largest number of the three checks (typecheck, lint, tests) that
+        a single entry point runs: one package.json script, Makefile target,
+        justfile recipe, tox or nox session, or pyproject script.
+      when_empty: 0
+    scoring:
+      method: levels
+      levels:
+        - level: "0"
+          score: 0
+          descriptor: No single command runs any check.
+        - level: "1"
+          score: 33
+          descriptor: One command runs one check.
+        - level: "2"
+          score: 66
+          descriptor: One command runs two checks.
+        - level: "3"
+          score: 100
+          descriptor: One command runs typecheck, lint and tests.
+    measure:
+      all_languages: Static resolution of entry points as described in script_resolution.
+    not_applicable_when: null
+    rationale: >-
+      "Run this and it tells you if you are done" is the most useful fact
+      an agent can learn about a repository. Without it, the agent has to
+      find and run each check separately, and often skips one.
+    sources: []
+
+  - id: "6.3"
+    key: feedback_loop_time
+    name: Feedback loop time
+    layer: execution
+    weight: 10
+    requires: [install, typecheck_run, lint_run, test_run]
+    pooling: unit_weighted
+    raw:
+      unit: seconds
+      definition: >-
+        Summed wall-clock time of the methodology's own typecheck (2.1),
+        lint (2.5) and test (1.1) runs on the pinned runner.
+      when_empty: 0
+    scoring:
+      method: piecewise_linear
+      anchors:
+        - raw: 60
+          score: 100
+          descriptor: A full check takes about a minute.
+        - raw: 180
+          score: 75
+          descriptor: A full check takes a few minutes.
+        - raw: 600
+          score: 50
+          descriptor: The ten-minute build.
+        - raw: 1200
+          score: 0
+          descriptor: Nobody runs the full check locally.
+    measure:
+      all_languages: Wall-clock time recorded by the orchestrator for the three steps.
+    not_applicable_when: null
+    rationale: >-
+      A slow check gets run less often, by people and by agents. This is
+      the only parameter whose raw value varies between identical runs, so
+      its weight is low and the runner hardware is fixed.
+    sources:
+      - "Beck, K. Extreme Programming Explained, 2nd ed. Addison-Wesley, 2004 (Ten-Minute Build)."
+      - "Fowler, M. Continuous Integration. https://martinfowler.com/articles/continuousIntegration.html"
+
+  - id: "6.4"
+    key: ci_runs_checks
+    name: CI runs the checks on pull requests
+    layer: static
+    weight: 20
+    requires: []
+    pooling: unit_weighted
+    raw:
+      unit: count of checks (0-3)
+      definition: >-
+        How many of the three checks (typecheck, lint, tests) CI runs on
+        pull requests or on every push. Checks may be spread across jobs
+        and workflows.
+      when_empty: 0
+    scoring:
+      method: levels
+      levels:
+        - level: "0"
+          score: 0
+          descriptor: CI runs no checks, or there is no CI.
+        - level: "1"
+          score: 33
+          descriptor: CI runs one check.
+        - level: "2"
+          score: 66
+          descriptor: CI runs two checks.
+        - level: "3"
+          score: 100
+          descriptor: CI runs typecheck, lint and tests on every pull request.
+    measure:
+      all_languages: >-
+        CI files as listed in 3.1. A workflow counts if it is triggered on
+        pull_request, pull_request_target, merge_request events, or on push
+        without a branch filter that limits it to the default branch.
+        Commands are resolved as described in script_resolution.
+    not_applicable_when: null
+    rationale: >-
+      Local checks are optional; CI checks are not. CI is what keeps the
+      score from dropping after the audit ends.
+    sources:
+      - "Fowler, M. Continuous Integration. https://martinfowler.com/articles/continuousIntegration.html"
+
+  - id: "6.5"
+    key: reproducible_environment
+    name: Reproducible environment
+    layer: static
+    weight: 15
+    requires: []
+    pooling: unit_weighted
+    raw:
+      unit: score
+      definition: Mean of two components.
+      when_empty: 0
+    scoring:
+      method: mean_of_components
+      components:
+        - key: runtime_pinned
+          name: Runtime version pinned
+          method: levels
+          levels:
+            - level: "no"
+              score: 0
+            - level: "yes"
+              score: 100
+          measure: >-
+            Any of .nvmrc, .node-version, .tool-versions, mise.toml,
+            engines.node in package.json, volta in package.json,
+            .python-version, requires-python in pyproject.toml, or
+            runtime.txt.
+        - key: env_documented
+          name: Environment variables documented
+          method: ratio
+          definition: >-
+            Variable names read in logic files that appear in an env example
+            file / all variable names read in logic files, times 100. No
+            variables read scores 100.
+          measure: >-
+            Example files: .env.example, .env.sample, .env.template,
+            .env.dist, example.env. Reads: process.env.X, process.env["X"],
+            destructuring from process.env, import.meta.env.X,
+            os.environ["X"], os.environ.get("X"), os.getenv("X"). Excluded
+            names: NODE_ENV, CI, HOME, PATH, PWD, TZ, NEXT_RUNTIME, and
+            names starting with VERCEL_, NETLIFY, RENDER_, RAILWAY_ or
+            GITHUB_.
+    measure:
+      all_languages: Static reads of the files and patterns listed in the components.
+    not_applicable_when: null
+    rationale: >-
+      A missing environment variable is a common reason a fresh checkout
+      does not start, and an agent cannot guess the names. Config read from the
+      environment, with the names documented, is the Twelve-Factor approach.
+    sources:
+      - "The Twelve-Factor App, III. Config. https://12factor.net/config"
+
+  - id: "6.6"
+    key: agent_instructions
+    name: Commands documented for agents
+    layer: static
+    weight: 15
+    requires: []
+    pooling: unit_weighted
+    raw:
+      unit: level
+      definition: >-
+        Whether the repository documents how to install, run and check it,
+        and whether the documented commands exist.
+      when_empty: 0
+    scoring:
+      method: levels
+      levels:
+        - level: none
+          score: 0
+          descriptor: No documented commands.
+        - level: readme
+          score: 50
+          descriptor: >-
+            README documents commands, or an agent instructions file exists
+            but at least one command in it does not resolve.
+        - level: agent_file
+          score: 100
+          descriptor: >-
+            AGENTS.md or CLAUDE.md at the repository root documents
+            commands, and every command in it resolves.
+    measure:
+      all_languages: >-
+        A command is an inline code span or a line in a fenced code block
+        that starts with a package manager (npm, pnpm, yarn, bun, npx, uv,
+        poetry, pdm, pip, pipenv, python, make, just) or a recognised tool.
+        It resolves when the script, target, recipe, session or tool it names
+        exists in the repository or in its declared dependencies.
+    not_applicable_when: null
+    rationale: >-
+      An agent reads AGENTS.md or CLAUDE.md before anything else. Commands
+      in that file that do not exist send it down the wrong path, which is
+      worse than no file, so they drop the level to README.
+    sources:
+      - "AGENTS.md. https://agents.md"

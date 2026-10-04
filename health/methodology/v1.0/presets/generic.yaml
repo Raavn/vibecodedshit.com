@@ -1,0 +1,41 @@
+preset:
+  key: generic
+  name: Generic
+  languages: [typescript, javascript, python]
+  detect: Used when no other preset matches.
+
+conventions: >-
+  Globs are relative to the package root and match with or without a src/
+  prefix (TypeScript, JavaScript) or a top-level package directory (Python).
+  When a file matches several layer globs, the innermost matching directory
+  decides its layer.
+
+layers:
+  shared: ["shared/**", "common/**", "lib/**", "utils/**", "helpers/**"]
+  features:
+    - "features/**"
+    - "modules/**"
+    - "routes/**"
+    - "pages/**"
+    - "app/**"
+    - "components/**"
+    - "views/**"
+    - "controllers/**"
+    - "api/**"
+
+modules:
+  roots: ["features/*", "modules/*", "packages/*"]
+  public_entry:
+    typescript_javascript: "index.{ts,tsx,js,jsx,mts,mjs,cjs}"
+    python: __init__.py
+
+rules:
+  - name: shared-does-not-import-features
+    description: Shared code does not depend on feature, route or UI code.
+    from: { in: [shared] }
+    to: { in: [features] }
+    severity: error
+    type_only_imports: included
+
+sources:
+  - "Martin, R. C. Clean Architecture. Prentice Hall, 2017 (the Dependency Rule)."

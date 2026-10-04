@@ -1,0 +1,231 @@
+# Codebase Health methodology, version 1.0
+#
+# This file holds the parts of the methodology that apply to every dimension:
+# aggregation, bands, execution rules, delta rules and regression flags.
+# Parameters and their rubrics live in dimensions/*.yaml. File scope lives in
+# scope.yaml. Framework presets for dimension 3 live in presets/*.yaml.
+#
+# Any change to a weight, anchor, band, threshold or rule in this folder
+# requires a new methodology version. Runs from different versions are never
+# compared.
+
+methodology: codebase-health
+version: "1.0"
+
+purpose: >-
+  Health = how safely and cheaply someone with no memory of this codebase,
+  whether a contractor or an agent, can make a correct change.
+
+languages:
+  - typescript
+  - javascript
+  - python
+
+scale:
+  min: 0
+  max: 100
+
+dimensions:
+  - id: 1
+    key: safety_net
+    file: dimensions/1-safety-net.yaml
+  - id: 2
+    key: type_static_rigor
+    file: dimensions/2-type-static-rigor.yaml
+  - id: 3
+    key: architecture_boundaries
+    file: dimensions/3-architecture-boundaries.yaml
+  - id: 4
+    key: complexity_maintainability
+    file: dimensions/4-complexity-maintainability.yaml
+  - id: 5
+    key: dependency_security_hygiene
+    file: dimensions/5-dependency-security-hygiene.yaml
+  - id: 6
+    key: operability_feedback_loop
+    file: dimensions/6-operability-feedback-loop.yaml
+
+scoring:
+  # How one parameter's raw value becomes a 0-100 score.
+  piecewise_linear: >-
+    Anchors are sorted by raw value. Between two anchors the score is
+    interpolated linearly. Below the lowest anchor the score equals the
+    lowest anchor's score; above the highest anchor it equals the highest
+    anchor's score. The same rule covers higher-is-better and
+    lower-is-better parameters; only the order of the scores differs.
+  levels: >-
+    The parameter's raw value is one of a fixed set of named levels, and each
+    level has a fixed score.
+  mean_of_components: >-
+    The parameter is the unweighted mean of its components, each scored by
+    its own rule.
+
+aggregation:
+  parameter_to_dimension:
+    method: weighted_mean
+    weights: per parameter, declared in each dimension file, summing to 100
+  not_applicable:
+    method: redistribute_within_dimension
+    rule: >-
+      A parameter's weight is spread over the other parameters in the same
+      dimension, in proportion to their weights. A parameter may only be not
+      applicable when its precondition is a design choice the methodology does
+      not score. Each dimension file lists the allowed conditions. Missing
+      tests and failed execution always score 0, never not applicable.
+  dimension_to_health:
+    method: capped_mean
+    weights: equal
+    formula: health = min(mean(dimension scores), min(dimension scores) + cap_margin)
+    cap_margin: 30
+  precision:
+    stored: full
+    displayed:
+      health: integer, rounded half up
+      health_delta: one decimal
+      dimension_score: integer, rounded half up
+      dimension_delta: integer, rounded half up
+    band_is_taken_from: displayed health
+
+bands:
+  - key: vibe_coded
+    name: Vibe-coded
+    min: 0
+    max: 39
+    meaning: >-
+      Changes break things without anyone noticing. Nobody, human or agent,
+      can work here safely.
+  - key: fragile
+    name: Fragile
+    min: 40
+    max: 59
+    meaning: It works, but every change is a gamble.
+  - key: stable
+    name: Stable
+    min: 60
+    max: 79
+    meaning: Changes are safe with care and review.
+  - key: agent_ready
+    name: Agent-ready
+    min: 80
+    max: 100
+    meaning: >-
+      An agent with no memory of the codebase can make a correct change and
+      verify it alone.
+
+layers:
+  static:
+    description: >-
+      Reads tracked files only: source, configuration, manifests and
+      lockfiles. Parses ASTs and builds import graphs. Never runs repository
+      code. Always runs.
+  execution:
+    description: >-
+      Installs dependencies, then runs the typechecker, the pinned lint
+      ruleset, the build and the test suite with coverage. Attempted on every
+      run.
+
+execution:
+  runner:
+    image: health:1.0
+    cpus: 4
+    memory_gb: 8
+  network: >-
+    Allowed during dependency install and while fetching the advisory and
+    registry snapshots. Off for build, typecheck, lint and tests.
+  environment: >-
+    Variables documented in the repository's env example file (see 6.5) are
+    loaded with their example values. No other secrets or variables are
+    provided. External services (databases, queues, browsers) are not
+    provided.
+  timeouts_seconds:
+    install: 900
+    build: 900
+    typecheck: 600
+    lint: 600
+    tests: 600
+  outcomes:
+    repository_failure: >-
+      An install, build, typecheck or test command fails or times out because
+      of the repository. Every parameter that requires that step scores 0.
+      A timeout counts as a failure.
+    tool_error: >-
+      The tool itself fails (a crash in the orchestrator, a missing tool in
+      the image, coverage data missing after a test run that produced
+      results). The run is marked invalid and produces no score.
+  requirements:
+    install: dependencies installed from the lockfile, or from the manifest when no lockfile exists
+    build: install succeeded and the build step (see 6.1) exited 0
+    typecheck_run: install succeeded and the typechecker ran to completion and reported diagnostics
+    lint_run: install succeeded and the pinned lint ruleset ran to completion
+    test_run: install succeeded, a supported test runner was found, and it produced a results report
+
+minimum_repository: >-
+  At least one logic file (see scope.yaml). Repositories below this are not
+  scored.
+
+pooling:
+  # How parameters combine across languages and workspace packages in one
+  # repository. The repository always gets one headline score.
+  ratio: >-
+    Numerators and denominators are summed across languages and packages,
+    then the pooled ratio is scored once. Used for counts per 1,000 lines,
+    percentages and pass rates.
+  unit_weighted: >-
+    The parameter is scored separately for each language or package, then
+    the scores are combined by logic-line weight. Used for configuration and
+    yes/no parameters. Example: 2.2 scores 100 for a TypeScript frontend with
+    8,000 logic lines and 0 for a Python backend with 2,000; the pooled score
+    is 80.
+  report: Every dimension is also reported per package and per language.
+
+delta:
+  description: >-
+    health diff compares two runs only when all conditions match. Otherwise
+    it refuses and names the conditions that differ.
+  conditions:
+    - key: layers
+      rule: Both runs attempted the same layers.
+    - key: tool_versions
+      rule: Both runs used the same tool versions (the same image digest).
+    - key: methodology_version
+      rule: Both runs used the same methodology version.
+    - key: as_of_date
+      rule: >-
+        Both runs were scored at the same as-of date. For a contract, this is
+        the baseline's as-of date. The report also shows today's score for
+        the newer run.
+    - key: ignore_set
+      rule: >-
+        Both runs used the same .healthignore and .gitleaksignore contents
+        (compared by hash).
+  rescoring: >-
+    run.json stores raw values and the resolved dependency list, so health
+    diff can rescore parameters 5.1 and 5.2 of both runs against one advisory
+    and registry snapshot.
+
+regression:
+  description: Used by sprint-loop. Flags a regression; never blocks.
+  flag_when:
+    - Any dimension score drops by 3.0 or more (unrounded).
+    - The band drops.
+  pr_label: health-regression
+  telegram_format: "Health {health} {band} ({health_delta}) · {dimension_deltas} · ⚠ {regressions or 'none'}"
+  telegram_example: "Health 62 Stable (+1.4) · Safety net +6 · Complexity −1 · ⚠ none"
+  baseline: >-
+    The base branch commit, cached by tree hash, methodology version and
+    as-of date. Both runs use the as-of date of the day sprint-loop runs.
+
+report_only:
+  # Signals that appear in the report and never change the score.
+  - key: hotspots
+    description: >-
+      Files ranked by churn (commits touching the file in the last 12 months)
+      multiplied by cognitive complexity. This is the "fix these first" list.
+  - key: secrets_in_history
+    description: Secrets found in git history. The fix is rotating the key.
+  - key: dev_dependency_vulnerabilities
+    description: Known vulnerabilities in packages reachable only from development dependencies.
+  - key: excluded_lines
+    description: Percentage of lines excluded by .healthignore.
+  - key: per_package_breakdown
+    description: Every dimension per workspace package and per language.
