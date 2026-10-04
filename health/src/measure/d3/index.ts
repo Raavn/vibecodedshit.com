@@ -1,10 +1,11 @@
 import type { Group } from '../../scope/types.js';
 import type { MeasureContext } from '../types.js';
 import type { D3Adapter, D3Graph, D3GraphResult, D3Rules } from './types.js';
+import { pyAdapter } from './py/adapter.js';
 import { tsAdapter } from './ts/adapter.js';
 
-/** Explicit list. The Python task adds `pyAdapter`. */
-export const D3_ADAPTERS: D3Adapter[] = [tsAdapter];
+/** Explicit list. */
+export const D3_ADAPTERS: D3Adapter[] = [tsAdapter, pyAdapter];
 
 function adaptersFor(ctx: MeasureContext): D3Adapter[] {
   const groups = new Set<Group>(ctx.scope.files.filter((f) => f.role === 'logic').map((f) => f.group));

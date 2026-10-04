@@ -1,0 +1,34 @@
+{
+  "note": "Hand counts. Two Python workspace packages, one preset each: services/api is fastapi (the d3-fastapi tree), services/admin declares django. admin has one app, so 3.4 does not apply to it; models importing views is 1 violation (two rules).",
+  "presets": {
+    "services/api": "fastapi",
+    "services/admin": "django"
+  },
+  "3.1": {
+    "services/api": "none",
+    "services/admin": "none"
+  },
+  "3.2": {
+    "services/admin": {
+      "numerator": 1,
+      "denominator": 1,
+      "violating": [
+        "services/admin/blogapp/models.py -> services/admin/blogapp/views.py (models-do-not-import-http,only-urls-import-views)"
+      ]
+    }
+  },
+  "3.3": {
+    "services/admin": {
+      "numerator": 0,
+      "denominator": 3,
+      "files": []
+    }
+  },
+  "3.4": {
+    "services/api": {
+      "numerator": 1,
+      "denominator": 3
+    }
+  },
+  "3.5": "not_applicable"
+}

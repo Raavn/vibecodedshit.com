@@ -1,0 +1,44 @@
+{
+  "note": "Hand counts. Django preset (django declared in pyproject.toml). 22 logic files, 22 internal edges (shop/test_views.py is a test, the empty barrels shop/__init__.py and shop/services/__init__.py are not scoped files so edges into them are dropped). 7 violating edges: config/urls.py is outside any app (no layer), models import admin, forms and views (views breaks two rules, one edge), the function-level import in services/cart.py and the TYPE_CHECKING import in selectors.py count in 3.2, blog/admin.py imports the views package; blog/views/__init__.py importing blog/views/user.py is exempt (same layer module). Cycle: models<>views and models<>admin, plus utils<>helpers; the TYPE_CHECKING pair and the function-level pair are not cycles. 3.4: blog/feed.py crosses into shop 6 times, 5 land on an entry (shop/__init__.py, models, selectors, services/__init__.py and services/cart.py as a submodule of the services package), utils is a bypass; barrels count as entries as in TypeScript. shop/broken.py has a syntax error: it stays a logic file with no edges and a warning.",
+  "3.1": {
+    ".": "none"
+  },
+  "3.2": {
+    ".": {
+      "numerator": 7,
+      "denominator": 22,
+      "violating": [
+        "blog/admin.py -> blog/views/__init__.py (only-urls-import-views)",
+        "config/urls.py -> shop/views.py (only-urls-import-views)",
+        "shop/models.py -> shop/admin.py (models-do-not-import-http)",
+        "shop/models.py -> shop/forms.py (models-do-not-import-http)",
+        "shop/models.py -> shop/views.py (models-do-not-import-http,only-urls-import-views)",
+        "shop/selectors.py -> shop/urls.py (services-do-not-import-views)",
+        "shop/services/cart.py -> shop/views.py (only-urls-import-views,services-do-not-import-views)"
+      ]
+    }
+  },
+  "3.3": {
+    ".": {
+      "numerator": 5,
+      "denominator": 22,
+      "files": [
+        "shop/admin.py",
+        "shop/helpers.py",
+        "shop/models.py",
+        "shop/utils.py",
+        "shop/views.py"
+      ]
+    }
+  },
+  "3.4": {
+    ".": {
+      "numerator": 5,
+      "denominator": 6
+    }
+  },
+  "3.5": "not_applicable",
+  "warnings": [
+    "shop/broken.py: syntax error, its imports are not counted"
+  ]
+}

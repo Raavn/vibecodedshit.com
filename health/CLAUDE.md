@@ -9,7 +9,7 @@ Run commands from this directory (`npm --prefix health <cmd>` from the repositor
 - `npm run typecheck` runs `tsc --noEmit`
 - `npm run lint` runs `eslint .`
 - `npm run test` runs `vitest run`
-- `npm run test:tools` runs the real Python tools (`pipx install complexipy vulture deptry && brew install osv-scanner gitleaks` first). Not part of `verify`.
+- `npm run test:tools` runs the real Python tools (`pipx install complexipy vulture deptry import-linter && brew install osv-scanner gitleaks` first). Not part of `verify`. `HEALTH_UPDATE_FIXTURES=1 npm run test:tools` rewrites the `helper-out.json` files of the D3 Python fixtures from the real helper.
 - `npm run verify` runs all three. Run it before every commit.
 - `npm run build` emits `dist/`
 - `npm run health -- scan <path> --preview` runs a preview scan and writes `./run.json`
@@ -20,7 +20,7 @@ Run commands from this directory (`npm --prefix health <cmd>` from the repositor
 - `src/scope/`: `git ls-files`, fixed exclusions, `.healthignore`, file roles, line counts, workspace packages. Python is parsed by `python/scope_helper.py` (stdlib only).
 - `src/measure/`: one `Measurer` per parameter (`p4-2.ts`), listed in `registry.ts`. A measurer returns raw values per (package, language group) and never pools or scores.
 - `src/tools/`: the injected `ToolKit` (resolve, run, fetch, memo), the tool catalog, work copies and the shared knip run. Measurers call tools only through `ctx.tools`; tests pass `fakeToolKit` from `test/helpers/tools.ts`. A missing or failing tool is `not_measured` in preview and a `ToolError` in full mode, never a score of 0.
-- `src/measure/d3/`: D3 (architecture & boundaries). `p3-1.ts` to `p3-5.ts` turn per-language facts into raw values and never see a tool; `d3/ts/` is the TS/JS adapter (dependency-cruiser in process, `.dependency-cruiser` rules read without executing them, presets converted to rules). `getD3Rules` (no tool) and `getD3Graph` (needs the tool) are memoized per scan.
+- `src/measure/d3/`: D3 (architecture & boundaries). `p3-1.ts` to `p3-5.ts` turn per-language facts into raw values and never see a tool; `d3/ts/` is the TS/JS adapter (dependency-cruiser in process, `.dependency-cruiser` rules read without executing them, presets converted to rules); `d3/py/` is the Python adapter (`python/imports_helper.py`, stdlib, for statements and flags; `python/graph_helper.py` for grimp and import-linter, run with the interpreter named in the `lint-imports` shebang on a work copy). `getD3Rules` (no tool) and `getD3Graph` (needs the tool) are memoized per scan.
 - `src/scripts/`, `src/manifest/`, `src/scope/tracked.ts`: shared readers for CI files, package scripts, Makefile targets and tracked files (3.1 resolves `depcruise` through them up to 3 levels).
 - `src/scoring/`: pure scoring, pooling and aggregation.
 - `src/run/`: `scan.ts` builds run.json, `recompute.ts` re-derives scores from stored raw values.

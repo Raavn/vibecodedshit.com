@@ -24,11 +24,13 @@ export function choosePreset(methodology: Methodology, group: Group, matches: Pa
 
 const MATCH_OPTIONS = { dot: true } as const;
 
-/** A glob `g` matches path `p` when `p` matches `g` or `src/` + `g`. */
-export function globMatcher(globs: string[]): (rel: string) => boolean {
-  const plain = picomatch(globs, MATCH_OPTIONS);
-  const prefixed = picomatch(globs.map((g) => `src/${g}`), MATCH_OPTIONS);
-  return (rel) => plain(rel) || prefixed(rel);
+/** TypeScript and JavaScript match a glob with or without `src/`. Python passes its root package directories. */
+export const TS_PREFIXES = ['', 'src/'];
+
+/** A glob `g` matches path `p` when `p` matches `prefix + g` for any of the prefixes (each empty or ending in `/`). */
+export function globMatcher(globs: string[], prefixes: string[] = TS_PREFIXES): (rel: string) => boolean {
+  const matchers = prefixes.map((prefix) => picomatch(globs.map((g) => `${prefix}${g}`), MATCH_OPTIONS));
+  return (rel) => matchers.some((match) => match(rel));
 }
 
 /** Leading literal directory segments of a glob (`app/**` has 1, `features/*` has 1, `**` has 0). */
@@ -46,12 +48,16 @@ function literalDepth(glob: string): number {
  * The glob layer of each file (paths relative to the package directory): the layer with the longest
  * matching directory prefix, ties to the first layer listed. Files in no layer are absent.
  */
-export function globLayers(layers: Record<string, string[] | string>, relFiles: string[]): Map<string, string> {
+export function globLayers(
+  layers: Record<string, string[] | string>,
+  relFiles: string[],
+  prefixes: string[] = TS_PREFIXES,
+): Map<string, string> {
   const compiled = Object.entries(layers)
     .filter((entry): entry is [string, string[]] => Array.isArray(entry[1]))
     .map(([name, globs]) => ({
       name,
-      entries: globs.map((glob) => ({ depth: literalDepth(glob), match: globMatcher([glob]) })),
+      entries: globs.map((glob) => ({ depth: literalDepth(glob), match: globMatcher([glob], prefixes) })),
     }));
   const result = new Map<string, string>();
   for (const rel of relFiles) {
@@ -69,8 +75,8 @@ export function globLayers(layers: Record<string, string[] | string>, relFiles: 
 }
 
 /** Directory (relative to the package) of the deepest module root containing the file, else undefined. */
-export function moduleDirs(roots: string[], relFiles: string[]): Map<string, string | undefined> {
-  const isRoot = globMatcher(roots);
+export function moduleDirs(roots: string[], relFiles: string[], prefixes: string[] = TS_PREFIXES): Map<string, string | undefined> {
+  const isRoot = globMatcher(roots, prefixes);
   const known = new Map<string, boolean>();
   const rootDir = (dir: string): boolean => {
     let value = known.get(dir);

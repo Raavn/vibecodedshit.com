@@ -1,0 +1,4 @@
+jobs:
+  arch:
+    steps:
+      - run: make check

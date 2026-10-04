@@ -42,4 +42,11 @@ export const catalog: Record<ToolName, CatalogEntry> = {
     versionPattern: /(\d+\.\d+\.\d+\S*)/,
     install: 'brew install gitleaks, or https://github.com/gitleaks/gitleaks/releases',
   },
+  'import-linter': {
+    kind: 'path',
+    bin: 'lint-imports',
+    versionArgs: ['--version'],
+    versionPattern: /import-linter (\d+(?:\.\d+)+)/,
+    install: 'pipx install import-linter (or uv tool install import-linter)',
+  },
 };

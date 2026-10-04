@@ -1,0 +1,57 @@
+{
+  "app": {
+    "emptied": [],
+    "edges": [
+      {
+        "from": "app/features/orders/order.py",
+        "to": "app/features/cart/cart.py",
+        "lines": [
+          1
+        ]
+      },
+      {
+        "from": "app/features/orders/order.py",
+        "to": "app/shared/clock.py",
+        "lines": [
+          2
+        ]
+      },
+      {
+        "from": "app/features/orders/report.py",
+        "to": "app/features/cart/__init__.py",
+        "lines": [
+          1
+        ]
+      },
+      {
+        "from": "app/shared/fmt.py",
+        "to": "app/features/cart/cart.py",
+        "lines": [
+          1
+        ]
+      },
+      {
+        "from": "app/shared/test_clock.py",
+        "to": "app/features/cart/cart.py",
+        "lines": [
+          1
+        ]
+      }
+    ],
+    "violations": [
+      {
+        "contract": ".:shared-does-not-import-features",
+        "importer": "app/shared/fmt.py",
+        "imported": "app/features/cart/cart.py",
+        "external": false
+      },
+      {
+        "contract": ".:shared-does-not-import-features",
+        "importer": "app/shared/test_clock.py",
+        "imported": "app/features/cart/cart.py",
+        "external": false
+      }
+    ],
+    "skipped": []
+  }
+}

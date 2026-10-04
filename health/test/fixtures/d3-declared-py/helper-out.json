@@ -1,0 +1,41 @@
+{
+  "core,ui": {
+    "emptied": [],
+    "edges": [
+      {
+        "from": "core/engine.py",
+        "to": "ui/view.py",
+        "lines": [
+          2
+        ]
+      },
+      {
+        "from": "ui/view.py",
+        "to": "core/engine.py",
+        "lines": [
+          1
+        ]
+      }
+    ],
+    "violations": [
+      {
+        "contract": "Layers",
+        "importer": "core/engine.py",
+        "imported": "ui/view.py",
+        "external": false
+      },
+      {
+        "contract": "No requests in core",
+        "importer": "core/engine.py",
+        "imported": "requests",
+        "external": true
+      }
+    ],
+    "skipped": [
+      {
+        "contract": "Ghost",
+        "reason": "ValueError: Module 'nowhere' does not exist."
+      }
+    ]
+  }
+}

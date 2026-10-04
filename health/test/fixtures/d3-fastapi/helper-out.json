@@ -1,0 +1,122 @@
+{
+  "app": {
+    "emptied": [],
+    "edges": [
+      {
+        "from": "app/api/routes/users.py",
+        "to": "app/services/user_service.py",
+        "lines": [
+          1
+        ]
+      },
+      {
+        "from": "app/features/ledger/entry.py",
+        "to": "app/features/billing/__init__.py",
+        "lines": [
+          1
+        ]
+      },
+      {
+        "from": "app/features/ledger/entry.py",
+        "to": "app/features/billing/charge.py",
+        "lines": [
+          2
+        ]
+      },
+      {
+        "from": "app/items/crud.py",
+        "to": "app/items/router.py",
+        "lines": [
+          1
+        ]
+      },
+      {
+        "from": "app/main.py",
+        "to": "app/api/routes/users.py",
+        "lines": [
+          1
+        ]
+      },
+      {
+        "from": "app/models/user.py",
+        "to": "app/services/user_service.py",
+        "lines": [
+          1
+        ]
+      },
+      {
+        "from": "app/services/db.py",
+        "to": "app/services/user_service.py",
+        "lines": [
+          1
+        ]
+      },
+      {
+        "from": "app/services/user_service.py",
+        "to": "app/api/routes/users.py",
+        "lines": [
+          2
+        ]
+      },
+      {
+        "from": "app/services/user_service.py",
+        "to": "app/models/user.py",
+        "lines": [
+          3
+        ]
+      },
+      {
+        "from": "app/users/router.py",
+        "to": "app/items/router.py",
+        "lines": [
+          1
+        ]
+      }
+    ],
+    "violations": [
+      {
+        "contract": ".:data-does-not-import-up",
+        "importer": "app/items/crud.py",
+        "imported": "app/items/router.py",
+        "external": false
+      },
+      {
+        "contract": ".:data-does-not-import-up",
+        "importer": "app/models/user.py",
+        "imported": "app/services/user_service.py",
+        "external": false
+      },
+      {
+        "contract": ".:data-does-not-import-up",
+        "importer": "app/services/db.py",
+        "imported": "app/services/user_service.py",
+        "external": false
+      },
+      {
+        "contract": ".:routers-are-leaves",
+        "importer": "app/items/crud.py",
+        "imported": "app/items/router.py",
+        "external": false
+      },
+      {
+        "contract": ".:routers-are-leaves",
+        "importer": "app/services/user_service.py",
+        "imported": "app/api/routes/users.py",
+        "external": false
+      },
+      {
+        "contract": ".:services-do-not-import-http",
+        "importer": "app/services/user_service.py",
+        "imported": "app/api/routes/users.py",
+        "external": false
+      },
+      {
+        "contract": ".:services-do-not-import-http#packages",
+        "importer": "app/services/user_service.py",
+        "imported": "fastapi",
+        "external": true
+      }
+    ],
+    "skipped": []
+  }
+}

@@ -1,0 +1,27 @@
+[importlinter]
+root_packages =
+    core
+    ui
+
+[importlinter:contract:layers]
+name = Layers
+type = layers
+layers =
+    ui
+    core
+
+[importlinter:contract:no-requests]
+name = No requests in core
+type = forbidden
+source_modules = core
+forbidden_modules = requests
+
+[importlinter:contract:ghost]
+name = Ghost
+type = forbidden
+source_modules = nowhere
+forbidden_modules = core
+
+[importlinter:contract:custom]
+name = Custom
+type = mypkg.contracts.Custom

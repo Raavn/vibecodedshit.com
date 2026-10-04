@@ -60,13 +60,14 @@ describe.each(['typescript', 'python', 'monorepo'])('fixture %s', (name) => {
     expect(result.comparable).toBe(false);
   });
 
-  it('scores dimensions 2, 3 (TypeScript only) and 4 and leaves the other dimensions not measured', async () => {
+  it('scores dimensions 2, 3 and 4 and leaves the other dimensions not measured', async () => {
     const result = await runScan(scanOpts(materializeFixture(name)));
     const scored = result.dimensions.filter((d) => d.score !== null);
-    // D3 is measured for TypeScript and JavaScript only; a repository with Python logic files leaves it not measured.
-    expect(scored.map((d) => d.id)).toEqual(name === 'typescript' ? [2, 3, 4] : [2, 4]);
+    expect(scored.map((d) => d.id)).toEqual([2, 3, 4]);
     if (name !== 'typescript') {
-      expect(result.parameters.find((p) => p.id === '3.2')).toMatchObject({ status: 'not_measured', reason: expect.stringMatching(/not implemented yet for python/) });
+      // import-linter is not installed on the test host: 3.2 to 3.5 are not_measured, 3.1 needs no tool and still measures.
+      expect(result.parameters.find((p) => p.id === '3.2')).toMatchObject({ status: 'not_measured', reason: expect.stringMatching(/import-linter not found/) });
+      expect(result.parameters.find((p) => p.id === '3.1')?.status).toBe('measured');
     }
     // D4 is the weight-redistributed mean of the parameters that were measured.
     const weights = new Map(methodology.dimensions.flatMap((d) => d.parameters).map((def) => [def.id, def.weight]));

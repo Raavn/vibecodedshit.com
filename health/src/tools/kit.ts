@@ -1,7 +1,7 @@
 import { spawn as nodeSpawn } from 'node:child_process';
 import { resolveTool } from './resolve.js';
 
-export type ToolName = 'jscpd' | 'knip' | 'complexipy' | 'vulture' | 'deptry' | 'osv-scanner' | 'gitleaks';
+export type ToolName = 'jscpd' | 'knip' | 'complexipy' | 'vulture' | 'deptry' | 'osv-scanner' | 'gitleaks' | 'import-linter';
 
 export interface ResolvedTool {
   name: ToolName;

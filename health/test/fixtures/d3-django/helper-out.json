@@ -1,0 +1,253 @@
+{
+  "blog,config,shop": {
+    "emptied": [
+      "shop/broken.py"
+    ],
+    "edges": [
+      {
+        "from": "blog/admin.py",
+        "to": "blog/views/__init__.py",
+        "lines": [
+          1
+        ]
+      },
+      {
+        "from": "blog/feed.py",
+        "to": "shop/__init__.py",
+        "lines": [
+          1
+        ]
+      },
+      {
+        "from": "blog/feed.py",
+        "to": "shop/models.py",
+        "lines": [
+          3
+        ]
+      },
+      {
+        "from": "blog/feed.py",
+        "to": "shop/selectors.py",
+        "lines": [
+          4
+        ]
+      },
+      {
+        "from": "blog/feed.py",
+        "to": "shop/services/__init__.py",
+        "lines": [
+          6
+        ]
+      },
+      {
+        "from": "blog/feed.py",
+        "to": "shop/services/cart.py",
+        "lines": [
+          5
+        ]
+      },
+      {
+        "from": "blog/feed.py",
+        "to": "shop/utils.py",
+        "lines": [
+          2
+        ]
+      },
+      {
+        "from": "blog/views/__init__.py",
+        "to": "blog/views/user.py",
+        "lines": [
+          1
+        ]
+      },
+      {
+        "from": "blog/views/user.py",
+        "to": "blog/models.py",
+        "lines": [
+          1
+        ]
+      },
+      {
+        "from": "config/urls.py",
+        "to": "shop/views.py",
+        "lines": [
+          1
+        ]
+      },
+      {
+        "from": "shop/admin.py",
+        "to": "shop/models.py",
+        "lines": [
+          1
+        ]
+      },
+      {
+        "from": "shop/helpers.py",
+        "to": "shop/utils.py",
+        "lines": [
+          1
+        ]
+      },
+      {
+        "from": "shop/lz_a.py",
+        "to": "shop/lz_b.py",
+        "lines": [
+          1
+        ]
+      },
+      {
+        "from": "shop/lz_b.py",
+        "to": "shop/lz_a.py",
+        "lines": [
+          2
+        ]
+      },
+      {
+        "from": "shop/models.py",
+        "to": "shop/admin.py",
+        "lines": [
+          1
+        ]
+      },
+      {
+        "from": "shop/models.py",
+        "to": "shop/forms.py",
+        "lines": [
+          1
+        ]
+      },
+      {
+        "from": "shop/models.py",
+        "to": "shop/views.py",
+        "lines": [
+          1
+        ]
+      },
+      {
+        "from": "shop/selectors.py",
+        "to": "shop/urls.py",
+        "lines": [
+          4
+        ]
+      },
+      {
+        "from": "shop/services/cart.py",
+        "to": "shop/views.py",
+        "lines": [
+          2
+        ]
+      },
+      {
+        "from": "shop/tc_a.py",
+        "to": "shop/tc_b.py",
+        "lines": [
+          1
+        ]
+      },
+      {
+        "from": "shop/tc_b.py",
+        "to": "shop/tc_a.py",
+        "lines": [
+          4
+        ]
+      },
+      {
+        "from": "shop/test_views.py",
+        "to": "shop/views.py",
+        "lines": [
+          1
+        ]
+      },
+      {
+        "from": "shop/urls.py",
+        "to": "shop/views.py",
+        "lines": [
+          1
+        ]
+      },
+      {
+        "from": "shop/utils.py",
+        "to": "shop/helpers.py",
+        "lines": [
+          1
+        ]
+      },
+      {
+        "from": "shop/views.py",
+        "to": "shop/models.py",
+        "lines": [
+          1
+        ]
+      }
+    ],
+    "violations": [
+      {
+        "contract": ".:models-do-not-import-http",
+        "importer": "shop/models.py",
+        "imported": "shop/admin.py",
+        "external": false
+      },
+      {
+        "contract": ".:models-do-not-import-http",
+        "importer": "shop/models.py",
+        "imported": "shop/forms.py",
+        "external": false
+      },
+      {
+        "contract": ".:models-do-not-import-http",
+        "importer": "shop/models.py",
+        "imported": "shop/views.py",
+        "external": false
+      },
+      {
+        "contract": ".:only-urls-import-views",
+        "importer": "blog/admin.py",
+        "imported": "blog/views/__init__.py",
+        "external": false
+      },
+      {
+        "contract": ".:only-urls-import-views",
+        "importer": "blog/views/__init__.py",
+        "imported": "blog/views/user.py",
+        "external": false
+      },
+      {
+        "contract": ".:only-urls-import-views",
+        "importer": "config/urls.py",
+        "imported": "shop/views.py",
+        "external": false
+      },
+      {
+        "contract": ".:only-urls-import-views",
+        "importer": "shop/models.py",
+        "imported": "shop/views.py",
+        "external": false
+      },
+      {
+        "contract": ".:only-urls-import-views",
+        "importer": "shop/services/cart.py",
+        "imported": "shop/views.py",
+        "external": false
+      },
+      {
+        "contract": ".:only-urls-import-views",
+        "importer": "shop/test_views.py",
+        "imported": "shop/views.py",
+        "external": false
+      },
+      {
+        "contract": ".:services-do-not-import-views",
+        "importer": "shop/selectors.py",
+        "imported": "shop/urls.py",
+        "external": false
+      },
+      {
+        "contract": ".:services-do-not-import-views",
+        "importer": "shop/services/cart.py",
+        "imported": "shop/views.py",
+        "external": false
+      }
+    ],
+    "skipped": []
+  }
+}
