@@ -15,7 +15,6 @@ Exposing hyper-designed, ecologically-bankrupt objects through a lens of high-fa
 - **Accents:** High-transparency variations of the primary plum for containers and buttons.
 
 ## Visual Language
-- **Interactive Background:** Fixed full-viewport `<canvas id="spoon-canvas">` layer for depth and digital texture.
 - **Corners:** High roundness for containers (Velvet feel) contrasting with sharp, brutalist typography.
 - **Spacing:** Generous whitespace to simulate "luxury" and "exclusive" digital space.
 - **Imagery:** Desaturated, high-contrast product renders with "REDACTED" overlays.
