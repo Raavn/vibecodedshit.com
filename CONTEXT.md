@@ -9,7 +9,7 @@ Replaced the earlier vision (an awareness campaign about vibe-coding apps that a
 Snappy, sarcastic, slightly controversial — but always educative. Not preachy. Think "the friend who roasts you but has a point."
 
 ## Approach
-1. **The methodology**: Six dimensions, 30 parameters, fixed rubrics, one health score and a band (Vibe-coded, Fragile, Stable, Agent-ready). Published under CC BY 4.0. Source: `~/ServerRoot/vibevibevibe.com/methodology/v1.0/`.
+1. **The methodology**: Six dimensions, 30 parameters, fixed rubrics, one health score and a band (Vibe-coded, Fragile, Stable, Agent-ready). Published under CC BY 4.0. Source: `health/methodology/v1.0/` in this repository.
 2. **The skill**: A Claude Code plugin with `/codebase-health` (code under MIT). It runs the pinned scoring tool, then Claude explains the result. Without Docker it runs a static-only preview that is marked "not comparable" and cannot be submitted.
 3. **Submissions**: With the user's consent, the skill sends the scores to app.vibecodedshit.com. The repo name is off by default; a hash of the git remote URL is sent instead. An email is optional. The user sees the exact payload before anything is sent.
 4. **The average**: The site shows the average score of submitted projects, counting each repo once (its latest full run, per methodology version). There is no public leaderboard.
@@ -23,4 +23,8 @@ Snappy, sarcastic, slightly controversial — but always educative. Not preachy.
 ## Tech Stance
 The site itself uses zero build tools, zero frameworks, zero npm packages. Plain HTML, CSS, and JavaScript. That's the point.
 
-This rule applies to vibecodedshit.com only. app.vibecodedshit.com (the submission app) may use npm packages and a framework.
+This rule applies to vibecodedshit.com only. The benchmark code in `health/` is not part of the site: it may use npm packages and has its own `package.json` there. There is no `package.json` at the repository root, and `.vercelignore` keeps `health/` out of the site deploy. app.vibecodedshit.com (the submission app) may use npm packages and a framework.
+
+## Repository layout
+- Repository root: the static site (`index.html`, `DESIGN.md`, this file). Vercel deploys it from the root with no build step.
+- `health/`: the codebase-health benchmark. `health/methodology/v1.0/` holds the versioned methodology; the `health` CLI and the Claude Code plugin are built there. It moved here on 2026-10-04 from the local-only `vibevibevibe.com` folder.

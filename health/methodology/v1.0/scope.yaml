@@ -1,0 +1,105 @@
+# Which files count, and how lines are counted.
+
+source_files:
+  start_from: git ls-files
+  extensions:
+    typescript: [.ts, .tsx, .mts, .cts]
+    javascript: [.js, .jsx, .mjs, .cjs]
+    python: [.py]
+
+exclusions:
+  # Fixed by the methodology. Applied before anything else.
+  vendored:
+    - "**/node_modules/**"
+    - "**/.venv/**"
+    - "**/venv/**"
+    - "**/vendor/**"
+    - "**/third_party/**"
+  build_output:
+    - "**/dist/**"
+    - "**/build/**"
+    - "**/.next/**"
+    - "**/out/**"
+    - "**/__pycache__/**"
+    - "**/coverage/**"
+  generated:
+    - files whose first 5 lines contain "@generated" or "Code generated"
+    - "**/*_pb2.py"
+    - "**/*_pb2_grpc.py"
+    - "**/node_modules/.prisma/**"
+    - "**/prisma/generated/**"
+    - "**/generated/prisma/**"
+  minified:
+    - "**/*.min.js"
+    - files whose average line length is over 300 characters
+  migrations:
+    - "**/prisma/migrations/**"
+    - "**/alembic/versions/**"
+    - "**/migrations/*.py"
+    - "**/drizzle/**/*.sql"
+  declarations:
+    - "**/*.d.ts"
+
+file_roles:
+  test:
+    typescript_javascript:
+      - "**/*.test.{ts,tsx,mts,cts,js,jsx,mjs,cjs}"
+      - "**/*.spec.{ts,tsx,mts,cts,js,jsx,mjs,cjs}"
+      - "**/__tests__/**"
+      - "**/__mocks__/**"
+      - "test/**"
+      - "tests/**"
+      - "e2e/**"
+    python:
+      - "**/test_*.py"
+      - "**/*_test.py"
+      - "**/tests/**"
+      - "**/conftest.py"
+  config:
+    - "**/*.config.{ts,mts,cts,js,mjs,cjs}"
+    - "**/*.config.*.{ts,mts,cts,js,mjs,cjs}"
+    - "**/.eslintrc.{js,cjs}"
+    - "**/setup.py"
+    - "**/noxfile.py"
+  logic: >-
+    An in-scope source file that is neither a test file nor a config file and
+    defines at least one function, method or class. Files that only re-export
+    (barrels), only declare types, or only declare constants are not logic
+    files.
+
+how_tests_are_used:
+  dimension_1: Test files are the subject of dimension 1.
+  typecheck_and_lint: >-
+    Test files are included in 2.1 (typecheck errors) and 2.5 (baseline lint
+    findings), because broken tests are a real problem.
+  other_static_metrics: >-
+    Test files are excluded from every other static metric in dimensions 2
+    to 4: escape hatches, typed surface, boundaries, cycles, complexity, file
+    size, duplication and dead code.
+
+line_counts:
+  logic_lines: >-
+    Non-blank lines that are not comment-only, in logic files. Python
+    docstrings count as comments. Used by 2.3, 4.2 and for unit_weighted
+    pooling.
+  source_lines: >-
+    Non-blank lines that are not comment-only, in logic files and test files.
+    Used by 2.1 and 2.5.
+
+healthignore:
+  file: .healthignore
+  syntax: gitignore patterns, relative to the repository root
+  allowed: true
+  safeguards:
+    - The report shows the percentage of lines excluded by .healthignore.
+    - health diff refuses to compare runs whose .healthignore contents differ.
+  does_not_apply_to: >-
+    The secret scan (5.4). Secret scanning covers every tracked file and only
+    honours .gitleaksignore, which is part of the ignore set.
+
+workspaces:
+  detection:
+    typescript_javascript: package.json "workspaces", pnpm-workspace.yaml
+    python: uv workspace members in pyproject.toml, or each directory with its own pyproject.toml
+  scoring: >-
+    One headline score for the repository. See pooling in methodology.yaml.

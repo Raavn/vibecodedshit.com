@@ -1,0 +1,266 @@
+dimension:
+  id: 3
+  key: architecture_boundaries
+  name: Architecture & boundaries
+  question: Can you change one part without reading the rest?
+  agent_relevance: >-
+    An agent works inside a limited context window. Enforced boundaries
+    limit how much of the codebase one change can affect, so the agent only
+    needs to read the module it is changing and that module's public entry
+    points.
+
+presets:
+  description: >-
+    When a repository declares no import rules, the scan uses the preset for
+    the detected framework (presets/*.yaml). When it declares rules (see
+    3.1), its rules replace the preset. Detection order: nextjs, express,
+    django, fastapi, generic. Each workspace package gets its own preset.
+  files:
+    - presets/nextjs.yaml
+    - presets/express.yaml
+    - presets/django.yaml
+    - presets/fastapi.yaml
+    - presets/generic.yaml
+
+parameters:
+  - id: "3.1"
+    key: boundaries_declared
+    name: Boundaries declared and enforced
+    layer: static
+    weight: 15
+    requires: []
+    pooling: unit_weighted
+    raw:
+      unit: level
+      definition: >-
+        Whether the repository declares import rules in a supported rules
+        file, and whether CI runs them.
+      when_empty: 0
+    scoring:
+      method: levels
+      levels:
+        - level: none
+          score: 0
+          descriptor: No import rules are declared.
+        - level: declared
+          score: 50
+          descriptor: >-
+            A rules file declares at least one direction rule, but CI does
+            not run it.
+        - level: enforced
+          score: 100
+          descriptor: The rules are declared and CI runs them on pull requests.
+    measure:
+      typescript_javascript: >-
+        Rules file: .dependency-cruiser.{js,cjs,mjs,json}. Declared means at
+        least one forbidden or allowed rule whose from and to paths name
+        different directories. Enforced means a CI file invokes depcruise,
+        directly or through a package script or make target (up to 3 levels).
+      python: >-
+        Rules file: .importlinter, [importlinter] in setup.cfg, or
+        [tool.importlinter] in pyproject.toml. Declared means at least one
+        layers, forbidden or independence contract. Enforced means a CI file
+        invokes lint-imports, directly or through a script or make target.
+      ci_files: >-
+        .github/workflows/*, .gitlab-ci.yml, .circleci/config.yml,
+        bitbucket-pipelines.yml, azure-pipelines.yml.
+    not_applicable_when: null
+    rationale: >-
+      An architecture that exists only in people's heads is not visible to
+      an agent and erodes with each change. A rules file states the
+      architecture in a form a tool can check. Running it in CI is what stops
+      new violations.
+    sources:
+      - "dependency-cruiser rules reference. https://github.com/sverweij/dependency-cruiser/blob/main/doc/rules-reference.md"
+      - "import-linter contract types. https://import-linter.readthedocs.io/en/stable/contract_types.html"
+
+  - id: "3.2"
+    key: boundary_violations
+    name: Boundary violations
+    layer: static
+    weight: 30
+    requires: []
+    pooling: ratio
+    raw:
+      unit: violations per 1,000 imports
+      definition: >-
+        Import edges that break a rule, divided by all internal import edges
+        / 1,000. Rules come from the repository's declared rules file, or
+        from the preset when none is declared. Rules with severity error or
+        warn count; info is ignored. Each violating edge counts once, even
+        when it breaks several rules. Imports from test files are excluded.
+        Type-only imports are included, except where a preset rule says
+        otherwise.
+      when_empty: 100
+    scoring:
+      method: piecewise_linear
+      anchors:
+        - raw: 0
+          score: 100
+          descriptor: Every import respects the architecture.
+        - raw: 2
+          score: 75
+          descriptor: A few known shortcuts.
+        - raw: 10
+          score: 50
+          descriptor: The layers exist in name only in places.
+        - raw: 30
+          score: 0
+          descriptor: Anything imports anything.
+    measure:
+      typescript_javascript: dependency-cruiser with the declared rules or the preset converted to dependency-cruiser rules.
+      python: grimp builds the import graph; import-linter checks the declared contracts or the preset converted to contracts.
+    not_applicable_when: null
+    rationale: >-
+      Each violation is a dependency a reader would not expect from the
+      directory structure. The count is normalized per 1,000 imports so
+      repositories of different sizes are comparable.
+    sources:
+      - "Martin, R. C. Clean Architecture. Prentice Hall, 2017 (the Dependency Rule)."
+      - "Cockburn, A. Hexagonal Architecture (Ports and Adapters), 2005. https://alistair.cockburn.us/hexagonal-architecture/"
+
+  - id: "3.3"
+    key: import_cycles
+    name: Import cycles
+    layer: static
+    weight: 25
+    requires: []
+    pooling: ratio
+    raw:
+      unit: percent
+      definition: >-
+        Logic files that belong to an import cycle / all logic files. A cycle
+        is a strongly connected component of two or more files in the graph
+        of module-level static imports. Type-only imports, dynamic imports,
+        imports inside functions and imports under
+        "if TYPE_CHECKING:" are excluded.
+      when_empty: 100
+    scoring:
+      method: piecewise_linear
+      anchors:
+        - raw: 0
+          score: 100
+          descriptor: The import graph has no cycles.
+        - raw: 2
+          score: 75
+          descriptor: One or two small cycles.
+        - raw: 5
+          score: 50
+          descriptor: Cycles connect several areas.
+        - raw: 15
+          score: 0
+          descriptor: Large parts of the code depend on each other.
+    measure:
+      typescript_javascript: dependency-cruiser cycle detection on the filtered graph.
+      python: grimp import graph, filtered as defined, then strongly connected components.
+    not_applicable_when: null
+    rationale: >-
+      Files in a cycle cannot be understood, tested or changed one at a time.
+      Cycles also cause import-order bugs at runtime, especially in Python.
+      Type-only imports are excluded because they have no runtime effect.
+    sources:
+      - "Martin, R. C. Agile Software Development: Principles, Patterns, and Practices. Prentice Hall, 2002 (the Acyclic Dependencies Principle)."
+
+  - id: "3.4"
+    key: public_entry_discipline
+    name: Public-entry discipline
+    layer: static
+    weight: 15
+    requires: []
+    pooling: ratio
+    raw:
+      unit: percent
+      definition: >-
+        Imports that cross from one module into another and land on that
+        module's public entry / all imports that cross between modules.
+        Modules are defined by the preset (or by the independence or layer
+        contracts in the declared rules). The public entry is index.* in
+        TypeScript and JavaScript, and __init__.py in Python.
+      when_empty: 100
+    scoring:
+      method: piecewise_linear
+      anchors:
+        - raw: 50
+          score: 0
+          descriptor: Other modules reach into internals as often as not.
+        - raw: 75
+          score: 50
+          descriptor: Entry points exist and are often bypassed.
+        - raw: 90
+          score: 75
+          descriptor: Entry points are mostly used.
+        - raw: 100
+          score: 100
+          descriptor: Every cross-module import goes through the entry point.
+    measure:
+      typescript_javascript: Import graph from dependency-cruiser; module roots from the preset.
+      python: >-
+        grimp import graph; module roots from the preset. In Django apps,
+        models, services and selectors are also public entries.
+    not_applicable_when: >-
+      The repository has fewer than two modules as defined by the preset or
+      the declared rules. Splitting code into modules is a design choice the
+      methodology does not score.
+    rationale: >-
+      A public entry point is a small interface the next person can read
+      instead of the whole module. When other modules import internals
+      directly, every internal file becomes part of the interface and cannot
+      be changed safely.
+    sources:
+      - "HackSoft Django Styleguide. https://github.com/HackSoftware/Django-Styleguide"
+
+  - id: "3.5"
+    key: domain_purity
+    name: Domain purity
+    layer: static
+    weight: 15
+    requires: []
+    pooling: ratio
+    raw:
+      unit: percent
+      definition: >-
+        Files in the domain layer that import a framework, database, network
+        or filesystem package, or an infrastructure directory / all files in
+        the domain layer.
+      when_empty: 100
+    scoring:
+      method: piecewise_linear
+      anchors:
+        - raw: 0
+          score: 100
+          descriptor: Domain logic is plain code that runs and tests without infrastructure.
+        - raw: 5
+          score: 75
+          descriptor: A few domain files touch infrastructure.
+        - raw: 15
+          score: 50
+          descriptor: Domain logic regularly reaches for the database or the network.
+        - raw: 40
+          score: 0
+          descriptor: The domain layer is a directory name.
+    measure:
+      domain_layer: >-
+        Files under a directory named domain, or files in a layer named
+        domain in the declared rules.
+      typescript_javascript: >-
+        Forbidden imports: next, react, react-dom, express, @prisma/client,
+        drizzle-orm, pg, mysql2, mongoose, redis, ioredis, axios, node-fetch,
+        fs, node:fs, http, node:http, https, node:https. A call to the global
+        fetch also counts.
+      python: >-
+        Forbidden imports: django, fastapi, flask, starlette, sqlalchemy,
+        requests, httpx, aiohttp, boto3, psycopg, psycopg2, redis, pymongo.
+        A call to the builtin open also counts.
+      infrastructure_directories: infrastructure, infra, db, adapters.
+    not_applicable_when: >-
+      The repository declares no domain layer. Choosing a layered or
+      domain-driven design is a design choice the methodology does not score.
+    rationale: >-
+      This is the deterministic part of domain-driven design alignment. Pure
+      domain code can be tested without a database or network and changed
+      without reading infrastructure code. The methodology does not judge
+      whether the domain model is good; it checks that the repository keeps
+      the boundary it declared.
+    sources:
+      - "Evans, E. Domain-Driven Design. Addison-Wesley, 2003."
+      - "Cockburn, A. Hexagonal Architecture (Ports and Adapters), 2005. https://alistair.cockburn.us/hexagonal-architecture/"

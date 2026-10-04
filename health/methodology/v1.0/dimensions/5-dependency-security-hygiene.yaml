@@ -1,0 +1,223 @@
+dimension:
+  id: 5
+  key: dependency_security_hygiene
+  name: Dependency & security hygiene
+  question: Is the code built on parts that are known, current and safe?
+  agent_relevance: >-
+    An agent adds dependencies and copies patterns from what it finds. An
+    undeclared dependency, a stale major version or a committed secret gets
+    copied into new code the same way good patterns do.
+
+as_of_date: >-
+  Parameters 5.1 and 5.2 are evaluated at the run's as-of date: advisories
+  published on or before that date count, and the latest version of a
+  package is the latest published on or before that date.
+
+parameters:
+  - id: "5.1"
+    key: known_vulnerabilities
+    name: Known vulnerabilities in production dependencies
+    layer: static
+    weight: 30
+    requires: []
+    pooling: ratio
+    raw:
+      unit: severity points
+      definition: >-
+        Sum of severity points over advisories affecting resolved production
+        dependencies (direct and transitive). Critical 10, high 5, moderate 2,
+        low 0.5. Each advisory counts once per package; aliases are
+        deduplicated. Withdrawn advisories are excluded.
+      when_empty: 100
+    scoring:
+      method: piecewise_linear
+      anchors:
+        - raw: 0
+          score: 100
+          descriptor: No known vulnerabilities.
+        - raw: 2
+          score: 75
+          descriptor: One moderate, or a few low.
+        - raw: 10
+          score: 50
+          descriptor: A critical, or several highs.
+        - raw: 30
+          score: 0
+          descriptor: Several criticals. Nobody is watching.
+    measure:
+      typescript_javascript: osv-scanner on the lockfile, against the OSV snapshot for the as-of date. Production dependencies only.
+      python: osv-scanner on the lockfile, against the OSV snapshot for the as-of date. Production dependencies only.
+      severity: >-
+        The GitHub Security Advisory severity label when present. Otherwise
+        the CVSS v3.1 base score band (critical 9.0-10.0, high 7.0-8.9,
+        moderate 4.0-6.9, low 0.1-3.9). Otherwise moderate.
+    not_applicable_when: null
+    rationale: >-
+      Severity points stop one critical advisory from scoring the same as
+      one low one. The count is not normalized by repository size, because
+      a vulnerability's risk does not shrink as the codebase grows.
+      Development-only dependencies are reported separately and not scored.
+    sources:
+      - "OSV schema (published, withdrawn, aliases). https://ossf.github.io/osv-schema/"
+      - "FIRST. CVSS v3.1 Specification, qualitative severity rating scale. https://www.first.org/cvss/v3.1/specification-document"
+
+  - id: "5.2"
+    key: major_versions_behind
+    name: Dependencies a major version behind
+    layer: static
+    weight: 20
+    requires: []
+    pooling: ratio
+    raw:
+      unit: percent
+      definition: >-
+        Direct dependencies (production and development) whose resolved
+        version is at least one major version behind the highest stable,
+        non-yanked version published on or before the as-of date / all direct
+        dependencies. For 0.x versions, a minor version bump counts as major.
+      when_empty: 100
+    scoring:
+      method: piecewise_linear
+      anchors:
+        - raw: 0
+          score: 100
+          descriptor: Every direct dependency is on its current major.
+        - raw: 10
+          score: 75
+          descriptor: A few dependencies are behind.
+        - raw: 25
+          score: 50
+          descriptor: A quarter of dependencies are behind.
+        - raw: 50
+          score: 0
+          descriptor: Upgrades have stopped.
+    measure:
+      typescript_javascript: npm registry publish times from the registry snapshot.
+      python: PyPI release upload times from the registry snapshot.
+    not_applicable_when: null
+    rationale: >-
+      Each major version behind is a migration someone will have to do, and
+      an agent writing code against current documentation will use APIs the
+      installed version does not have. Development dependencies are included
+      because outdated tooling affects every change.
+    sources:
+      - "Semantic Versioning 2.0.0, item 4 (major version zero). https://semver.org"
+
+  - id: "5.3"
+    key: lockfile
+    name: Lockfile
+    layer: static
+    weight: 15
+    requires: []
+    pooling: unit_weighted
+    raw:
+      unit: level
+      definition: Whether a lockfile exists and matches the manifest.
+      when_empty: 0
+    scoring:
+      method: levels
+      levels:
+        - level: none
+          score: 0
+          descriptor: No lockfile. Every install can resolve different versions.
+        - level: out_of_sync
+          score: 40
+          descriptor: A lockfile exists but does not match the manifest.
+        - level: in_sync
+          score: 100
+          descriptor: The lockfile matches the manifest.
+    measure:
+      typescript_javascript: >-
+        package-lock.json, npm-shrinkwrap.json, pnpm-lock.yaml, yarn.lock or
+        bun.lock. In sync means every dependency declared in package.json is
+        present in the lockfile with a version that satisfies its range.
+      python: >-
+        uv.lock, poetry.lock, pdm.lock, Pipfile.lock, or requirements files
+        with every requirement pinned with == and --hash. In sync means
+        every dependency declared in pyproject.toml (or Pipfile) is in the
+        lockfile with a version that satisfies its specifier, or for
+        uv.lock and poetry.lock, the lockfile's recorded manifest hash
+        matches.
+    not_applicable_when: null
+    rationale: >-
+      Without a lockfile, two installs of the same commit can produce
+      different code. Results stop being reproducible, including this
+      methodology's results.
+    sources:
+      - "npm ci documentation. https://docs.npmjs.com/cli/commands/npm-ci"
+
+  - id: "5.4"
+    key: secrets_in_tree
+    name: Secrets in the working tree
+    layer: static
+    weight: 20
+    requires: []
+    pooling: unit_weighted
+    raw:
+      unit: count
+      definition: >-
+        Secrets found by the pinned gitleaks default ruleset in every
+        tracked file at the scanned commit. .healthignore does not apply.
+        .gitleaksignore applies and is part of the ignore set.
+      when_empty: 100
+    scoring:
+      method: piecewise_linear
+      anchors:
+        - raw: 0
+          score: 100
+          descriptor: No secrets in the code.
+        - raw: 1
+          score: 0
+          descriptor: At least one secret is in the code.
+    measure:
+      all_languages: gitleaks dir on the checkout, default ruleset of the pinned version.
+    not_applicable_when: null
+    rationale: >-
+      One committed secret is enough to cause a breach, so the parameter is
+      binary. Secrets in git history are reported but not scored, because
+      the fix is rotating the key, which cannot be seen in the code.
+    sources:
+      - "CWE-798: Use of Hard-coded Credentials. https://cwe.mitre.org/data/definitions/798.html"
+      - "gitleaks. https://github.com/gitleaks/gitleaks"
+
+  - id: "5.5"
+    key: declaration_errors
+    name: Dependency declaration errors
+    layer: static
+    weight: 15
+    requires: []
+    pooling: ratio
+    raw:
+      unit: percent
+      definition: >-
+        (Declared dependencies that are never imported + imported packages
+        that are not declared) / declared direct dependencies.
+      when_empty: 100
+    scoring:
+      method: piecewise_linear
+      anchors:
+        - raw: 0
+          score: 100
+          descriptor: The manifest matches the code.
+        - raw: 5
+          score: 75
+          descriptor: A few stale or missing entries.
+        - raw: 15
+          score: 50
+          descriptor: The manifest and the code have drifted apart.
+        - raw: 30
+          score: 0
+          descriptor: Nobody maintains the manifest.
+    measure:
+      typescript_javascript: knip unused dependencies plus unlisted dependencies.
+      python: >-
+        deptry DEP001 (missing), DEP002 (unused) and DEP003 (transitive
+        imported directly). DEP004 (development dependency used in
+        production code) is not counted.
+    not_applicable_when: null
+    rationale: >-
+      An undeclared import works until the transitive dependency that
+      provides it changes. An unused declaration adds install time and
+      attack surface. Both mislead a reader about what the code depends on.
+    sources:
+      - "deptry rules. https://deptry.com/rules-violations/"

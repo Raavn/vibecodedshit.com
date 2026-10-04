@@ -1,0 +1,184 @@
+dimension:
+  id: 4
+  key: complexity_maintainability
+  name: Complexity & maintainability
+  question: How much does someone have to read to make one change correctly?
+  agent_relevance: >-
+    Every line an agent reads uses context. Long files, complex functions,
+    duplicated logic and dead code all increase how much it must read, and
+    duplicated logic is where an agent fixes one copy and misses the other.
+
+parameters:
+  - id: "4.1"
+    key: complex_functions
+    name: Complex functions
+    layer: static
+    weight: 30
+    requires: []
+    pooling: ratio
+    raw:
+      unit: percent
+      definition: >-
+        Functions with cognitive complexity strictly greater than 15 / all
+        functions in logic files, as enumerated by the tool.
+      when_empty: 100
+    scoring:
+      method: piecewise_linear
+      anchors:
+        - raw: 0
+          score: 100
+          descriptor: Every function can be read in one pass.
+        - raw: 3
+          score: 75
+          descriptor: A few hard functions.
+        - raw: 8
+          score: 50
+          descriptor: Hard functions in most areas.
+        - raw: 20
+          score: 0
+          descriptor: Logic is concentrated in functions nobody wants to touch.
+    measure:
+      typescript_javascript: eslint-plugin-sonarjs cognitive-complexity rule, threshold 15.
+      python: complexipy, threshold 15.
+    not_applicable_when: null
+    rationale: >-
+      Cognitive complexity counts nesting and breaks in linear flow, which
+      is closer to how hard a function is to read than cyclomatic
+      complexity. 15 is the default threshold in SonarQube, eslint-plugin-sonarjs
+      and complexipy. Counting the share of functions over the threshold,
+      instead of the mean, keeps many small functions from hiding a few
+      large ones.
+    sources:
+      - "Campbell, G. A. Cognitive Complexity: A new way of measuring understandability. SonarSource, 2018. https://www.sonarsource.com/docs/CognitiveComplexity.pdf"
+      - "SonarQube rule S3776 (Cognitive Complexity of functions should not be too high), default threshold 15."
+      - "McCabe, T. J. A Complexity Measure. IEEE Transactions on Software Engineering, 1976 (cyclomatic complexity, threshold 10)."
+
+  - id: "4.2"
+    key: large_files
+    name: Lines in large files
+    layer: static
+    weight: 20
+    requires: []
+    pooling: ratio
+    raw:
+      unit: percent
+      definition: >-
+        Logic lines in logic files with more than 500 logic lines / all logic
+        lines.
+      when_empty: 100
+    scoring:
+      method: piecewise_linear
+      anchors:
+        - raw: 0
+          score: 100
+          descriptor: Every file fits in one read.
+        - raw: 10
+          score: 75
+          descriptor: A few large files.
+        - raw: 25
+          score: 50
+          descriptor: A quarter of the code lives in large files.
+        - raw: 50
+          score: 0
+          descriptor: Most of the code lives in files too large to read whole.
+    measure:
+      typescript_javascript: Logic line count per file (scope.yaml).
+      python: Logic line count per file (scope.yaml); docstrings do not count.
+    not_applicable_when: null
+    rationale: >-
+      A large file has to be read in parts, so changes to it are made with
+      partial context. The threshold of 500 logic lines is more lenient than
+      ESLint's max-lines default (300 physical lines) and stricter than
+      Pylint's max-module-lines default (1,000). The raw value is a share of
+      lines, not of files, so one 5,000-line file weighs more than one
+      501-line file.
+    sources:
+      - "ESLint max-lines rule, default 300. https://eslint.org/docs/latest/rules/max-lines"
+      - "Pylint too-many-lines (C0302), max-module-lines default 1000."
+
+  - id: "4.3"
+    key: duplication
+    name: Duplication
+    layer: static
+    weight: 25
+    requires: []
+    pooling: ratio
+    raw:
+      unit: percent
+      definition: Duplicated lines / all lines in logic files, as reported by jscpd.
+      when_empty: 100
+    scoring:
+      method: piecewise_linear
+      anchors:
+        - raw: 3
+          score: 100
+          descriptor: Duplication is incidental.
+        - raw: 5
+          score: 75
+          descriptor: Some copied blocks.
+        - raw: 10
+          score: 50
+          descriptor: Copy and paste is a common way to add features.
+        - raw: 20
+          score: 0
+          descriptor: Large parts of the logic exist in several copies.
+    measure:
+      typescript_javascript: jscpd, min-tokens 50, min-lines 5, logic files only.
+      python: jscpd, same settings.
+    not_applicable_when: null
+    rationale: >-
+      A bug fixed in one copy stays in the others. This is a common agent
+      mistake: the agent finds one copy, fixes it, and its tests pass. 3% is
+      the default duplication limit in SonarQube's quality gate.
+    sources:
+      - "SonarQube default quality gate (Sonar way): duplicated lines on new code at most 3%."
+      - "jscpd. https://github.com/kucherenko/jscpd"
+
+  - id: "4.4"
+    key: dead_code
+    name: Unused exports and files
+    layer: static
+    weight: 25
+    requires: []
+    pooling: ratio
+    raw:
+      unit: percent
+      definition: >-
+        (Unused exported symbols + exported symbols in unused files) / all
+        exported symbols in logic files. Exported types count. Library entry
+        points (package.json exports and main, Python __all__ of a
+        distributed package) count as used.
+      when_empty: 100
+    scoring:
+      method: piecewise_linear
+      anchors:
+        - raw: 0
+          score: 100
+          descriptor: Everything exported is used.
+        - raw: 3
+          score: 75
+          descriptor: A little dead code.
+        - raw: 8
+          score: 50
+          descriptor: Dead code is common.
+        - raw: 20
+          score: 0
+          descriptor: A large share of the code is never called.
+    measure:
+      typescript_javascript: knip (unused files, exports and types), with framework plugins enabled.
+      python: >-
+        vulture with min-confidence 60 for unused functions, classes and
+        methods; decorated definitions are treated as used. Unused modules:
+        modules no other module imports, excluding entry modules (__main__,
+        manage.py, wsgi, asgi, settings, conftest, targets of
+        [project.scripts], Django convention modules such as models, admin,
+        apps, urls, views, and FastAPI main.py).
+    not_applicable_when: null
+    rationale: >-
+      Dead code costs reading time and looks like a place to make a change.
+      An agent that edits an unused function gets no test failure and no
+      effect. Decorated Python definitions are treated as used because
+      frameworks register them by decorator (routes, fixtures, signals).
+    sources:
+      - "knip. https://knip.dev"
+      - "vulture. https://github.com/jendrikseipp/vulture"
