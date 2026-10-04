@@ -1,0 +1,17 @@
+{
+  "note": "Hand counts. One package per case, 3 logic lines each (solution has 2 files, 6 lines). Scores: none 0, partial 40, strict 75, strict_plus 100. Pooled = 3*(0+40+40+75+100+40+0+75+0+75) + 6*40 = 1575, over 36 lines.",
+  "levels": {
+    "noflags": "none",
+    "oneflag": "partial",
+    "partial": "partial",
+    "strict": "strict",
+    "strictplus": "strict_plus",
+    "chain": "partial",
+    "jsplain": "none",
+    "jscheck": "strict",
+    "noconfig": "none",
+    "inherited": "strict",
+    "solution": "partial"
+  },
+  "score": 43.75
+}

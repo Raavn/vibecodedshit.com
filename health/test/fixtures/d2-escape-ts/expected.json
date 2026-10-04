@@ -1,0 +1,8 @@
+{
+  "note": "Hand counts. hatches.ts 17 logic lines, 11 points: as 1, as unknown as 2, as any 2, any annotation 1, angle bracket 1, x! 1, as const 0, ts-ignore 1, ts-expect-error 1, strings 0, y!: T 1. nocheck.ts 3 lines, 10 points. middle.ts 3 lines, 0 (a ts-nocheck outside the leading comments is not an opt-out). plain.js 3 lines, 1 point (ts-ignore; the JSDoc any is not counted).",
+  "ts": {
+    "numerator": 22,
+    "denominator": 26,
+    "scale": 1000
+  }
+}

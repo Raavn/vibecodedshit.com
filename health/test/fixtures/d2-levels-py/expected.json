@@ -1,0 +1,20 @@
+{
+  "note": "Hand counts. One package per case, 2 logic lines each. Scores: none 0, basic 40, standard 75, strict 100. Pooled = 995/14.",
+  "levels": {
+    "noconfig": "none",
+    "pr_basic": "basic",
+    "pr_unset": "standard",
+    "pr_standard": "standard",
+    "pr_strict": "strict",
+    "pr_json": "strict",
+    "based_standard": "standard",
+    "mypy_default": "basic",
+    "mypy_standard": "standard",
+    "mypy_strict": "strict",
+    "mypy_ini": "strict",
+    "mypy_cfg": "standard",
+    "both": "basic",
+    "inner": "strict"
+  },
+  "score": 71.0714
+}

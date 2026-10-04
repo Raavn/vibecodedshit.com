@@ -1,0 +1,8 @@
+{
+  "note": "Hand counts. hatches.py 22 logic lines, 13 points: Any in a parameter 1, return 1, variable 1, string annotations 2, typing.Any/t.Any/aliased Any 3, cast 1, typing.cast 1, type: ignore 1, pyright: ignore 1, noqa then type: ignore 1. header.py 2 lines, 10 (type: ignore before the first statement). docstring_first.py 2 lines, 1 (the docstring is the first statement). mypyignore.py 2 lines, 10. strings.py 6 lines, 0 (text in strings and a user-defined Any).",
+  "py": {
+    "numerator": 34,
+    "denominator": 34,
+    "scale": 1000
+  }
+}
