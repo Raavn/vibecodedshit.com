@@ -43,3 +43,27 @@ export function tallyUnits(tallies: Map<string, Tally>) {
       raw: { kind: 'ratio' as const, numerator: t.numerator, denominator: t.denominator, scale: 100 },
     }));
 }
+
+export interface LogicUnit {
+  package: string;
+  group: Group;
+  /** The package directory, "." for the root. */
+  dir: string;
+  /** Logic lines of the unit. */
+  weight: number;
+  files: ScopedFile[];
+}
+
+/** One unit per (workspace package, language group) that has at least one logic-role file, sorted by package then group. */
+export function logicUnits(scope: Scope): LogicUnit[] {
+  const units = new Map<string, LogicUnit>();
+  for (const file of scope.files) {
+    if (file.role !== 'logic') continue;
+    const key = unitId(file);
+    const unit = units.get(key) ?? { package: file.package, group: file.group, dir: file.package, weight: 0, files: [] };
+    unit.weight += file.logicLines;
+    unit.files.push(file);
+    units.set(key, unit);
+  }
+  return [...units.values()].sort((a, b) => a.package.localeCompare(b.package) || a.group.localeCompare(b.group));
+}

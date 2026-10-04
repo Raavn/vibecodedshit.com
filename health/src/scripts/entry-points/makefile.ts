@@ -43,6 +43,17 @@ export function parseMakefile(text: string): Map<string, Target> {
 /** Targets of the Makefile in `dir`. A prerequisite is expanded like a call to `make <prerequisite>`. */
 export const makefileEntryPoints: EntryPointKind = {
   id: 'makefile',
+  list(repoPath, dir) {
+    const base = dir === '' ? '.' : dir;
+    for (const candidate of MAKEFILE_NAMES) {
+      const text = readTracked(repoPath, path.posix.join(base, candidate));
+      if (text === null) continue;
+      return [...parseMakefile(text).keys()]
+        .filter((name) => !name.startsWith('.') && !name.includes('%'))
+        .map((name) => ({ name, invoke: `make ${name}` }));
+    }
+    return [];
+  },
   lookup(repoPath, dir, name) {
     const base = dir === '' ? '.' : dir;
     for (const candidate of MAKEFILE_NAMES) {

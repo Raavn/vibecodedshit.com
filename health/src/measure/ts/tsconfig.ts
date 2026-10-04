@@ -1,6 +1,7 @@
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 import ts from 'typescript';
+import { trackedPaths } from '../../scope/tracked.js';
 
 export const STRICT_FAMILY = [
   'noImplicitAny',
@@ -162,4 +163,38 @@ export function nearestTsConfig(repoPath: string, dir: string): string | undefin
     if (current === root) break;
   }
   return undefined;
+}
+
+const optionsCache = new Map<string, ts.CompilerOptions>();
+
+/**
+ * The compiler options of the nearest `tsconfig.json`, else `jsconfig.json`, with `extends` chains resolved through a host that only
+ * sees tracked files (so `node_modules` is never read). Without a config: `Bundler` resolution, ESNext modules, `allowJs`, JSON modules.
+ */
+export function compilerOptionsFor(repoPath: string, dir: string): ts.CompilerOptions {
+  const fallback: ts.CompilerOptions = {
+    moduleResolution: ts.ModuleResolutionKind.Bundler,
+    module: ts.ModuleKind.ESNext,
+    allowJs: true,
+    resolveJsonModule: true,
+  };
+  const configFile = nearestTsConfig(repoPath, dir);
+  if (!configFile) return fallback;
+  const cached = optionsCache.get(configFile);
+  if (cached) return cached;
+  const root = path.resolve(repoPath);
+  const tracked = new Set(trackedPaths(repoPath));
+  const rel = (abs: string): string => path.posix.relative(posix(root), posix(abs));
+  const visible = (abs: string): boolean => tracked.has(rel(abs));
+  const configHost: ts.ParseConfigHost = {
+    useCaseSensitiveFileNames: true,
+    readDirectory: () => [],
+    fileExists: visible,
+    readFile: (abs) => (visible(abs) ? ts.sys.readFile(abs) : undefined),
+  };
+  const read = ts.readConfigFile(configFile, (abs) => configHost.readFile(abs));
+  const parsed = read.error ? undefined : ts.parseJsonConfigFileContent(read.config, configHost, path.dirname(configFile));
+  const options: ts.CompilerOptions = { ...fallback, ...(parsed?.options ?? {}), allowJs: true };
+  optionsCache.set(configFile, options);
+  return options;
 }

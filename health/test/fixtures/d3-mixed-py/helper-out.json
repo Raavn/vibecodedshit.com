@@ -1,0 +1,149 @@
+{
+  "services/admin/blogapp": {
+    "emptied": [],
+    "edges": [
+      {
+        "from": "services/admin/blogapp/models.py",
+        "to": "services/admin/blogapp/views.py",
+        "lines": [
+          1
+        ]
+      }
+    ],
+    "violations": [
+      {
+        "contract": "services/admin:models-do-not-import-http",
+        "importer": "services/admin/blogapp/models.py",
+        "imported": "services/admin/blogapp/views.py",
+        "external": false
+      },
+      {
+        "contract": "services/admin:only-urls-import-views",
+        "importer": "services/admin/blogapp/models.py",
+        "imported": "services/admin/blogapp/views.py",
+        "external": false
+      }
+    ],
+    "skipped": []
+  },
+  "services/api/app": {
+    "emptied": [],
+    "edges": [
+      {
+        "from": "services/api/app/api/routes/users.py",
+        "to": "services/api/app/services/user_service.py",
+        "lines": [
+          1
+        ]
+      },
+      {
+        "from": "services/api/app/features/ledger/entry.py",
+        "to": "services/api/app/features/billing/__init__.py",
+        "lines": [
+          1
+        ]
+      },
+      {
+        "from": "services/api/app/features/ledger/entry.py",
+        "to": "services/api/app/features/billing/charge.py",
+        "lines": [
+          2
+        ]
+      },
+      {
+        "from": "services/api/app/items/crud.py",
+        "to": "services/api/app/items/router.py",
+        "lines": [
+          1
+        ]
+      },
+      {
+        "from": "services/api/app/main.py",
+        "to": "services/api/app/api/routes/users.py",
+        "lines": [
+          1
+        ]
+      },
+      {
+        "from": "services/api/app/models/user.py",
+        "to": "services/api/app/services/user_service.py",
+        "lines": [
+          1
+        ]
+      },
+      {
+        "from": "services/api/app/services/db.py",
+        "to": "services/api/app/services/user_service.py",
+        "lines": [
+          1
+        ]
+      },
+      {
+        "from": "services/api/app/services/user_service.py",
+        "to": "services/api/app/api/routes/users.py",
+        "lines": [
+          2
+        ]
+      },
+      {
+        "from": "services/api/app/services/user_service.py",
+        "to": "services/api/app/models/user.py",
+        "lines": [
+          3
+        ]
+      },
+      {
+        "from": "services/api/app/users/router.py",
+        "to": "services/api/app/items/router.py",
+        "lines": [
+          1
+        ]
+      }
+    ],
+    "violations": [
+      {
+        "contract": "services/api:data-does-not-import-up",
+        "importer": "services/api/app/items/crud.py",
+        "imported": "services/api/app/items/router.py",
+        "external": false
+      },
+      {
+        "contract": "services/api:data-does-not-import-up",
+        "importer": "services/api/app/models/user.py",
+        "imported": "services/api/app/services/user_service.py",
+        "external": false
+      },
+      {
+        "contract": "services/api:data-does-not-import-up",
+        "importer": "services/api/app/services/db.py",
+        "imported": "services/api/app/services/user_service.py",
+        "external": false
+      },
+      {
+        "contract": "services/api:routers-are-leaves",
+        "importer": "services/api/app/items/crud.py",
+        "imported": "services/api/app/items/router.py",
+        "external": false
+      },
+      {
+        "contract": "services/api:routers-are-leaves",
+        "importer": "services/api/app/services/user_service.py",
+        "imported": "services/api/app/api/routes/users.py",
+        "external": false
+      },
+      {
+        "contract": "services/api:services-do-not-import-http",
+        "importer": "services/api/app/services/user_service.py",
+        "imported": "services/api/app/api/routes/users.py",
+        "external": false
+      },
+      {
+        "contract": "services/api:services-do-not-import-http#packages",
+        "importer": "services/api/app/services/user_service.py",
+        "imported": "fastapi",
+        "external": true
+      }
+    ],
+    "skipped": []
+  }
+}

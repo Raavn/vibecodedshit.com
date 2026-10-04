@@ -53,3 +53,12 @@ describe('moduleDirs and publicEntryGlob', () => {
     expect(publicEntryGlob(methodology.presets.express!, 'typescript_javascript')).toBe('index.{ts,js,mts,mjs,cjs}');
   });
 });
+
+describe('prefixes', () => {
+  it('Python passes its root package directories instead of src/, TypeScript keeps both defaults', () => {
+    const layers = { shared: ['shared/**'] };
+    expect([...globLayers(layers, ['src/shared/a.py', 'pkg/shared/b.py', 'shared/c.py'], ['', 'pkg/'])]).toEqual([['pkg/shared/b.py', 'shared'], ['shared/c.py', 'shared']]);
+    expect([...globLayers(layers, ['src/shared/a.ts', 'pkg/shared/b.ts', 'shared/c.ts'])]).toEqual([['src/shared/a.ts', 'shared'], ['shared/c.ts', 'shared']]);
+    expect(moduleDirs(['features/*'], ['pkg/features/x/a.py'], ['', 'pkg/']).get('pkg/features/x/a.py')).toBe('pkg/features/x');
+  });
+});

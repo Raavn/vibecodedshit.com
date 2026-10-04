@@ -4,19 +4,19 @@ import { entryPointKind } from './entry-points/index.js';
 import type { ResolvedCommand } from './types.js';
 
 const SKIPPED_WORDS = new Set(['sudo', 'time', 'exec', 'env', 'command', 'nohup']);
-const RUNNER_PREFIXES: string[][] = [
+export const RUNNER_PREFIXES: string[][] = [
   ['pnpm', 'exec'], ['pnpm', 'dlx'], ['yarn', 'exec'], ['yarn', 'dlx'], ['uv', 'run'], ['poetry', 'run'], ['pdm', 'run'],
-  ['hatch', 'run'], ['pipx', 'run'], ['python', '-m'], ['python3', '-m'], ['npx'], ['bunx'],
+  ['hatch', 'run'], ['pipx', 'run'], ['python', '-m'], ['python3', '-m'], ['npx'], ['bunx'], ['yarn'], ['pnpm'],
 ];
 
-interface Simple {
+export interface Simple {
   text: string;
   /** The separator that follows the command. */
   sep: string;
 }
 
 /** Split on newline, `&&`, `||`, `;` and `|` outside quotes. */
-function splitSimple(text: string): Simple[] {
+export function splitSimple(text: string): Simple[] {
   const out: Simple[] = [];
   let current = '';
   let quote: string | null = null;
@@ -43,7 +43,7 @@ function splitSimple(text: string): Simple[] {
   return out.filter((s) => s.text.trim() !== '');
 }
 
-function tokenize(text: string): string[] {
+export function tokenize(text: string): string[] {
   const tokens: string[] = [];
   const re = /"([^"]*)"|'([^']*)'|(\S+)/g;
   for (let m = re.exec(text); m !== null; m = re.exec(text)) tokens.push(m[1] ?? m[2] ?? m[3] ?? '');
@@ -75,57 +75,135 @@ function stripRunners(tokens: string[]): string[] {
 
 interface Call {
   runner: string;
-  kind: 'package-json' | 'makefile';
+  kind: string;
   names: string[];
   dir: string;
   prePost: boolean;
+  /** When no name is found, the command is read again with its runner prefix removed instead of being kept as a call. */
+  fallback: boolean;
+}
+
+/** Flags that take a value, for the runners whose first plain argument is the script or target name. */
+const VALUE_FLAGS = new Set(['--prefix', '-C', '--cwd', '--filter', '-F', '--workspace', '--directory']);
+
+function joinDir(dir: string, next: string | undefined): string {
+  return next === undefined ? dir : path.posix.normalize(path.posix.join(dir, next));
+}
+
+function detectPackageManager(base: string, tokens: string[], dir: string): Call | undefined {
+  let callDir = dir;
+  const args: string[] = [];
+  for (let i = 1; i < tokens.length; i += 1) {
+    const token = tokens[i] as string;
+    if (token === '--prefix' || token === '-C' || token === '--cwd') {
+      callDir = joinDir(dir, tokens[i + 1]);
+      i += 1;
+    } else if (token.startsWith('--prefix=')) callDir = joinDir(dir, token.slice(9));
+    else if (VALUE_FLAGS.has(token)) i += 1;
+    else if (token.startsWith('-')) continue;
+    else args.push(token);
+  }
+  let name: string | undefined;
+  let fallback = false;
+  if (base === 'npm') {
+    if (args[0] === 'run' || args[0] === 'run-script') name = args[1];
+    else if (args[0] === 'test' || args[0] === 'start') name = args[0];
+  } else if (base === 'bun') {
+    if (args[0] === 'run') name = args[1];
+  } else if (args[0] === 'run') name = args[1];
+  else if (args[0] !== undefined && !(base === 'pnpm' && (args[0] === 'exec' || args[0] === 'dlx')) && !(base === 'yarn' && (args[0] === 'exec' || args[0] === 'dlx'))) {
+    name = args[0];
+    fallback = true;
+  }
+  if (name === undefined) return undefined;
+  return { runner: base, kind: 'package-json', names: [name], dir: callDir, prePost: base === 'npm' || base === 'yarn', fallback };
+}
+
+function detectMake(base: string, tokens: string[], dir: string): Call | undefined {
+  let callDir = dir;
+  const targets: string[] = [];
+  for (let i = 1; i < tokens.length; i += 1) {
+    const token = tokens[i] as string;
+    if (token === '-C' || token === '--directory') {
+      callDir = joinDir(dir, tokens[i + 1]);
+      i += 1;
+    } else if (token === '-f' || token === '--file') i += 1;
+    else if (token.startsWith('-') || token.includes('=')) continue;
+    else targets.push(token);
+  }
+  if (targets.length === 0) return undefined;
+  return { runner: base, kind: 'makefile', names: targets, dir: callDir, prePost: false, fallback: false };
+}
+
+function detectJust(tokens: string[], dir: string): Call {
+  let callDir = dir;
+  const names: string[] = [];
+  for (let i = 1; i < tokens.length; i += 1) {
+    const token = tokens[i] as string;
+    if (token === '-d' || token === '--working-directory') {
+      callDir = joinDir(dir, tokens[i + 1]);
+      i += 1;
+    } else if (token === '-f' || token === '--justfile') i += 1;
+    else if (token.startsWith('--justfile=') || token.startsWith('--working-directory=')) continue;
+    else if (token.startsWith('-') || token.includes('=')) continue;
+    else names.push(token);
+  }
+  return { runner: 'just', kind: 'justfile', names: names.length === 0 ? ['@default'] : names, dir: callDir, prePost: false, fallback: false };
+}
+
+function detectTox(tokens: string[], dir: string): Call {
+  const names: string[] = [];
+  for (let i = 1; i < tokens.length; i += 1) {
+    const token = tokens[i] as string;
+    if (token === '--') break;
+    if (token === '-e') {
+      names.push(...(tokens[i + 1] ?? '').split(','));
+      i += 1;
+    } else if (token.startsWith('-e') && token.length > 2) names.push(...token.slice(2).split(','));
+  }
+  return { runner: 'tox', kind: 'tox', names: names.length === 0 ? ['@default'] : names.filter((n) => n !== ''), dir, prePost: false, fallback: false };
+}
+
+function detectNox(tokens: string[], dir: string): Call {
+  const names: string[] = [];
+  for (let i = 1; i < tokens.length; i += 1) {
+    const token = tokens[i] as string;
+    if (token === '--') break;
+    if (token === '-s' || token === '--session' || token === '-e' || token === '--sessions') {
+      while (tokens[i + 1] !== undefined && !(tokens[i + 1] as string).startsWith('-')) {
+        names.push(...(tokens[i + 1] as string).split(','));
+        i += 1;
+      }
+    }
+  }
+  return { runner: 'nox', kind: 'nox', names: names.length === 0 ? ['@all'] : names.filter((n) => n !== ''), dir, prePost: false, fallback: false };
+}
+
+/** `uv run <n>`, `poetry run <n>`, `pdm run <n>`, `hatch run [<env>:]<n>`, `rye run <n>`, `poe <n>` and `task <n>` name a script of a pyproject table. */
+function detectPyproject(tokens: string[], dir: string): Call | undefined {
+  const [first, second] = tokens;
+  const rest = (from: number): string | undefined => tokens.slice(from).find((t) => !t.startsWith('-'));
+  const make = (runner: string, key: (n: string) => string, name: string | undefined, fallback: boolean): Call | undefined =>
+    name === undefined ? undefined : { runner, kind: 'pyproject', names: [key(name)], dir, prePost: false, fallback };
+  if ((first === 'uv' || first === 'poetry') && second === 'run') return make(first, (n) => `scripts:${n}`, rest(2), true);
+  if (first === 'pdm' && second === 'run') return make(first, (n) => `pdm:${n}`, rest(2), true);
+  if (first === 'hatch' && second === 'run') return make(first, (n) => (n.includes(':') ? `hatch:${n}` : `hatch:default:${n}`), rest(2), true);
+  if (first === 'rye' && second === 'run') return make(first, (n) => `rye:${n}`, rest(2), false);
+  if (first === 'poe') return make(first, (n) => `poe:${n}`, rest(1), false);
+  if (first === 'task') return make(first, (n) => `taskipy:${n}`, rest(1), false);
+  return undefined;
 }
 
 function detectCall(tokens: string[], dir: string): Call | undefined {
   const first = tokens[0];
   if (first === undefined) return undefined;
   const base = path.posix.basename(first);
-  if (base === 'npm' || base === 'yarn' || base === 'pnpm' || base === 'bun') {
-    let callDir = dir;
-    const args: string[] = [];
-    for (let i = 1; i < tokens.length; i += 1) {
-      const token = tokens[i] as string;
-      if (token === '--prefix' || token === '-C' || token === '--cwd') {
-        const next = tokens[i + 1];
-        if (next !== undefined) callDir = path.posix.normalize(path.posix.join(dir, next));
-        i += 1;
-      } else if (token.startsWith('--prefix=')) callDir = path.posix.normalize(path.posix.join(dir, token.slice(9)));
-      else if (token.startsWith('-')) continue;
-      else args.push(token);
-    }
-    let name: string | undefined;
-    if (base === 'npm') {
-      if (args[0] === 'run' || args[0] === 'run-script') name = args[1];
-      else if (args[0] === 'test' || args[0] === 'start') name = args[0];
-    } else if (base === 'bun') {
-      if (args[0] === 'run') name = args[1];
-    } else if (args[0] === 'run') name = args[1];
-    else if (args[0] !== undefined && !(base === 'pnpm' && args[0] === 'exec')) name = args[0];
-    if (name === undefined) return undefined;
-    return { runner: base, kind: 'package-json', names: [name], dir: callDir, prePost: base === 'npm' || base === 'yarn' };
-  }
-  if (base === 'make' || first === '$(MAKE)' || first === '${MAKE}') {
-    let callDir = dir;
-    const targets: string[] = [];
-    for (let i = 1; i < tokens.length; i += 1) {
-      const token = tokens[i] as string;
-      if (token === '-C' || token === '--directory') {
-        const next = tokens[i + 1];
-        if (next !== undefined) callDir = path.posix.normalize(path.posix.join(dir, next));
-        i += 1;
-      } else if (token === '-f' || token === '--file') i += 1;
-      else if (token.startsWith('-') || token.includes('=')) continue;
-      else targets.push(token);
-    }
-    if (targets.length === 0) return undefined;
-    return { runner: 'make', kind: 'makefile', names: targets, dir: callDir, prePost: false };
-  }
-  return undefined;
+  if (base === 'npm' || base === 'yarn' || base === 'pnpm' || base === 'bun') return detectPackageManager(base, tokens, dir);
+  if (base === 'make' || first === '$(MAKE)' || first === '${MAKE}') return detectMake('make', tokens, dir);
+  if (base === 'just') return detectJust(tokens, dir);
+  if (base === 'tox') return detectTox(tokens, dir);
+  if (base === 'nox') return detectNox(tokens, dir);
+  return detectPyproject(tokens, dir);
 }
 
 interface Frame {
@@ -144,21 +222,30 @@ function expandText(repoPath: string, text: string, frame: Frame, maxDepth: numb
       if (simple.sep === '&&') dir = path.posix.normalize(path.posix.join(dir, tokens[1]));
       continue;
     }
+    const call = detectCall(tokens, dir);
+    if (call && follow(repoPath, call, tokens, frame, maxDepth, out)) continue;
     const stripped = stripRunners(tokens);
-    const call = stripped === tokens ? detectCall(tokens, dir) : undefined;
-    if (call) {
-      follow(repoPath, call, tokens, frame, maxDepth, out);
-      continue;
-    }
     const [tool, ...argv] = stripped;
     out.push({ tool: tool === undefined ? null : path.posix.basename(tool), argv, file: frame.file, chain: frame.chain, depth: frame.chain.length });
   }
 }
 
-function follow(repoPath: string, call: Call, tokens: string[], frame: Frame, maxDepth: number, out: ResolvedCommand[]): void {
-  const plain = (): void =>
-    void out.push({ tool: call.runner, argv: tokens.slice(1), file: frame.file, chain: frame.chain, depth: frame.chain.length });
+/** Replace a call by what it runs. False when the caller should read the command another way (runner prefix removed). */
+function follow(repoPath: string, call: Call, tokens: string[], frame: Frame, maxDepth: number, out: ResolvedCommand[]): boolean {
   const kind = entryPointKind(call.kind);
+  const plain = (): boolean => {
+    if (call.fallback && frame.chain.length < maxDepth) return false;
+    const readable = kind?.fileFor === undefined ? undefined : kind.fileFor(repoPath, call.dir) !== undefined;
+    out.push({
+      tool: call.runner,
+      argv: tokens.slice(1),
+      file: frame.file,
+      chain: frame.chain,
+      depth: frame.chain.length,
+      ...(readable === undefined ? {} : { readable }),
+    });
+    return true;
+  };
   if (!kind || frame.chain.length >= maxDepth) return plain();
   let followed = false;
   for (const name of call.names) {
@@ -177,7 +264,7 @@ function follow(repoPath: string, call: Call, tokens: string[], frame: Frame, ma
       for (const body of found.bodies) expandText(repoPath, body, next, maxDepth, out);
     }
   }
-  if (!followed) plain();
+  return followed || plain();
 }
 
 /** The commands a text runs, calls to scripts and make targets replaced by what they run (up to `maxDepth` bodies deep, default 3). */

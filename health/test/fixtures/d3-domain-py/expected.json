@@ -1,0 +1,37 @@
+{
+  "note": "Hand counts. 12 domain files (app/domain, the test file is ignored). Impure: django, requests.adapters (first dotted name), sqlalchemy.orm, psycopg2.extras, an import of app/infra, a builtin open() call, builtins.open(), and a sqlalchemy import under TYPE_CHECKING. Clean: the file that defines its own open, Path(...).open(), a relative import and util.py. 8 of 12.",
+  "3.1": {
+    ".": "none"
+  },
+  "3.2": {
+    ".": {
+      "numerator": 0,
+      "denominator": 2,
+      "violating": []
+    }
+  },
+  "3.3": {
+    ".": {
+      "numerator": 0,
+      "denominator": 13,
+      "files": []
+    }
+  },
+  "3.4": "not_applicable",
+  "3.5": {
+    ".": {
+      "numerator": 8,
+      "denominator": 12,
+      "files": [
+        "app/domain/builtin_open.py",
+        "app/domain/db.py",
+        "app/domain/files.py",
+        "app/domain/net.py",
+        "app/domain/pg.py",
+        "app/domain/typing_only.py",
+        "app/domain/uses_infra.py",
+        "app/domain/web.py"
+      ]
+    }
+  }
+}
