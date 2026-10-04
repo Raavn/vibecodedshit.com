@@ -1,0 +1,7 @@
+{
+  "name": "web",
+  "main": "src/index.ts",
+  "devDependencies": {
+    "vitest": "*"
+  }
+}

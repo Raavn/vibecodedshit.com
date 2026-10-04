@@ -35,6 +35,10 @@ export function summarize(run: RunFile, methodology: Methodology): string {
   }
   const names = new Map(methodology.dimensions.flatMap((d) => d.parameters).map((p) => [p.id, p.name]));
   for (const param of run.parameters) {
+    if (param.status === 'not_measured' && param.reason && !/^(execution layer|not implemented)/.test(param.reason)) {
+      lines.push(`${param.id} ${names.get(param.id) ?? ''}: not measured (${param.reason})`);
+      continue;
+    }
     if (param.status !== 'measured') continue;
     const raw = param.raw;
     const shown = raw && raw.kind === 'ratio' ? `${round1((raw.numerator / raw.denominator) * raw.scale)}%` : 'n/a';

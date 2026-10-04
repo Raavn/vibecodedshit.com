@@ -14,23 +14,29 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "test": "vitest run",
+    "test:tools": "HEALTH_TOOLS=1 vitest run test/tools",
     "verify": "npm run typecheck && npm run lint && npm run test",
     "build": "tsc -p tsconfig.build.json",
     "health": "tsx src/bin.ts"
   },
   "dependencies": {
+    "@typescript-eslint/parser": "8.71.0",
+    "eslint": "9.39.5",
+    "eslint-plugin-sonarjs": "4.2.2",
     "ignore": "^7.0.12",
+    "jscpd": "5.4.0",
+    "knip": "6.39.0",
     "picomatch": "^4.0.7",
+    "smol-toml": "1.9.0",
     "typescript": "^5.9.3",
+    "typescript-eslint": "8.71.0",
     "yaml": "^2.9.1",
     "zod": "^4.6.5"
   },
   "devDependencies": {
     "@types/node": "^26.6.4",
     "@types/picomatch": "^4.0.3",
-    "eslint": "^9.39.5",
     "tsx": "^4.23.15",
-    "typescript-eslint": "^8.71.0",
     "vitest": "^4.1.11"
   }
 }

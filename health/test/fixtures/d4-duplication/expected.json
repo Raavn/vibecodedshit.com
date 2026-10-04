@@ -1,0 +1,19 @@
+{
+  "note": "Hand counts. TS: a.ts and b.ts share a 12-line block (12 duplicated lines each); c.ts has a different block; d.ts and e.ts share two 4-line blocks (below min-lines 5, not counted); filler.ts is 300 distinct lines. Lines are physical: a 14, b 14, c 12, d 10, e 10, filler 300 = 360. Python: p1.py and p2.py share a 12-line block, 14 lines each, filler.py 300 lines = 328.",
+  "p43": {
+    "web": {
+      "numerator": 24,
+      "denominator": 360
+    },
+    "api": {
+      "numerator": 24,
+      "denominator": 328
+    },
+    "pooled": {
+      "numerator": 48,
+      "denominator": 688
+    },
+    "rawPercent": 6.976744,
+    "score": 65.116279
+  }
+}

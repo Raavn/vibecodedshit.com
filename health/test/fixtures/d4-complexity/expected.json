@@ -1,0 +1,37 @@
+{
+  "note": "Hand counts. packages/web (TS): funcs.ts has 10 functions (flat15, flat16, trivial, withCallback, its callback, Box.method, t1..t4), one over 15 (flat16 = 16; flat15 = 15 pins strict >). broken.ts does not parse. packages/api (Python): funcs.py has 10 functions (flat15, flat16, trivial, Box.method, t1..t6), one over 15. Cognitive complexity by Campbell: flat15 15, flat16 16, method 1, callback 1 (its own function, the outer withCallback is 0).",
+  "p41": {
+    "web": {
+      "numerator": 1,
+      "denominator": 10
+    },
+    "api": {
+      "numerator": 1,
+      "denominator": 10
+    },
+    "pooled": {
+      "numerator": 2,
+      "denominator": 20
+    },
+    "rawPercent": 10,
+    "score": 41.6667
+  },
+  "complexityByFile": [
+    {
+      "file": "packages/api/api/funcs.py",
+      "group": "python",
+      "functions": 10,
+      "overThreshold": 1,
+      "complexitySum": 32,
+      "complexityMax": 16
+    },
+    {
+      "file": "packages/web/src/funcs.ts",
+      "group": "typescript_javascript",
+      "functions": 10,
+      "overThreshold": 1,
+      "complexitySum": 33,
+      "complexityMax": 16
+    }
+  ]
+}
