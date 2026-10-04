@@ -18,6 +18,10 @@ ARG PDM_VERSION=2.29.2
 ARG PIPENV_VERSION=2026.8.0
 ARG RUFF_VERSION=0.16.10
 ARG MYPY_VERSION=2.4.0
+ARG C8_VERSION=12.0.0
+ARG PYTEST_VERSION=9.1.1
+ARG PYTEST_COV_VERSION=7.1.0
+ARG COVERAGE_VERSION=7.16.2
 ARG GO_VERSION=1.27.1
 ARG GO_SHA256=63d339f0da5ab53635a56f2490a7984dfe12dfcff22ad749f63edaf590168445
 
@@ -33,7 +37,8 @@ RUN npm install -g \
     bun@${BUN_VERSION} \
     typescript@${TYPESCRIPT_VERSION} \
     eslint@${ESLINT_VERSION} \
-    pyright@${PYRIGHT_VERSION}
+    pyright@${PYRIGHT_VERSION} \
+    c8@${C8_VERSION}
 
 # The pinned lint ruleset and its plugins live in /opt/health, never in a scanned repository.
 WORKDIR /opt/health
@@ -59,6 +64,12 @@ RUN curl -LsSf https://astral.sh/uv/${UV_VERSION}/install.sh | sh \
  && uv tool install --python ${PYTHON_VERSION} pipenv==${PIPENV_VERSION} \
  && uv tool install --python ${PYTHON_VERSION} ruff==${RUFF_VERSION} \
  && uv tool install --python ${PYTHON_VERSION} mypy==${MYPY_VERSION}
+
+# pytest, pytest-cov and coverage as wheels, for repositories whose environment has none (the test step has no network). `health-pytest` installs them offline.
+RUN uv venv /tmp/wheel-venv --python ${PYTHON_VERSION} \
+ && uv pip install --python /tmp/wheel-venv/bin/python pip \
+ && /tmp/wheel-venv/bin/python -m pip download -d /opt/health/wheels pytest==${PYTEST_VERSION} pytest-cov==${PYTEST_COV_VERSION} coverage==${COVERAGE_VERSION} \
+ && rm -rf /tmp/wheel-venv
 
 # Go, pinned by checksum. No parameter uses it yet.
 RUN curl -fsSL -o /tmp/go.tgz https://go.dev/dl/go${GO_VERSION}.linux-amd64.tar.gz \

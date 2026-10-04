@@ -1,0 +1,12 @@
+{
+  "name": "exec-tests-mocha",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "mocha test"
+  },
+  "devDependencies": {
+    "mocha": "11.7.4"
+  }
+}

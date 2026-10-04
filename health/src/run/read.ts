@@ -25,6 +25,11 @@ export const runFileSchema = z.looseObject({
   layers: z.array(z.enum(['static', 'execution'])),
   repo: z.looseObject({ path: z.string(), headCommit: z.string().nullable(), treeHash: z.string().nullable() }),
   tools: z.record(z.string(), z.unknown()),
+  execution: z
+    .looseObject({
+      feedbackLoop: z.looseObject({ typecheckSeconds: z.number(), lintSeconds: z.number(), testSeconds: z.number(), totalSeconds: z.number() }),
+    })
+    .optional(),
   reportOnly: z.record(z.string(), z.unknown()).optional(),
   ignoreSet: z.looseObject({
     healthignoreSha256: z.string().nullable(),

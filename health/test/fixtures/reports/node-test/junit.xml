@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<testsuites>
+<testsuite name="math" tests="4" failures="1" skipped="1">
+	<testcase name="adds" time="0.001" classname="test"/>
+	<testcase name="clamps below" time="0.001" classname="test"/>
+	<testcase name="clamps above" time="0.002" classname="test">
+		<failure type="testCodeFailure" message="Expected values to be strictly equal">AssertionError</failure>
+	</testcase>
+	<testcase name="clamps in the middle" time="0" classname="test">
+		<skipped type="skip" message="true"/>
+	</testcase>
+</testsuite>
+</testsuites>

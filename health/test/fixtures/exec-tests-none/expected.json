@@ -1,0 +1,17 @@
+{
+  "note": "No tests: 1.1 to 1.3 score 0 (never not applicable), 6.3 fails.",
+  "logicLines": 8,
+  "p11": {
+    "score": 0
+  },
+  "p12": {
+    "score": 0
+  },
+  "p13": {
+    "score": 0
+  },
+  "p63": {
+    "status": "failed",
+    "score": 0
+  }
+}

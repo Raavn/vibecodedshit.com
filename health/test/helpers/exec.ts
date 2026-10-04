@@ -18,8 +18,9 @@ export function fakeRunner(respond: (spec: StepSpec) => FakeStep): ExecRunner & 
       specs.push(spec);
       const result = respond(spec);
       for (const [name, text] of Object.entries(result.files ?? {})) {
-        mkdirSync(spec.outDir, { recursive: true });
-        writeFileSync(path.join(spec.outDir, name), text);
+        const file = path.join(spec.outDir, name);
+        mkdirSync(path.dirname(file), { recursive: true });
+        writeFileSync(file, text);
       }
       const outcome: StepOutcome = {
         status: result.timeout ? 'timeout' : result.exitCode === 0 ? 'ok' : 'failed',

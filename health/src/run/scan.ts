@@ -5,6 +5,7 @@ import ts from 'typescript';
 import { createDockerRunner, imageDigest } from '../exec/docker.js';
 import { runExecution } from '../exec/run.js';
 import type { ExecRunner, ExecutionResults } from '../exec/types.js';
+import { feedbackLoop } from '../measure/p6-3.js';
 import { measurers as allMeasurers } from '../measure/registry.js';
 import type { Measurement, Measurer } from '../measure/types.js';
 import { computeHotspots, type FileComplexitySum } from '../report-only/hotspots.js';
@@ -182,6 +183,7 @@ export async function runScan(opts: ScanOptions, preloaded?: Methodology): Promi
       ...(scope.pythonVersion === undefined ? {} : { python: scope.pythonVersion }),
       ...(Object.keys(tools.versions()).length === 0 ? {} : { static: tools.versions() }),
     },
+    ...(exec ? { execution: { feedbackLoop: feedbackLoop(exec) } } : {}),
     ...(Object.keys(reportOnly).length === 0 ? {} : { reportOnly }),
     ignoreSet: {
       healthignoreSha256: scope.healthignoreSha256,

@@ -27,6 +27,13 @@ export interface RunDimension {
   score: number | null;
 }
 
+export interface FeedbackLoop {
+  typecheckSeconds: number;
+  lintSeconds: number;
+  testSeconds: number;
+  totalSeconds: number;
+}
+
 export interface RunFile {
   schemaVersion: 1;
   valid: boolean;
@@ -50,6 +57,8 @@ export interface RunFile {
     /** Static tools that ran (name to version). */
     static?: Record<string, string>;
   };
+  /** Full runs: wall-clock seconds of the typecheck, lint and test steps, whose sum is 6.3's raw value. Additive, ignored by recompute and diff. */
+  execution?: { feedbackLoop: FeedbackLoop };
   /** Report-only values, never scored and ignored by recompute. */
   reportOnly?: Record<string, unknown>;
   ignoreSet: {

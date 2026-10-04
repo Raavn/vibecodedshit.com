@@ -1,0 +1,27 @@
+{
+  "numTotalTests": 4,
+  "testResults": [
+    {
+      "name": "/work/test/math.test.js",
+      "status": "failed",
+      "assertionResults": [
+        {
+          "status": "passed",
+          "title": "adds"
+        },
+        {
+          "status": "passed",
+          "title": "clamps below"
+        },
+        {
+          "status": "failed",
+          "title": "clamps above"
+        },
+        {
+          "status": "skipped",
+          "title": "clamps in the middle"
+        }
+      ]
+    }
+  ]
+}

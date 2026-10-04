@@ -1,0 +1,4 @@
+[project]
+name = "exec-tests-unittest"
+version = "1.0.0"
+dependencies = []
