@@ -13,6 +13,8 @@ Run commands from this directory (`npm --prefix health <cmd>` from the repositor
 - `npm run verify` runs all three. Run it before every commit.
 - `npm run build` emits `dist/`
 - `npm run health -- scan <path> --preview` runs a preview scan and writes `./run.json`
+- `npm run health -- report <run.json> [--out <file>]` writes one self-contained HTML file (default `./health-report.html`, git-ignored) and prints its absolute path
+- `npm run health -- diff <before.json> <after.json> [--json]` compares two runs (after minus before); `--json` prints one object, schema in `src/diff/compare.ts`
 
 ## Layout
 
@@ -26,7 +28,9 @@ Run commands from this directory (`npm --prefix health <cmd>` from the repositor
 - `src/measure/safety/` (1.4, 1.5): TS import facts, module resolution against tracked files only, barrel following, test-case and assertion counting, and the Python import resolution. `python/tests_helper.py` gives the Python facts.
 - `src/measure/ops/` (6.2, 6.5, 6.6): entry-point checks per directory, runtime pins, env reads (`python/env_helper.py` for Python), env example parsing, and the documented-command extraction and resolution. `python/nox_helper.py` reads `noxfile.py` sessions.
 - `src/scoring/`: pure scoring, pooling and aggregation.
-- `src/run/`: `scan.ts` builds run.json, `recompute.ts` re-derives scores from stored raw values.
+- `src/run/`: `scan.ts` builds run.json, `recompute.ts` re-derives scores from stored raw values, `read.ts` reads and validates a run.json (zod) for `report` and `diff`.
+- `src/commands/`: `report.ts` and `diff.ts` (`scan` is still in `cli.ts`). `report` and `diff` read run.json only and never recompute: the report renders in `src/report/` (template literals, `escapeHtml` for every dynamic string, no script, no external request, no clock); the diff is `src/diff/` (`conditions.ts` the five refusal conditions, `compare.ts` deltas and the regression flag, `format.ts` human output).
+- `src/report-only/hotspots.ts`: churn (12 months, `git log`) times the per-file cognitive complexity 4.1 stores in `reportOnly.complexityByFile`. `scan.ts` stores the top 20 as `reportOnly.hotspots`; report-only values never enter scoring, `recompute` or the diff.
 
 Adding a parameter: add `src/measure/p<d>-<n>.ts` and a test beside it, add one import and one entry to `registry.ts`, extend a fixture's `expected.json`. Do not change scoring, pooling, aggregation or the run.json shape.
 
@@ -36,4 +40,4 @@ Adding a parameter: add `src/measure/p<d>-<n>.ts` and a test beside it, add one 
 
 ## Exit codes
 
-0 ok, 1 usage error, 2 methodology error (no run.json), 3 no logic file (no run.json), 4 tool error (run.json with `valid: false`).
+0 ok, 1 usage error or unreadable input, 2 methodology error (no run.json), 3 no logic file (no run.json), 4 tool error (run.json with `valid: false`), 5 `diff` refused (the runs are not comparable). A regression flag never changes the exit code.

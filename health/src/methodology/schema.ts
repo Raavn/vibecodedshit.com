@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
-const anchor = z.object({ raw: z.number(), score: z.number() });
-const levelEntry = z.object({ level: z.string(), score: z.number() });
+const anchor = z.object({ raw: z.number(), score: z.number(), descriptor: z.string().optional() });
+const levelEntry = z.object({ level: z.string(), score: z.number(), descriptor: z.string().optional() });
 
 const component = z.object({
   key: z.string(),
@@ -75,7 +75,7 @@ export const methodologyFileSchema = z.object({
     dimension_to_health: z.object({ cap_margin: z.number() }),
   }),
   bands: z
-    .array(z.object({ key: z.string(), name: z.string(), min: z.number(), max: z.number() }))
+    .array(z.object({ key: z.string(), name: z.string(), min: z.number(), max: z.number(), meaning: z.string().optional() }))
     .min(1),
 });
 

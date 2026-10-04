@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import ts from 'typescript';
 import { measurers } from '../measure/registry.js';
+import { computeHotspots, type FileComplexitySum } from '../report-only/hotspots.js';
 import type { Measurement } from '../measure/types.js';
 import { loadMethodology, packageRoot, type Methodology } from '../methodology/load.js';
 import { buildScope } from '../scope/build.js';
@@ -131,6 +132,13 @@ export async function runScan(opts: ScanOptions, preloaded?: Methodology): Promi
         parameters.push({ id: def.id, status: 'not_applicable', reason: measurement.reason, weight: def.weight });
       }
     }
+  }
+
+  const complexityByFile = reportOnly.complexityByFile;
+  if (Array.isArray(complexityByFile)) {
+    const hotspots = computeHotspots(repoPath, opts.asOf, complexityByFile as FileComplexitySum[]);
+    reportOnly.hotspots = hotspots.hotspots;
+    warnings.push(...hotspots.warnings);
   }
 
   const dimensions = dimensionScores(methodology, parameters);
