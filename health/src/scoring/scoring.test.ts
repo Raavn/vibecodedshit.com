@@ -36,6 +36,16 @@ describe('parameter score', () => {
     expect(scoreRaw(def('1.2'), { kind: 'ratio', numerator: 0, denominator: 0, scale: 100 })).toBe(0);
   });
 
+  it('scores a component ratio with nothing to count as its own emptyScore, else when_empty (6.5)', () => {
+    const runtime = { kind: 'level' as const, level: 'no' };
+    const empty = { kind: 'ratio' as const, numerator: 0, denominator: 0, scale: 100 };
+    // runtime_pinned 0, env_documented 100 (no variables read): mean 50.
+    expect(scoreRaw(def('6.5'), { kind: 'components', components: { runtime_pinned: runtime, env_documented: { ...empty, emptyScore: 100 } } })).toBe(50);
+    // Without emptyScore the parameter's when_empty (0) applies.
+    expect(scoreRaw(def('6.5'), { kind: 'components', components: { runtime_pinned: runtime, env_documented: empty } })).toBe(0);
+    expect(scoreRaw(def('6.5'), { kind: 'components', components: { runtime_pinned: { kind: 'level', level: 'yes' }, env_documented: { kind: 'ratio', numerator: 3, denominator: 5, scale: 100 } } })).toBe(80);
+  });
+
   it('scores levels, including the language-group form of 2.2', () => {
     expect(scoreRaw(def('2.2'), { kind: 'level', level: 'strict_plus' }, 'typescript_javascript')).toBe(100);
     expect(scoreRaw(def('2.2'), { kind: 'level', level: 'standard' }, 'python')).toBe(75);

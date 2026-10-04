@@ -7,6 +7,8 @@ const component = z.object({
   key: z.string(),
   method: z.enum(['levels', 'ratio']),
   levels: z.array(levelEntry).optional(),
+  definition: z.string().optional(),
+  measure: z.string().optional(),
 });
 
 const scoring = z.discriminatedUnion('method', [
@@ -34,6 +36,8 @@ export const parameterSchema = z.object({
 
 export const dimensionFileSchema = z.object({
   dimension: z.object({ id: z.number(), key: z.string(), name: z.string() }),
+  /** Dimension 6 prose naming the recognised tools and the removed prefixes. */
+  script_resolution: z.string().optional(),
   parameters: z.array(parameterSchema).min(1),
   presets: z.object({ files: z.array(z.string()) }).optional(),
 });

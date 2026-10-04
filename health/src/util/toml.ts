@@ -15,3 +15,12 @@ export function readToml(absPath: string): Record<string, unknown> | undefined {
     return undefined;
   }
 }
+
+/** Parse TOML text; invalid TOML gives undefined. */
+export function parseTomlText(text: string): Record<string, unknown> | undefined {
+  try {
+    return parse(text);
+  } catch {
+    return undefined;
+  }
+}
