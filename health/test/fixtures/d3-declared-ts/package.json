@@ -1,0 +1,8 @@
+{
+  "name": "d3-declared-ts",
+  "private": true,
+  "scripts": {
+    "verify": "npm run arch",
+    "arch": "depcruise src"
+  }
+}

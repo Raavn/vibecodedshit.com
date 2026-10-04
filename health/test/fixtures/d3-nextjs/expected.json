@@ -1,0 +1,37 @@
+{
+  "note": "Hand counts. 22 logic files; src/features/billing/index.ts is a barrel (no callable), so it is not a scoped file and its edges are out of 3.2, but it is the public entry for 3.4. 17 internal non-test edges. Violations: card>page (routes-are-leaves); util>button and shape>page (lib-does-not-import-ui, shape is type-only and counts; shape>page also breaks routes-are-leaves, one edge counts once); widget>db and chart>db (client-does-not-import-server; chart is routes and client); prisma>@prisma/client (packages alternative). typed>db is type-only and does not count. util.test.ts is a test and does not count. Cycles: a<>b (counts), c<>d (type-only), e>f dynamic and f>e (one runtime direction), g>h with h requiring g inside a function: none count.",
+  "3.1": {
+    ".": "none"
+  },
+  "3.2": {
+    ".": {
+      "numerator": 6,
+      "denominator": 17,
+      "violating": [
+        "src/app/chart.tsx -> src/server/db.ts (client-does-not-import-server)",
+        "src/components/card.tsx -> src/app/page.tsx (routes-are-leaves)",
+        "src/components/prisma.tsx -> @prisma/client (client-does-not-import-server)",
+        "src/components/widget.tsx -> src/server/db.ts (client-does-not-import-server)",
+        "src/lib/shape.ts -> src/app/page.tsx (lib-does-not-import-ui,routes-are-leaves)",
+        "src/lib/util.ts -> src/components/button.tsx (lib-does-not-import-ui)"
+      ]
+    }
+  },
+  "3.3": {
+    ".": {
+      "numerator": 2,
+      "denominator": 22,
+      "files": [
+        "src/lib/a.ts",
+        "src/lib/b.ts"
+      ]
+    }
+  },
+  "3.4": {
+    ".": {
+      "numerator": 1,
+      "denominator": 2
+    }
+  },
+  "3.5": "not_applicable"
+}

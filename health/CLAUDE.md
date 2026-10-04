@@ -20,6 +20,8 @@ Run commands from this directory (`npm --prefix health <cmd>` from the repositor
 - `src/scope/`: `git ls-files`, fixed exclusions, `.healthignore`, file roles, line counts, workspace packages. Python is parsed by `python/scope_helper.py` (stdlib only).
 - `src/measure/`: one `Measurer` per parameter (`p4-2.ts`), listed in `registry.ts`. A measurer returns raw values per (package, language group) and never pools or scores.
 - `src/tools/`: the injected `ToolKit` (resolve, run, fetch, memo), the tool catalog, work copies and the shared knip run. Measurers call tools only through `ctx.tools`; tests pass `fakeToolKit` from `test/helpers/tools.ts`. A missing or failing tool is `not_measured` in preview and a `ToolError` in full mode, never a score of 0.
+- `src/measure/d3/`: D3 (architecture & boundaries). `p3-1.ts` to `p3-5.ts` turn per-language facts into raw values and never see a tool; `d3/ts/` is the TS/JS adapter (dependency-cruiser in process, `.dependency-cruiser` rules read without executing them, presets converted to rules). `getD3Rules` (no tool) and `getD3Graph` (needs the tool) are memoized per scan.
+- `src/scripts/`, `src/manifest/`, `src/scope/tracked.ts`: shared readers for CI files, package scripts, Makefile targets and tracked files (3.1 resolves `depcruise` through them up to 3 levels).
 - `src/scoring/`: pure scoring, pooling and aggregation.
 - `src/run/`: `scan.ts` builds run.json, `recompute.ts` re-derives scores from stored raw values.
 

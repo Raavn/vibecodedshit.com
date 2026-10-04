@@ -1,0 +1,45 @@
+{
+  "note": "Hand counts. packages/api is express, packages/web is nextjs (one preset per package). api: 4 internal edges, 6 violations (numerator above denominator, as the methodology words it): services>express, audit>express (type-only, counts), model>express, services>routes, model>services, fmt>routes. users<>user-service is a runtime cycle (2 of 5 logic files). web: 2 edges, lib>components is the only violation.",
+  "3.1": {
+    "packages/api": "none",
+    "packages/web": "none"
+  },
+  "3.2": {
+    "packages/api": {
+      "numerator": 6,
+      "denominator": 4,
+      "violating": [
+        "packages/api/src/models/user.ts -> express (data-does-not-import-up)",
+        "packages/api/src/models/user.ts -> packages/api/src/services/user-service.ts (data-does-not-import-up)",
+        "packages/api/src/services/audit.ts -> express (services-do-not-import-http)",
+        "packages/api/src/services/user-service.ts -> express (services-do-not-import-http)",
+        "packages/api/src/services/user-service.ts -> packages/api/src/routes/users.ts (services-do-not-import-http)",
+        "packages/api/src/utils/fmt.ts -> packages/api/src/routes/users.ts (shared-does-not-import-up)"
+      ]
+    },
+    "packages/web": {
+      "numerator": 1,
+      "denominator": 2,
+      "violating": [
+        "packages/web/src/lib/x.ts -> packages/web/src/components/c.tsx (lib-does-not-import-ui)"
+      ]
+    }
+  },
+  "3.3": {
+    "packages/api": {
+      "numerator": 2,
+      "denominator": 5,
+      "files": [
+        "packages/api/src/routes/users.ts",
+        "packages/api/src/services/user-service.ts"
+      ]
+    },
+    "packages/web": {
+      "numerator": 0,
+      "denominator": 3,
+      "files": []
+    }
+  },
+  "3.4": "not_applicable",
+  "3.5": "not_applicable"
+}

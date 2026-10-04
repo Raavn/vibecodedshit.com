@@ -49,4 +49,22 @@ describe('loadMethodology', () => {
     writeFileSync(file, readFileSync(file, 'utf8').replace('version: "1.0"', 'version: "1.1"'));
     expect(() => loadMethodology('1.0', root)).toThrow(/does not match directory/);
   });
+
+  it('parses the 3.5 forbidden-import lists and infrastructure directories from the YAML text', () => {
+    const m = loadMethodology('1.0');
+    expect(m.d3.forbiddenImports.typescript_javascript).toEqual([
+      'next', 'react', 'react-dom', 'express', '@prisma/client', 'drizzle-orm', 'pg', 'mysql2', 'mongoose', 'redis', 'ioredis', 'axios',
+      'node-fetch', 'fs', 'http', 'https',
+    ]);
+    expect(m.d3.forbiddenImports.python).toContain('sqlalchemy');
+    expect(m.d3.forbiddenImports.python).not.toContain('A call to the builtin open also counts');
+    expect(m.d3.infrastructureDirectories).toEqual(['infrastructure', 'infra', 'db', 'adapters']);
+  });
+
+  it('rejects a 3.5 measure text without a forbidden-import list', () => {
+    const root = copyMethodology();
+    const file = path.join(root, 'methodology', 'v1.0', 'dimensions', '3-architecture-boundaries.yaml');
+    writeFileSync(file, readFileSync(file, 'utf8').replace('Forbidden imports: next', 'Banned: next'));
+    expect(() => loadMethodology('1.0', root)).toThrow(/no "Forbidden imports:" list/);
+  });
 });

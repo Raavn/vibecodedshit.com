@@ -1,0 +1,34 @@
+{
+  "note": "Hand counts. 6 internal non-test edges, 2 violations (clock>cart, fmt>cart type-only). Runtime cycle order > cart/index > cart/cart > order (3 of 5 files). Two modules (cart, orders); crossings: order>cart/index (entry), order>cart/cart, cart/cart>order.",
+  "3.1": {
+    ".": "none"
+  },
+  "3.2": {
+    ".": {
+      "numerator": 2,
+      "denominator": 6,
+      "violating": [
+        "src/shared/clock.ts -> src/features/cart/cart.ts (shared-does-not-import-features)",
+        "src/shared/fmt.ts -> src/features/cart/cart.ts (shared-does-not-import-features)"
+      ]
+    }
+  },
+  "3.3": {
+    ".": {
+      "numerator": 3,
+      "denominator": 5,
+      "files": [
+        "src/features/cart/cart.ts",
+        "src/features/cart/index.ts",
+        "src/features/orders/order.ts"
+      ]
+    }
+  },
+  "3.4": {
+    ".": {
+      "numerator": 1,
+      "denominator": 3
+    }
+  },
+  "3.5": "not_applicable"
+}
