@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, realpathSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import ts from 'typescript';
@@ -200,6 +200,8 @@ async function buildGraph(ctx: MeasureContext): Promise<D3GraphResult> {
   const version = dcVersion();
   if (version !== undefined) ctx.tools.recordVersion(TOOL, version);
 
+  // dependency-cruiser follows symlinks, so its resolved paths are relative to the real repo root (macOS tmpdir sits behind /var -> /private/var).
+  const root = realpathSync(ctx.repoPath);
   const extensions = [...ctx.methodology.scope.source_files.extensions.typescript, ...ctx.methodology.scope.source_files.extensions.javascript];
   const scoped = new Map<string, ScopedFile>();
   for (const file of ctx.scope.files) if (file.group === GROUP) scoped.set(file.path, file);
@@ -241,7 +243,7 @@ async function buildGraph(ctx: MeasureContext): Promise<D3GraphResult> {
   // One graph call per distinct tsconfig; every call carries all generated preset rules.
   const groups = new Map<string, string[]>();
   for (const unit of units) {
-    const key = nearestTsConfig(ctx.repoPath, unit.package === '.' ? '' : unit.package) ?? '';
+    const key = nearestTsConfig(root, unit.package === '.' ? '' : unit.package) ?? '';
     const list = groups.get(key) ?? [];
     list.push(...unit.files.map((f) => f.path));
     groups.set(key, list);
@@ -250,7 +252,7 @@ async function buildGraph(ctx: MeasureContext): Promise<D3GraphResult> {
   const violations: DcViolation[] = [];
   try {
     for (const [tsConfig, files] of groups) {
-      const result = await runCruise(cruise, { baseDir: ctx.repoPath, files, tsConfig: tsConfig === '' ? undefined : tsConfig, ruleSet: { forbidden: dcRules } }, extensions, warnings);
+      const result = await runCruise(cruise, { baseDir: root, files, tsConfig: tsConfig === '' ? undefined : tsConfig, ruleSet: { forbidden: dcRules } }, extensions, warnings);
       for (const module of result.modules) {
         if (!scoped.has(module.source)) continue;
         const perTarget = allEdges.get(module.source) ?? new Map<string, Set<string>>();
@@ -278,12 +280,12 @@ async function buildGraph(ctx: MeasureContext): Promise<D3GraphResult> {
       const prefix = dir === '.' ? '' : `${dir}/`;
       const files = [...scoped.keys()].filter((f) => f.startsWith(prefix)).map((f) => f.slice(prefix.length));
       if (files.length === 0) continue;
-      const baseDir = dir === '.' ? ctx.repoPath : path.join(ctx.repoPath, dir);
+      const baseDir = dir === '.' ? root : path.join(root, dir);
       const ruleSet = {
         forbidden: config.forbidden,
         ...(config.allowed ? { allowed: config.allowed, allowedSeverity: config.allowedSeverity } : {}),
       };
-      const result = await runCruise(cruise, { baseDir, files, tsConfig: nearestTsConfig(ctx.repoPath, dir), ruleSet }, extensions, warnings);
+      const result = await runCruise(cruise, { baseDir, files, tsConfig: nearestTsConfig(root, dir), ruleSet }, extensions, warnings);
       for (const violation of result.violations) {
         const from = path.posix.join(dir, violation.from);
         const unit = unitByPackage.get(scoped.get(from)?.package ?? '');
