@@ -118,7 +118,7 @@ describe('report parsers', () => {
   it('maps coverage paths to repo-relative paths and skips the total', () => {
     const summary = parseCoverageSummary(reportFiles('vitest')['coverage/coverage-summary.json'] as string, '.');
     expect([...(summary?.keys() ?? [])]).toEqual(['src/math.js', 'src/unused.js']);
-    expect(summary?.get('src/math.js')).toEqual({ lines: { total: 8, covered: 7 }, branches: { total: 4, covered: 3 } });
+    expect(summary?.get('src/math.js')).toEqual({ lines: { total: 4, covered: 3 }, branches: { total: 4, covered: 3 } });
     expect(parseCoverageSummary('{"/work/pkg/a.js":{"lines":{"total":1,"covered":1}}}', 'pkg')).toBeNull();
     expect([...(parseCoverageSummary('{"total":{},"/work/pkg/a.js":{"lines":{"total":2,"covered":1}}}', 'pkg')?.keys() ?? [])]).toEqual(['pkg/a.js']);
     const py = parseCoveragePy(reportFiles('pytest')['coverage.json'] as string, 'api');
@@ -278,7 +278,7 @@ describe('no tests, timeouts and tool errors', () => {
     delete summary['/work/src/unused.js'];
     const runner = healthy(() => ({ exitCode: 1, files: { ...files, 'coverage/coverage-summary.json': JSON.stringify(summary) } }));
     const result = await runScan(opts(materializeFixture('exec-tests-vitest'), runner));
-    expect(param(result, '1.2').raw).toEqual({ kind: 'ratio', numerator: 7, denominator: 11, scale: 100 });
+    expect(param(result, '1.2').raw).toEqual({ kind: 'ratio', numerator: 3, denominator: 7, scale: 100 });
     expect(param(result, '1.3').raw).toEqual({ kind: 'ratio', numerator: 3, denominator: 4, scale: 100 });
     expect(result.warnings.filter((w) => /1 logic file\(s\) missing/.test(w))).toHaveLength(1);
   });
@@ -290,7 +290,7 @@ describe('no tests, timeouts and tool errors', () => {
     summary['/work/node_modules/x/index.js'] = summary['/work/src/math.js'];
     const runner = healthy(() => ({ exitCode: 1, files: { ...files, 'coverage/coverage-summary.json': JSON.stringify(summary) } }));
     const result = await runScan(opts(materializeFixture('exec-tests-vitest'), runner));
-    expect(param(result, '1.2').raw).toEqual({ kind: 'ratio', numerator: 7, denominator: 11, scale: 100 });
+    expect(param(result, '1.2').raw).toEqual({ kind: 'ratio', numerator: 3, denominator: 5, scale: 100 });
   });
 
   it('excludes skipped cases from both sides of the pass rate', async () => {

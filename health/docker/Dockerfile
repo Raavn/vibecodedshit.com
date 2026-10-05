@@ -3,6 +3,7 @@
 ARG NODE_IMAGE=node:22.20.0-bookworm@sha256:915acd9e9b885ead0c620e27e37c81b74c226e0e1c8177f37a60217b6eabb0d7
 FROM ${NODE_IMAGE}
 
+ARG NPM_VERSION=11.21.0
 ARG PNPM_VERSION=12.9.1
 ARG YARN_VERSION=4.18.1
 ARG BUN_VERSION=1.4.2
@@ -31,7 +32,11 @@ RUN apt-get update \
  && rm -rf /var/lib/apt/lists/*
 
 # Node tools. Yarn is Berry because the methodology installs with `yarn install --immutable`.
-RUN npm install -g \
+# The base image ships Yarn 1 at /usr/local/bin/yarn, which blocks the Berry install, so it is removed first.
+# npm is pinned past the base image's 10.9: its peer resolution crashes on vitest 4 (`reading 'edgesOut'`).
+RUN rm -rf /usr/local/bin/yarn /usr/local/bin/yarnpkg /opt/yarn-v* \
+ && npm install -g npm@${NPM_VERSION} \
+ && npm install -g \
     pnpm@${PNPM_VERSION} \
     @yarnpkg/cli-dist@${YARN_VERSION} \
     bun@${BUN_VERSION} \

@@ -1,5 +1,5 @@
 {
-  "note": "Hand-counted. Cases: add and clamp-below pass, clamp-above fails, clamp-middle is skipped. src/math.js has 8 logic lines (7 covered: the final return is not reached) and 4 branches (3 covered); src/unused.js has 3 logic lines and no test loads it.",
+  "note": "Cases (hand-counted): add and clamp-below pass, clamp-above fails, clamp-middle is skipped. Coverage is what @vitest/coverage-v8 4.1.11 reports in health:1.0: vitest 4 counts statement lines only, so src/math.js has 4 lines (3 covered: the final return is not reached) and 4 branches (3 covered); src/unused.js has 1 line and 0 branches, and no test loads it.",
   "logicLines": 11,
   "cases": {
     "passed": 2,
@@ -12,9 +12,9 @@
     "score": 0
   },
   "p12": {
-    "numerator": 7,
-    "denominator": 11,
-    "score": 79.545454
+    "numerator": 3,
+    "denominator": 5,
+    "score": 75
   },
   "p13": {
     "numerator": 3,

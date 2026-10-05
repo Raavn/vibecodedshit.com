@@ -1,13 +1,47 @@
 <?xml version="1.0" encoding="utf-8"?>
 <testsuites>
-<testsuite name="math" tests="4" failures="1" skipped="1">
-	<testcase name="adds" time="0.001" classname="test"/>
-	<testcase name="clamps below" time="0.001" classname="test"/>
-	<testcase name="clamps above" time="0.002" classname="test">
-		<failure type="testCodeFailure" message="Expected values to be strictly equal">AssertionError</failure>
-	</testcase>
-	<testcase name="clamps in the middle" time="0" classname="test">
-		<skipped type="skip" message="true"/>
-	</testcase>
-</testsuite>
+	<testsuite name="math" time="0.003203" disabled="0" errors="0" tests="4" failures="1" skipped="1" hostname="f5972725f33a">
+		<testcase name="adds" time="0.000762" classname="test"/>
+		<testcase name="clamps below" time="0.000086" classname="test"/>
+		<testcase name="clamps above" time="0.000702" classname="test" failure="Expected values to be strictly equal:10 !== 11">
+			<failure type="testCodeFailure" message="Expected values to be strictly equal:10 !== 11">
+[Error [ERR_TEST_FAILURE]: Expected values to be strictly equal:
+
+10 !== 11
+] {
+  code: 'ERR_TEST_FAILURE',
+  failureType: 'testCodeFailure',
+  cause: AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  10 !== 11
+  
+      at TestContext.&lt;anonymous> (file:///work/test/math.test.js:13:12)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1047:25)
+      at Suite.processPendingSubtests (node:internal/test_runner/test:744:18)
+      at Test.postRun (node:internal/test_runner/test:1173:19)
+      at Test.run (node:internal/test_runner/test:1101:12)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:744:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 10,
+    expected: 11,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+}
+			</failure>
+		</testcase>
+		<testcase name="clamps in the middle" time="0.000065" classname="test">
+			<skipped type="skipped" message="true"/>
+		</testcase>
+	</testsuite>
+	<!-- tests 4 -->
+	<!-- suites 1 -->
+	<!-- pass 2 -->
+	<!-- fail 1 -->
+	<!-- cancelled 0 -->
+	<!-- skipped 1 -->
+	<!-- todo 0 -->
+	<!-- duration_ms 66.834833 -->
 </testsuites>
