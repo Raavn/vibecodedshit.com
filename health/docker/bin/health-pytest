@@ -1,0 +1,10 @@
+#!/bin/sh
+# health-pytest <pytest args...>: python -m pytest in the repository's .venv. When the environment has no
+# pytest or pytest-cov, they are installed offline from the wheels baked into the image (exit 127 if that fails).
+exec health-venv sh -c '
+  python -c "import pytest, pytest_cov" 2>/dev/null || {
+    [ -n "$VIRTUAL_ENV" ] || { python -m venv .venv && . .venv/bin/activate; } || exit 127
+    pip install --no-index --find-links /opt/health/wheels pytest pytest-cov >/dev/null || exit 127
+  }
+  exec python -m pytest "$@"
+' sh "$@"

@@ -8,12 +8,17 @@ import type { Methodology } from '../methodology/load.js';
 import type { Scope } from '../scope/types.js';
 import { readTracked, trackedPaths } from '../scope/tracked.js';
 import { createWorkCopy } from '../tools/workcopy.js';
+import { ToolError } from '../scope/types.js';
 import { planExecution } from './plan.js';
 import { build } from './steps/build.js';
 import { install } from './steps/install.js';
 import { lint } from './steps/lint.js';
+import { coverageInstall } from './steps/coverage-install.js';
+import { test } from './steps/test.js';
 import { typecheck } from './steps/typecheck.js';
-import type { CheckResult, CommandContext, ExecRunner, ExecutionResults, RootResult, Step, StepCommand, StepOutcome } from './types.js';
+import { detectInvocations } from './test-runners/detect.js';
+import { RUNNERS } from './test-runners/index.js';
+import type { CheckResult, CommandContext, ExecRunner, ExecutionResults, RootResult, Step, StepCommand, StepName, StepOutcome, TestInvocation, TestResult } from './types.js';
 
 export interface ExecutionOptions {
   repoPath: string;
@@ -24,6 +29,16 @@ export interface ExecutionOptions {
   image: { tag: string; digest: string };
 }
 
+/** `timeouts_seconds` names the test step `tests` and has no entry for the coverage provider install, which is bounded like install. */
+const TIMEOUT_KEY: Record<StepName, 'install' | 'build' | 'typecheck' | 'lint' | 'tests'> = {
+  install: 'install',
+  'coverage-install': 'install',
+  build: 'build',
+  typecheck: 'typecheck',
+  lint: 'lint',
+  test: 'tests',
+};
+
 function envFor(repoPath: string, dir: string, methodology: Methodology): Record<string, string> {
   for (const up of dirsUpward(dir)) {
     for (const name of methodology.d6.envExampleFiles) {
@@ -32,6 +47,26 @@ function envFor(repoPath: string, dir: string, methodology: Methodology): Record
     }
   }
   return {};
+}
+
+/**
+ * Reads the reports of one test run. A timeout or a missing or unreadable results report leaves `results`
+ * unset (a repository failure). A results report with at least one case but no usable coverage report is
+ * a ToolError: coverage is the tool's job, so the run is invalid.
+ */
+async function readTest(invocation: TestInvocation, outcome: StepOutcome): Promise<TestResult> {
+  const spec = RUNNERS[invocation.runner];
+  const base: TestResult = { dir: invocation.dir, group: invocation.group, runner: invocation.runner, args: invocation.args, outcome };
+  if (outcome.status === 'timeout') return base;
+  const read = (name: string): Promise<string | null> => readFile(path.join(outcome.outputDir, name), 'utf8').catch(() => null);
+  const text = await read(spec.results);
+  const results = text === null ? null : spec.parseResults(text);
+  if (results === null) return base;
+  if (results.passed + results.failed + results.errored + results.skipped === 0) return { ...base, results };
+  const coverageText = await read(spec.coverage);
+  const coverage = coverageText === null ? null : spec.parseCoverage(coverageText, invocation.dir);
+  if (coverage === null) throw new ToolError(`${invocation.runner} produced results but no usable coverage data in ${invocation.dir}`);
+  return { ...base, results, coverage };
 }
 
 /**
@@ -64,7 +99,7 @@ export async function runExecution(opts: ExecutionOptions): Promise<ExecutionRes
         network: step.network,
         argv: command.argv,
         cwd: ctx.dir,
-        timeoutSeconds: timeouts[step.name],
+        timeoutSeconds: timeouts[TIMEOUT_KEY[step.name]],
         env: envFor(repoPath, dirForEnv, methodology),
         workDir: work.dir,
         outDir,
@@ -91,6 +126,7 @@ export async function runExecution(opts: ExecutionOptions): Promise<ExecutionRes
     const checksRan = roots.every((root) => root.install === null || root.install.status === 'ok');
     const typecheckResults: CheckResult[] = [];
     const lintResults: CheckResult[] = [];
+    const testResults: TestResult[] = [];
     if (checksRan) {
       const collect = async (step: Step, ctx: CommandContext, into: CheckResult[], envDir: string): Promise<void> => {
         const result = await run(step, ctx, envDir);
@@ -100,9 +136,25 @@ export async function runExecution(opts: ExecutionOptions): Promise<ExecutionRes
       };
       for (const pkg of plan.typecheck) await collect(typecheck, context(pkg.dir, pkg.group, pkg.sourceFiles), typecheckResults, pkg.root);
       for (const root of plan.roots) await collect(lint, context(root.dir, root.group, root.sourceFiles), lintResults, root.dir);
+
+      const invocations = detectInvocations({ roots: plan.roots, scope, tracked: trackedSet, read: (rel) => readTracked(repoPath, rel) });
+      for (const invocation of invocations) {
+        const files = plan.roots
+          .filter((r) => r.group === invocation.group)
+          .flatMap((r) => r.logicFiles)
+          .filter((file) => invocation.dir === '.' || file.startsWith(`${invocation.dir}/`));
+        const ctx: CommandContext = { ...context(invocation.dir, invocation.group, files), invocation };
+        const provider = await run(coverageInstall, ctx, invocation.dir);
+        if (provider && provider.outcome.status !== 'ok') {
+          throw new ToolError(`the coverage provider could not be installed for ${invocation.runner} in ${invocation.dir} (${provider.outcome.status})`);
+        }
+        const ran = await run(test, ctx, invocation.dir);
+        if (ran === null) continue;
+        testResults.push(await readTest(invocation, ran.outcome));
+      }
     }
 
-    return { image, roots, checksRan, typecheck: typecheckResults, lint: lintResults };
+    return { image, roots, checksRan, typecheck: typecheckResults, lint: lintResults, test: { invocations: testResults } };
   } finally {
     await work.cleanup();
     await rm(out, { recursive: true, force: true });

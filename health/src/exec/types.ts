@@ -1,6 +1,6 @@
 import type { Group } from '../scope/types.js';
 
-export type StepName = 'install' | 'build' | 'typecheck' | 'lint';
+export type StepName = 'install' | 'build' | 'typecheck' | 'lint' | 'coverage-install' | 'test';
 
 /** One container run. `cwd` is relative to the work copy, posix. */
 export interface StepSpec {
@@ -40,6 +40,8 @@ export interface CommandContext {
   read(rel: string): string | null;
   /** In-scope (logic and test) files the step covers, repo-relative. */
   files: string[];
+  /** Test and coverage-install steps: the invocation they belong to. */
+  invocation?: TestInvocation;
 }
 
 export type CheckTool = 'tsc' | 'pyright' | 'mypy' | 'eslint' | 'ruff';
@@ -81,6 +83,36 @@ export interface CheckResult {
   report: string | null;
 }
 
+export type TestRunnerName = 'vitest' | 'jest' | 'mocha' | 'node-test' | 'pytest';
+
+/** One test runner run: the directory it runs in, the runner and the arguments kept from the repository's `test` script. */
+export interface TestInvocation {
+  dir: string;
+  group: Group;
+  runner: TestRunnerName;
+  args: string[];
+}
+
+export interface CaseCounts {
+  passed: number;
+  failed: number;
+  errored: number;
+  skipped: number;
+}
+
+export interface FileCoverage {
+  lines: { total: number; covered: number };
+  branches: { total: number; covered: number };
+}
+
+export interface TestResult extends TestInvocation {
+  outcome: StepOutcome;
+  /** Case counts from the results report. Undefined when the run timed out or wrote no usable report. */
+  results?: CaseCounts;
+  /** Per repo-relative file, from the coverage report. Undefined when the run had no case, so no coverage was required. */
+  coverage?: Map<string, FileCoverage>;
+}
+
 export interface ExecutionResults {
   image: { tag: string; digest: string };
   roots: RootResult[];
@@ -88,4 +120,6 @@ export interface ExecutionResults {
   checksRan: boolean;
   typecheck: CheckResult[];
   lint: CheckResult[];
+  /** One entry per test runner invocation. Empty when no supported runner was found or the checks did not run. */
+  test: { invocations: TestResult[] };
 }

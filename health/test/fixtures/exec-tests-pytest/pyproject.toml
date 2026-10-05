@@ -1,0 +1,7 @@
+[project]
+name = "exec-tests-pytest"
+version = "1.0.0"
+dependencies = []
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

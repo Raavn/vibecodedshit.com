@@ -1,3 +1,6 @@
+import { p11 } from './p1-1.js';
+import { p12 } from './p1-2.js';
+import { p13 } from './p1-3.js';
 import { p14 } from './p1-4.js';
 import { p15 } from './p1-5.js';
 import { p21 } from './p2-1.js';
@@ -21,9 +24,10 @@ import { p54 } from './p5-4.js';
 import { p55 } from './p5-5.js';
 import { p61 } from './p6-1.js';
 import { p62 } from './p6-2.js';
+import { p63 } from './p6-3.js';
 import { p64 } from './p6-4.js';
 import { p65 } from './p6-5.js';
 import { p66 } from './p6-6.js';
 import type { Measurer } from './types.js';
 
-export const measurers: Measurer[] = [p14, p15, p21, p22, p23, p24, p25, p31, p32, p33, p34, p35, p41, p42, p43, p44, p51, p52, p53, p54, p55, p61, p62, p64, p65, p66];
+export const measurers: Measurer[] = [p11, p12, p13, p14, p15, p21, p22, p23, p24, p25, p31, p32, p33, p34, p35, p41, p42, p43, p44, p51, p52, p53, p54, p55, p61, p62, p63, p64, p65, p66];

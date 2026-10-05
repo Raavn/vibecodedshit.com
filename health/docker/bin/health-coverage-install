@@ -1,0 +1,5 @@
+#!/bin/sh
+# health-coverage-install: install @vitest/coverage-v8 at the installed vitest version, into the work copy only.
+[ -f node_modules/@vitest/coverage-v8/package.json ] && exit 0
+version=$(node -p "require('vitest/package.json').version") || exit 1
+exec npm install --no-save --no-package-lock --ignore-scripts "@vitest/coverage-v8@$version"

@@ -1,0 +1,4 @@
+[project]
+name = "exec-tests-nox"
+version = "1.0.0"
+dependencies = []

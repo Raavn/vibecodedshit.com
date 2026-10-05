@@ -19,7 +19,7 @@ function parse(result: CheckResult): Findings | null {
 }
 
 /** Why a check counts as a repository failure, or null when it ran and its report can be read. */
-function failure(result: CheckResult): string | null {
+export function failure(result: CheckResult): string | null {
   if (result.outcome.status === 'timeout') return `${result.tool} timed out in ${result.dir}`;
   const code = result.outcome.exitCode;
   if (code === null || !NORMAL_EXIT[result.tool].includes(code)) return `${result.tool} exited with ${String(code)} in ${result.dir}`;
