@@ -3,6 +3,7 @@ import { parseArgs } from 'node:util';
 import { EXIT } from './commands/common.js';
 import { runDiff } from './commands/diff.js';
 import { runReport } from './commands/report.js';
+import { runSubmit } from './commands/submit.js';
 import { loadMethodology, MethodologyError } from './methodology/load.js';
 import { invalidRun, NoLogicFilesError, runScan } from './run/scan.js';
 import { writeRun } from './run/write.js';
@@ -12,8 +13,9 @@ export { EXIT } from './commands/common.js';
 const USAGE = `Usage: health scan <path> [--preview] [--as-of YYYY-MM-DD] [--out <file>] [--methodology <version>]
        health report <run.json> [--out <file>]
        health diff <before.json> <after.json> [--json]
+       health submit <run.json> [--confirm] [--include-repo-name] [--email <addr>] [--summary-file <path>]
 
-Exit codes: 0 ok, 1 usage or unreadable input, 2 methodology error, 3 no logic file, 4 tool error, 5 diff refused.
+Exit codes: 0 ok, 1 usage or unreadable input, 2 methodology error, 3 no logic file, 4 tool error, 5 diff refused, 6 submit failed.
 `;
 function round1(value) {
     return (Math.round(value * 10) / 10).toFixed(1);
@@ -54,6 +56,8 @@ export async function run(argv, io, deps = {}) {
         return runReport(argv.slice(1), io);
     if (argv[0] === 'diff')
         return runDiff(argv.slice(1), io);
+    if (argv[0] === 'submit')
+        return runSubmit(argv.slice(1), io, { git: deps.git, fetch: deps.fetch });
     let parsed;
     try {
         parsed = parseArgs({
