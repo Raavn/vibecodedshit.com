@@ -273,8 +273,9 @@ parameters:
         no-unused-vars (or @typescript-eslint/no-unused-vars on TypeScript
         files). Type-aware rules on TypeScript files only:
         @typescript-eslint/no-floating-promises, no-misused-promises,
-        await-thenable. react-hooks/rules-of-hooks when react is a
-        dependency.
+        await-thenable. TypeScript files outside every tsconfig are linted
+        without the type-aware rules. react-hooks/rules-of-hooks when react is
+        a dependency.
       python: ruff with the rule sets F (Pyflakes), B (flake8-bugbear) and E9 (syntax and IO errors).
     not_applicable_when: null
     rationale: >-

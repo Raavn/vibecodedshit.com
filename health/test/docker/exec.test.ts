@@ -59,4 +59,10 @@ describe.skipIf(!enabled)('health:1.0 image', { timeout: 20 * 60_000 }, () => {
     const want = expected('exec-lint-finding').p25;
     expect(param(run, '2.5')?.raw).toEqual({ kind: 'ratio', numerator: want?.numerator, denominator: want?.denominator, scale: 1000 });
   });
+
+  it('exec-lint-outside-tsconfig: TS files outside every tsconfig are linted without type information', async () => {
+    const run = await scan('exec-lint-outside-tsconfig');
+    const want = expected('exec-lint-outside-tsconfig').p25;
+    expect(param(run, '2.5')?.raw).toEqual({ kind: 'ratio', numerator: want?.numerator, denominator: want?.denominator, scale: 1000 });
+  });
 });
