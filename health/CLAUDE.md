@@ -13,7 +13,8 @@ Run commands from this directory (`npm --prefix health <cmd>` from the repositor
 - `npm run test:docker` runs the Docker integration tests in `test/docker/` against the real image (`HEALTH_DOCKER=1`). Skipped otherwise, not part of `verify`. Build the image first with `npm run image:build`.
 - `npm run image:build` builds `health:1.0` from `docker/Dockerfile`.
 - `npm run verify` runs all three. Run it before every commit.
-- `npm run build` emits `dist/`
+- `npm run build` emits `dist/`. `dist/` is committed (plugin installs don't build); `test/plugin/dist.test.ts` fails when it is stale, so run the build and commit it with any change under `src/`.
+- The Claude Code plugin: `.claude-plugin/plugin.json` here, marketplace at `../.claude-plugin/marketplace.json`, skill in `skills/codebase-health/SKILL.md`. Keep `plugin.json` `version` equal to `package.json`.
 - `npm run health -- scan <path> --preview` runs a preview scan and writes `./run.json`. Without `--preview` it is a full run: the execution steps run in the `health:1.0` image (Docker needed).
 - `npm run health -- report <run.json> [--out <file>]` writes one self-contained HTML file (default `./health-report.html`, git-ignored) and prints its absolute path
 - `npm run health -- diff <before.json> <after.json> [--json]` compares two runs (after minus before); `--json` prints one object, schema in `src/diff/compare.ts`
