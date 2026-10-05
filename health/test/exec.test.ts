@@ -282,6 +282,25 @@ describe('fixtures through a fake runner', () => {
     expect(((want.numerator / want.denominator) * 1000).toFixed(3)).toBe(want.perThousand.toFixed(3));
   });
 
+  it('counts the merged health-eslint report for TS files outside every tsconfig', async () => {
+    const want = expected('exec-lint-outside-tsconfig').p25 ?? { numerator: 0, denominator: 1 };
+    const out = JSON.stringify([
+      { filePath: '/work/src/index.ts', messages: [{ ruleId: '@typescript-eslint/no-floating-promises', severity: 2, message: 'Promises must be awaited.' }] },
+      { filePath: '/work/scripts/outside.ts', messages: [] },
+      { filePath: '/work/scripts/unused.ts', messages: [{ ruleId: '@typescript-eslint/no-unused-vars', severity: 2, message: "'spare' is assigned a value but never used." }] },
+      { filePath: '/work/scripts/broken.ts', messages: [{ ruleId: null, fatal: true, severity: 2, message: 'Parsing error: Expression expected.' }] },
+    ]);
+    const runner = healthy((spec) => (spec.step === 'lint' ? { exitCode: 1, files: { 'eslint.json': out } } : undefined));
+    const result = await runScan(fullOpts(materializeFixture('exec-lint-outside-tsconfig'), runner));
+    expect(param(result, '2.5').raw).toEqual({ kind: 'ratio', numerator: want.numerator, denominator: want.denominator, scale: 1000 });
+  });
+
+  it('runs the lint step through health-eslint', async () => {
+    const specs: StepSpec[] = [];
+    await runScan(fullOpts(materializeFixture('exec-lint-outside-tsconfig'), healthy((spec) => { specs.push(spec); return undefined; })));
+    expect(specs.find((spec) => spec.step === 'lint')?.argv.slice(0, 3)).toEqual(['health-capture', '/out/eslint.json', 'health-eslint']);
+  });
+
   it('drops findings outside in-scope files', async () => {
     const out = JSON.stringify([{ filePath: '/work/node_modules/x/index.js', messages: [{ ruleId: 'x' }] }]);
     const runner = healthy((spec) => (spec.step === 'lint' ? { exitCode: 1, files: { 'eslint.json': out } } : undefined));

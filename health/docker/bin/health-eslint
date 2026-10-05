@@ -1,0 +1,48 @@
+#!/usr/bin/env node
+// health-eslint <eslint args...>: run eslint, then relint without type information the files the project service
+// could not place in any tsconfig ("was not found by the project service"). Those files get the core rules and
+// @typescript-eslint/no-unused-vars; their fatal entry is replaced by the untyped result. A real syntax error still
+// reports one fatal message in either pass. Prints the merged JSON report on stdout, exits like eslint (0 clean, 1 findings).
+import { spawnSync } from 'node:child_process';
+
+const UNTYPED_CONFIG = '/opt/health/eslint.untyped.config.mjs';
+const MAX_BUFFER = 512 * 1024 * 1024;
+
+function eslint(args) {
+  return spawnSync('eslint', args, { encoding: 'utf8', maxBuffer: MAX_BUFFER, stdio: ['ignore', 'pipe', 'inherit'] });
+}
+
+function parse(text) {
+  try {
+    const doc = JSON.parse(text);
+    return Array.isArray(doc) ? doc : null;
+  } catch {
+    return null;
+  }
+}
+
+const args = process.argv.slice(2);
+const first = eslint(args);
+const report = parse(first.stdout ?? '');
+if (report === null || (first.status !== 0 && first.status !== 1)) {
+  process.stdout.write(first.stdout ?? '');
+  process.exit(first.status ?? 2);
+}
+
+const outsideProject = (entry) =>
+  entry.messages?.length === 1 && entry.messages[0].fatal === true && /project service/.test(entry.messages[0].message ?? '');
+const stray = report.filter(outsideProject);
+
+let merged = report;
+if (stray.length > 0) {
+  const second = eslint(['-c', UNTYPED_CONFIG, '-f', 'json', '--no-error-on-unmatched-pattern', ...stray.map((entry) => entry.filePath)]);
+  const relinted = parse(second.stdout ?? '');
+  if (relinted === null || (second.status !== 0 && second.status !== 1)) {
+    process.stdout.write(first.stdout ?? '');
+    process.exit(second.status ?? 2);
+  }
+  merged = [...report.filter((entry) => !outsideProject(entry)), ...relinted];
+}
+
+process.stdout.write(JSON.stringify(merged));
+process.exit(merged.some((entry) => entry.messages?.length > 0) ? 1 : 0);

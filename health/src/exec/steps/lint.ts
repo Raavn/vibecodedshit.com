@@ -13,7 +13,7 @@ export const lint: Step = {
     if (files.length === 0) return null;
     if (ctx.group === 'typescript_javascript') {
       return {
-        argv: ['health-capture', '/out/eslint.json', 'eslint', '-c', ESLINT_CONFIG, '-f', 'json', '--no-error-on-unmatched-pattern', ...files],
+        argv: ['health-capture', '/out/eslint.json', 'health-eslint', '-c', ESLINT_CONFIG, '-f', 'json', '--no-error-on-unmatched-pattern', ...files],
         tool: 'eslint',
         report: 'eslint.json',
       };
