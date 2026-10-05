@@ -21,7 +21,16 @@ The CLI ships as a Claude Code plugin with a `/codebase-health` skill. The plugi
 /codebase-health [path]
 ```
 
-The namespaced form `/codebase-health:codebase-health` also works. The skill runs a full scan when Docker and the `health:1.0` image are available. Otherwise it runs a preview scan and says the result is not comparable. It then renders the HTML report and explains `run.json`: the health score and band, the weakest dimension and the three parameters most worth fixing. Claude only reads the scores. It never computes, adjusts or submits them.
+The namespaced form `/codebase-health:codebase-health` also works. The skill runs a full scan when Docker and the `health:1.0` image are available. Otherwise it runs a preview scan and says the result is not comparable. It then renders the HTML report and explains `run.json`: the health score and band, the weakest dimension and the three parameters most worth fixing. Claude only reads the scores. It never computes or adjusts them.
+
+## Submitting a result
+
+Submission is opt-in. `health submit <run.json> [--confirm] [--include-repo-name] [--email <addr>] [--summary-file <path>]` prints the full payload and sends it to app.vibecodedshit.com only with `--confirm`. The skill shows the payload and asks once, with No as the default. Privacy page: https://app.vibecodedshit.com/privacy
+
+- The repository is identified by the SHA-256 of its normalised git remote URL (the root commit when there is no remote). The name is sent only with `--include-repo-name`, the email only with `--email`.
+- Only a comparable full run can be submitted. Source code and file paths are never sent.
+- Re-submitting a repository replaces its earlier entry, if the new run's as-of date is not earlier.
+- Exit codes: 0 printed or sent, 1 usage error or refusal, 6 sending failed.
 
 Installing by the GitHub slug works only for users whose git credentials can read the repository.
 

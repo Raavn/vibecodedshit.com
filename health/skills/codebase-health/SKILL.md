@@ -12,7 +12,7 @@ Scan a repository with the Codebase Health benchmark and explain the result. The
 ## Rules
 
 - You never measure, compute, estimate, round or adjust a score. Every number you state is copied from run.json or the methodology YAML.
-- Never submit results anywhere. This version has no submission.
+- Submitting a result is opt-in (step 6). Never pass --confirm before the user has answered yes in this conversation. Never submit from an unattended run.
 - A preview result is not comparable; say so.
 - Show the help line only when health.band is vibe_coded or fragile.
 - Never change, delete or update anything on your own. That includes old runs and the plugin itself.
@@ -83,7 +83,19 @@ Installed versions: plugin = `version` in `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/
 
 Do not run the update.
 
-### 6. Help line
+### 6. Submission (opt-in)
+
+Skip this step, and do not mention submission, when the run is a preview, when `comparable` is false (the CLI would refuse), or when no user can answer (`claude -p`, a scheduled task, a subagent).
+
+1. Write a summary of 3 to 6 sentences to `<RUN_DIR>/summary.txt`. It condenses the explanation from step 4 and contains no file names, paths, repository name, code or email.
+2. Run `node "${CLAUDE_PLUGIN_ROOT}/dist/bin.js" submit "<RUN_DIR>/run.json" --summary-file "<RUN_DIR>/summary.txt"` without `--confirm`. Show the full payload before asking. Show the privacy page link too: https://app.vibecodedshit.com/privacy
+3. Ask once, before anything is sent: "Submit this result to vibecodedshit.com? Default: No." Use the AskUserQuestion tool with No as the first option. Default answer: No. Any answer other than an explicit yes means do nothing; say "Not submitted."
+4. After a yes, ask two separate questions, each defaulting to No. Include the repository name and the email only if the user opts in to each separately.
+   - Include the repository name: state the exact `repoName` value that would be sent.
+   - Add an email: ask for the address only after a yes.
+5. Run the same command with `--confirm`, adding `--include-repo-name` and `--email <addr>` only for the opt-ins the user accepted. The CLI prints the final payload; report success or the error.
+
+### 7. Help line
 
 Only when `health.band` is `vibe_coded` or `fragile`, in preview and full mode, print this as the last line of the output:
 

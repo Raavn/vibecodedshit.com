@@ -17,6 +17,7 @@ Run commands from this directory (`npm --prefix health <cmd>` from the repositor
 - The Claude Code plugin: `.claude-plugin/plugin.json` here, marketplace at `../.claude-plugin/marketplace.json`, skill in `skills/codebase-health/SKILL.md`. Keep `plugin.json` `version` equal to `package.json`.
 - `npm run health -- scan <path> --preview` runs a preview scan and writes `./run.json`. Without `--preview` it is a full run: the execution steps run in the `health:1.0` image (Docker needed).
 - `npm run health -- report <run.json> [--out <file>]` writes one self-contained HTML file (default `./health-report.html`, git-ignored) and prints its absolute path
+- `npm run health -- submit <run.json> [--confirm] [--include-repo-name] [--email <addr>] [--summary-file <path>]` prints the payload and sends it only with `--confirm`. Refuses preview, invalid and non-comparable runs.
 - `npm run health -- diff <before.json> <after.json> [--json]` compares two runs (after minus before); `--json` prints one object, schema in `src/diff/compare.ts`
 
 ## Layout
@@ -35,6 +36,7 @@ Run commands from this directory (`npm --prefix health <cmd>` from the repositor
 - `src/scoring/`: pure scoring, pooling and aggregation.
 - `src/run/`: `scan.ts` builds run.json, `recompute.ts` re-derives scores from stored raw values, `read.ts` reads and validates a run.json (zod) for `report` and `diff`.
 - `src/commands/`: `report.ts` and `diff.ts` (`scan` is still in `cli.ts`). `report` and `diff` read run.json only and never recompute: the report renders in `src/report/` (template literals, `escapeHtml` for every dynamic string, no script, no external request, no clock); the diff is `src/diff/` (`conditions.ts` the five refusal conditions, `compare.ts` deltas and the regression flag, `format.ts` human output).
+- `src/commands/submit.ts`, `src/submit/`: opt-in result submission. `payload.ts` builds the payload from an allowlist of run.json fields (never spread the run; `units`, `breakdown`, `repo` and reasons hold paths), `repo-identity.ts` hashes the normalised remote URL (root commit when there is no remote), `send.ts` POSTs to the constant in `constants.ts`. Git and `fetch` are injected through `CliDeps`. Nothing is sent without `--confirm`. Field names must match the app's schema (`app.vibecodedshit.com` `src/lib/submission.ts`).
 - `src/report-only/hotspots.ts`: churn (12 months, `git log`) times the per-file cognitive complexity 4.1 stores in `reportOnly.complexityByFile`. `scan.ts` stores the top 20 as `reportOnly.hotspots`; report-only values never enter scoring, `recompute` or the diff.
 
 Adding a parameter: add `src/measure/p<d>-<n>.ts` and a test beside it, add one import and one entry to `registry.ts`, extend a fixture's `expected.json`. Do not change scoring, pooling, aggregation or the run.json shape (full runs add `tools.image`, the image tag and digest, and `execution.feedbackLoop`).
@@ -45,4 +47,4 @@ Adding a parameter: add `src/measure/p<d>-<n>.ts` and a test beside it, add one 
 
 ## Exit codes
 
-0 ok, 1 usage error or unreadable input, 2 methodology error (no run.json), 3 no logic file (no run.json), 4 tool error (run.json with `valid: false`), 5 `diff` refused (the runs are not comparable). A regression flag never changes the exit code.
+0 ok, 1 usage error or unreadable input, 2 methodology error (no run.json), 3 no logic file (no run.json), 4 tool error (run.json with `valid: false`), 5 `diff` refused (the runs are not comparable), 6 `submit` failed to send (network error, timeout or a non-2xx answer; usage errors and refusals are 1). A regression flag never changes the exit code.
