@@ -1,0 +1,16 @@
+{
+  "name": "vibecodedshit",
+  "owner": {
+    "name": "Peter Kisel"
+  },
+  "metadata": {
+    "description": "Tools from vibecodedshit.com for measuring and improving codebase health."
+  },
+  "plugins": [
+    {
+      "name": "codebase-health",
+      "source": "./health",
+      "description": "Scan a codebase with the Codebase Health benchmark and get an explained report."
+    }
+  ]
+}
