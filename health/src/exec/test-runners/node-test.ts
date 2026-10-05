@@ -1,3 +1,4 @@
+import { parseCoverageRanges } from '../test-reports/coverage-ranges.js';
 import { parseCoverageSummary } from '../test-reports/coverage-summary.js';
 import { parseJunit } from '../test-reports/junit.js';
 import type { RunnerSpec } from './spec.js';
@@ -5,9 +6,11 @@ import type { RunnerSpec } from './spec.js';
 export const nodeTest: RunnerSpec = {
   results: 'junit.xml',
   coverage: 'coverage/coverage-summary.json',
+  ranges: 'coverage/coverage-final.json',
   argv: (invocation, globs) => [
     'c8',
     '--reporter=json-summary',
+    '--reporter=json',
     '--report-dir=/out/coverage',
     '--all',
     ...globs.flatMap((glob) => ['--include', glob]),
@@ -19,4 +22,5 @@ export const nodeTest: RunnerSpec = {
   ],
   parseResults: parseJunit,
   parseCoverage: parseCoverageSummary,
+  parseRanges: parseCoverageRanges,
 };

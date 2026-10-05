@@ -1,3 +1,4 @@
+import { parseCoverageRanges } from '../test-reports/coverage-ranges.js';
 import { parseCoverageSummary } from '../test-reports/coverage-summary.js';
 import { parseVitestJson } from '../test-reports/vitest-json.js';
 import type { RunnerSpec } from './spec.js';
@@ -6,6 +7,7 @@ import type { RunnerSpec } from './spec.js';
 export const vitest: RunnerSpec = {
   results: 'results.json',
   coverage: 'coverage/coverage-summary.json',
+  ranges: 'coverage/coverage-final.json',
   argv: (invocation, globs) => [
     'npx',
     '--no-install',
@@ -16,6 +18,7 @@ export const vitest: RunnerSpec = {
     '--coverage.enabled',
     '--coverage.provider=v8',
     '--coverage.reporter=json-summary',
+    '--coverage.reporter=json',
     '--coverage.reportsDirectory=/out/coverage',
     '--coverage.reportOnFailure',
     ...globs.map((glob) => `--coverage.include=${glob}`),
@@ -23,4 +26,5 @@ export const vitest: RunnerSpec = {
   ],
   parseResults: parseVitestJson,
   parseCoverage: parseCoverageSummary,
+  parseRanges: parseCoverageRanges,
 };

@@ -1,3 +1,4 @@
+import { parseCoverageRanges } from '../test-reports/coverage-ranges.js';
 import { parseCoverageSummary } from '../test-reports/coverage-summary.js';
 import { parseJestJson } from '../test-reports/jest-json.js';
 import type { RunnerSpec } from './spec.js';
@@ -5,6 +6,7 @@ import type { RunnerSpec } from './spec.js';
 export const jest: RunnerSpec = {
   results: 'results.json',
   coverage: 'coverage/coverage-summary.json',
+  ranges: 'coverage/coverage-final.json',
   argv: (invocation, globs) => [
     'npx',
     '--no-install',
@@ -15,6 +17,7 @@ export const jest: RunnerSpec = {
     '--coverage',
     '--coverageProvider=v8',
     '--coverageReporters=json-summary',
+    '--coverageReporters=json',
     '--coverageDirectory=/out/coverage',
     ...globs.map((glob) => `--collectCoverageFrom=${glob}`),
     '--coverageThreshold={}',
@@ -22,4 +25,5 @@ export const jest: RunnerSpec = {
   ],
   parseResults: parseJestJson,
   parseCoverage: parseCoverageSummary,
+  parseRanges: parseCoverageRanges,
 };

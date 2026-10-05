@@ -1,5 +1,5 @@
 {
-  "note": "Cases (hand-counted): add and clamp-below pass, clamp-above fails, clamp-middle is skipped. CommonJS, the default jest setup. Coverage is what jest 30.2.0 with the v8 provider reports in health:1.0: src/math.js has 9 lines (7 covered: the final return is not reached) and 4 branches (3 covered); src/unused.js has 4 lines and 1 branch, and no test loads it.",
+  "note": "Cases (hand-counted): add and clamp-below pass, clamp-above fails, clamp-middle is skipped. CommonJS, the default jest setup. 1.2 is health's own code-line count from coverage-final.json (hand-built from the stored summary, regenerate it with test:docker). Branches are what jest 30.2.0 with the v8 provider reports in health:1.0: src/math.js has 9 lines (7 covered: the final return is not reached) and 4 branches (3 covered); src/unused.js has 4 lines and 1 branch, and no test loads it.",
   "logicLines": 13,
   "cases": {
     "passed": 2,

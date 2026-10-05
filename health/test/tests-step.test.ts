@@ -3,6 +3,7 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { run } from '../src/cli.js';
 import { planExecution } from '../src/exec/plan.js';
+import { coveredLines, parseCoverageRanges } from '../src/exec/test-reports/coverage-ranges.js';
 import { parseCoveragePy } from '../src/exec/test-reports/coverage-py.js';
 import { parseCoverageSummary } from '../src/exec/test-reports/coverage-summary.js';
 import { parseJestJson } from '../src/exec/test-reports/jest-json.js';
@@ -23,6 +24,7 @@ import { measurers } from '../src/measure/registry.js';
 import { loadMethodology } from '../src/methodology/load.js';
 import { runScan } from '../src/run/scan.js';
 import type { RunFile } from '../src/run/schema.js';
+import { analyzeTsFile } from '../src/scope/ts-lines.js';
 import { buildScope } from '../src/scope/build.js';
 import { trackedPaths } from '../src/scope/tracked.js';
 import { ToolError } from '../src/scope/types.js';
@@ -127,6 +129,35 @@ describe('report parsers', () => {
   });
 });
 
+describe('1.2 line counting', () => {
+  const math = 'export function add(a, b) {\n  return a + b;\n}\nexport function clamp(n, lo, hi) {\n  if (n < lo) return lo;\n  if (n > hi) return hi;\n  return n;\n}\n';
+  const count = (runner: string) => {
+    const ranges = parseCoverageRanges(reportFiles(runner)['coverage/coverage-final.json'] as string, '.')?.get('src/math.js') ?? [];
+    return coveredLines(analyzeTsFile('src/math.js', math).codeLineNumbers, ranges).size;
+  };
+
+  it('gives the same covered and coverable lines for vitest 4, c8 and the jest v8 provider on the same code', () => {
+    expect(analyzeTsFile('src/math.js', math).codeLines).toBe(8);
+    expect(count('vitest')).toBe(7);
+    expect(count('mocha')).toBe(7);
+    expect(count('node-test')).toBe(7);
+  });
+
+  it('maps coverage-final.json paths to repo-relative paths and rejects text that is not that report', () => {
+    const parsed = parseCoverageRanges(reportFiles('vitest')['coverage/coverage-final.json'] as string, 'pkg');
+    expect([...(parsed?.keys() ?? [])]).toEqual(['src/math.js', 'src/unused.js']);
+    expect([...(parseCoverageRanges('{"a.js":{"statementMap":{}}}', 'pkg')?.keys() ?? [])]).toEqual(['pkg/a.js']);
+    expect(parseCoverageRanges('nope', '.')).toBeNull();
+    expect(parseCoverageRanges('[]', '.')).toBeNull();
+  });
+
+  it('uses the innermost range, and counts a line outside every range as covered only when the file ran', () => {
+    const ranges = [{ start: 1, end: 5, hits: 3 }, { start: 3, end: 3, hits: 0 }];
+    expect([...coveredLines([1, 2, 3, 4, 9], ranges)]).toEqual([1, 2, 4, 9]);
+    expect([...coveredLines([1, 9], [{ start: 1, end: 1, hits: 0 }])]).toEqual([]);
+  });
+});
+
 describe('runner detection', () => {
   it('lets the test script win, then falls back to vitest, jest, mocha dependencies', () => {
     const pkg = (scripts: Record<string, string>, deps: string[] = []) => JSON.stringify({ scripts, devDependencies: Object.fromEntries(deps.map((d) => [d, '1'])) });
@@ -181,9 +212,9 @@ describe('runner detection', () => {
     const inv = (runner: TestRunnerName, args: string[] = []) => ({ dir: '.', group: 'typescript_javascript' as const, runner, args });
     const globs = ['src/**/*.js'];
     const v = RUNNERS.vitest.argv(inv('vitest', ['--config', 'x.ts']), globs, []);
-    expect(v).toEqual(expect.arrayContaining(['--reporter=json', '--outputFile=/out/results.json', '--coverage.provider=v8', '--coverage.reporter=json-summary', '--coverage.reportOnFailure', '--coverage.include=src/**/*.js', '--config', 'x.ts']));
-    expect(RUNNERS.jest.argv(inv('jest'), globs, [])).toEqual(expect.arrayContaining(['--json', '--coverageProvider=v8', '--collectCoverageFrom=src/**/*.js', '--coverageThreshold={}']));
-    expect(RUNNERS.mocha.argv(inv('mocha'), globs, []).slice(0, 7)).toEqual(['c8', '--reporter=json-summary', '--report-dir=/out/coverage', '--all', '--include', 'src/**/*.js', 'npx']);
+    expect(v).toEqual(expect.arrayContaining(['--reporter=json', '--outputFile=/out/results.json', '--coverage.provider=v8', '--coverage.reporter=json-summary', '--coverage.reporter=json', '--coverage.reportOnFailure', '--coverage.include=src/**/*.js', '--config', 'x.ts']));
+    expect(RUNNERS.jest.argv(inv('jest'), globs, [])).toEqual(expect.arrayContaining(['--json', '--coverageProvider=v8', '--coverageReporters=json-summary', '--coverageReporters=json', '--collectCoverageFrom=src/**/*.js', '--coverageThreshold={}']));
+    expect(RUNNERS.mocha.argv(inv('mocha'), globs, []).slice(0, 8)).toEqual(['c8', '--reporter=json-summary', '--reporter=json', '--report-dir=/out/coverage', '--all', '--include', 'src/**/*.js', 'npx']);
     expect(RUNNERS['node-test'].argv(inv('node-test'), globs, [])).toEqual(expect.arrayContaining(['--test-reporter=junit', '--test-reporter-destination=/out/junit.xml', 'node', '--test']));
     expect(RUNNERS.pytest.argv(inv('pytest'), [], ['calc'])).toEqual(['health-pytest', '--continue-on-collection-errors', '--junitxml=/out/junit.xml', '--cov=calc', '--cov-branch', '--cov-report=json:/out/coverage.json', '--cov-fail-under=0']);
   });
@@ -265,6 +296,8 @@ describe('no tests, timeouts and tool errors', () => {
     const results = reportFiles('vitest')['results.json'] as string;
     await expect(runScan(opts(materializeFixture('exec-tests-vitest'), healthy(() => ({ exitCode: 0, files: { 'results.json': results } }))))).rejects.toBeInstanceOf(ToolError);
     await expect(runScan(opts(materializeFixture('exec-tests-vitest'), healthy(() => ({ exitCode: 0, files: { 'results.json': results, 'coverage/coverage-summary.json': 'garbage' } }))))).rejects.toThrow(/no usable coverage data/);
+    const summary = reportFiles('vitest')['coverage/coverage-summary.json'] as string;
+    await expect(runScan(opts(materializeFixture('exec-tests-vitest'), healthy(() => ({ exitCode: 0, files: { 'results.json': results, 'coverage/coverage-summary.json': summary } }))))).rejects.toThrow(/no usable coverage-final.json/);
   });
 
   it('is a tool error when the coverage provider cannot be installed, and exits 4 through the CLI', async () => {
@@ -276,9 +309,11 @@ describe('no tests, timeouts and tool errors', () => {
     const files = reportFiles('vitest');
     const summary = JSON.parse(files['coverage/coverage-summary.json'] as string) as Record<string, unknown>;
     delete summary['/work/src/unused.js'];
-    const runner = healthy(() => ({ exitCode: 1, files: { ...files, 'coverage/coverage-summary.json': JSON.stringify(summary) } }));
+    const final = JSON.parse(files['coverage/coverage-final.json'] as string) as Record<string, unknown>;
+    delete final['/work/src/unused.js'];
+    const runner = healthy(() => ({ exitCode: 1, files: { ...files, 'coverage/coverage-summary.json': JSON.stringify(summary), 'coverage/coverage-final.json': JSON.stringify(final) } }));
     const result = await runScan(opts(materializeFixture('exec-tests-vitest'), runner));
-    expect(param(result, '1.2').raw).toEqual({ kind: 'ratio', numerator: 3, denominator: 7, scale: 100 });
+    expect(param(result, '1.2').raw).toEqual({ kind: 'ratio', numerator: 7, denominator: 11, scale: 100 });
     expect(param(result, '1.3').raw).toEqual({ kind: 'ratio', numerator: 3, denominator: 4, scale: 100 });
     expect(result.warnings.filter((w) => /1 logic file\(s\) missing/.test(w))).toHaveLength(1);
   });
@@ -288,9 +323,12 @@ describe('no tests, timeouts and tool errors', () => {
     const summary = JSON.parse(files['coverage/coverage-summary.json'] as string) as Record<string, unknown>;
     summary['/work/test/math.test.js'] = summary['/work/src/math.js'];
     summary['/work/node_modules/x/index.js'] = summary['/work/src/math.js'];
-    const runner = healthy(() => ({ exitCode: 1, files: { ...files, 'coverage/coverage-summary.json': JSON.stringify(summary) } }));
+    const final = JSON.parse(files['coverage/coverage-final.json'] as string) as Record<string, unknown>;
+    final['/work/test/math.test.js'] = final['/work/src/math.js'];
+    final['/work/node_modules/x/index.js'] = final['/work/src/math.js'];
+    const runner = healthy(() => ({ exitCode: 1, files: { ...files, 'coverage/coverage-summary.json': JSON.stringify(summary), 'coverage/coverage-final.json': JSON.stringify(final) } }));
     const result = await runScan(opts(materializeFixture('exec-tests-vitest'), runner));
-    expect(param(result, '1.2').raw).toEqual({ kind: 'ratio', numerator: 3, denominator: 5, scale: 100 });
+    expect(param(result, '1.2').raw).toEqual({ kind: 'ratio', numerator: 7, denominator: 11, scale: 100 });
   });
 
   it('excludes skipped cases from both sides of the pass rate', async () => {

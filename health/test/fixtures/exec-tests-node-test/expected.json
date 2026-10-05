@@ -1,5 +1,5 @@
 {
-  "note": "Cases (hand-counted): add and clamp-below pass, clamp-above fails, clamp-middle is skipped. Coverage is what c8 12.0.0 reports in health:1.0: src/math.js has 8 lines (7 covered: the final return is not reached) and 5 branches as V8 block coverage counts them (4 covered); src/unused.js has 3 lines and 1 branch, and no test loads it.",
+  "note": "Cases (hand-counted): add and clamp-below pass, clamp-above fails, clamp-middle is skipped. 1.2 is health's own code-line count from coverage-final.json (hand-built from the stored summary, regenerate it with test:docker). Branches are what c8 12.0.0 reports in health:1.0: src/math.js has 8 lines (7 covered: the final return is not reached) and 5 branches as V8 block coverage counts them (4 covered); src/unused.js has 3 lines and 1 branch, and no test loads it.",
   "logicLines": 11,
   "cases": {
     "passed": 2,

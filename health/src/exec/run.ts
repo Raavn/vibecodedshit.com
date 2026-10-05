@@ -66,7 +66,11 @@ async function readTest(invocation: TestInvocation, outcome: StepOutcome): Promi
   const coverageText = await read(spec.coverage);
   const coverage = coverageText === null ? null : spec.parseCoverage(coverageText, invocation.dir);
   if (coverage === null) throw new ToolError(`${invocation.runner} produced results but no usable coverage data in ${invocation.dir}`);
-  return { ...base, results, coverage };
+  if (spec.ranges === undefined || spec.parseRanges === undefined) return { ...base, results, coverage };
+  const rangesText = await read(spec.ranges);
+  const ranges = rangesText === null ? null : spec.parseRanges(rangesText, invocation.dir);
+  if (ranges === null) throw new ToolError(`${invocation.runner} produced no usable coverage-final.json in ${invocation.dir}`);
+  return { ...base, results, coverage, ranges };
 }
 
 /**

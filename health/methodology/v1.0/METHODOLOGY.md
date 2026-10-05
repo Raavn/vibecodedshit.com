@@ -218,7 +218,7 @@ Scores are interpolated between anchors and clamped outside them. If there is no
 
 Weight 25%. Execution layer. Scores 0 if any of these steps fail: install, test run. Pooled as a ratio across languages and packages.
 
-**Raw value** (percent). Covered lines / coverable lines across all logic files, including logic files no test loads. A file no test loads counts as 0% covered.
+**Raw value** (percent). Covered lines / coverable lines across all logic files, including logic files no test loads. A file no test loads counts as 0% covered. For TypeScript and JavaScript the coverable lines are health's code lines (lines with at least one token). A line counts as covered when the innermost statement or function containing it ran.
 
 | Raw | Score | Meaning |
 |---|---|---|
@@ -231,7 +231,7 @@ Scores are interpolated between anchors and clamped outside them. If there is no
 
 **How it is measured.**
 
-- TypeScript / JavaScript: v8 or istanbul coverage with the json-summary reporter (vitest coverage.all, jest collectCoverageFrom over logic files, c8 for mocha and node:test). Repository coverage thresholds are disabled so they cannot fail the run.
+- TypeScript / JavaScript: v8 or istanbul coverage with the json-summary and json reporters (vitest coverage.include, jest collectCoverageFrom over logic files, c8 for mocha and node:test). Lines are counted by health from the json report's statement and function ranges, not taken from the tool, so the same code gives the same count under every runner. Repository coverage thresholds are disabled so they cannot fail the run.
 - Python: coverage.py through pytest-cov, with --cov set to every first-party package so files no test imports are included.
 
 **Why.** Coverage shows which code no test executes. It does not show that the executed code is checked, which is why 1.5 exists. The 60% anchor matches Google's "acceptable" level. The 100 anchor is 80%, which is the coverage SonarQube's default quality gate requires on new code and sits between Google's "commendable" (75%) and "exemplary" (90%). Above 80% the methodology gives no extra credit, because the remaining code is often glue that costs more to test than it returns.
@@ -258,7 +258,7 @@ Scores are interpolated between anchors and clamped outside them. If there is no
 
 **How it is measured.**
 
-- TypeScript / JavaScript: Same coverage run as 1.2; branch totals from json-summary.
+- TypeScript / JavaScript: Same coverage run as 1.2; branch totals from json-summary. They come from the runner's coverage tool and can differ slightly between runners on the same code.
 - Python: Same run as 1.2 with --cov-branch.
 
 **Why.** Tests written quickly cover the happy path. Line coverage can be high while every error branch is untested. Branch coverage shows that gap. Branch percentages are lower than line percentages on the same code, so the anchors sit about 10 points lower than 1.2's.

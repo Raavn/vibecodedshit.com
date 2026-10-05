@@ -1,5 +1,7 @@
 import type { Measurement, MeasureContext, UnitRaw } from '../measure/types.js';
 import { emptyTallies, tallyUnits, unitId } from '../measure/units.js';
+import { analyzeTsFile } from '../scope/ts-lines.js';
+import { coveredLines } from './test-reports/coverage-ranges.js';
 import type { ExecutionResults, FileCoverage } from './types.js';
 
 type Exec = NonNullable<MeasureContext['exec']>;
@@ -42,10 +44,23 @@ export function measurePassRate(ctx: MeasureContext): Measurement {
   return { status: 'measured', units };
 }
 
+/** Code lines of a TS/JS logic file and how many ran, or null when no invocation's coverage-final.json lists the file. */
+function tsLineCoverage(ctx: MeasureContext, exec: ExecutionResults, file: string): { total: number; covered: number } | null {
+  const reported = exec.test.invocations.map((run) => run.ranges?.get(file)).filter((r) => r !== undefined);
+  if (reported.length === 0) return null;
+  const codeLines = analyzeTsFile(file, ctx.scope.getTsSourceFile(file).text).codeLineNumbers;
+  const covered = new Set<number>();
+  for (const ranges of reported) for (const line of coveredLines(codeLines, ranges)) covered.add(line);
+  return { total: codeLines.size, covered: covered.size };
+}
+
 /**
  * 1.2 (lines) and 1.3 (branches): covered over coverable across the in-scope logic files, per (package,
- * group) unit. A logic file the coverage report lacks counts as 0 covered with its logic lines coverable
- * (it adds no branches), so it cannot raise the ratio. Coverage entries outside the logic set are dropped.
+ * group) unit. 1.2 does not take the runner's line counts, which differ between runners for the same code:
+ * for a TS/JS file the coverable lines are health's own code lines and a line is covered when the innermost
+ * statement or function range holding it ran in any invocation (see `coveredLines`). Python lines and all
+ * branches are the tool's counts. A logic file the coverage report lacks counts as 0 covered with its logic
+ * lines coverable (it adds no branches), so it cannot raise the ratio. Coverage entries outside the logic set are dropped.
  * With no test case at all every unit is 0 of 0 and scores `when_empty`.
  */
 export function measureCoverage(ctx: MeasureContext, kind: 'lines' | 'branches'): Measurement {
@@ -71,6 +86,17 @@ export function measureCoverage(ctx: MeasureContext, kind: 'lines' | 'branches')
   for (const file of logic) {
     const tally = tallies.get(unitId(file));
     if (!tally) continue;
+    if (kind === 'lines' && file.group === 'typescript_javascript') {
+      const lines = tsLineCoverage(ctx, exec, file.path);
+      if (lines === null) {
+        missing += 1;
+        tally.denominator += file.logicLines;
+      } else {
+        tally.numerator += lines.covered;
+        tally.denominator += lines.total;
+      }
+      continue;
+    }
     const cov = merged.get(file.path);
     if (cov) {
       tally.numerator += cov[kind].covered;
