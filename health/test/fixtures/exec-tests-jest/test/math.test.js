@@ -1,4 +1,4 @@
-import { add, clamp } from '../src/math.js';
+const { add, clamp } = require('../src/math.js');
 
 describe('math', () => {
   it('adds', () => {

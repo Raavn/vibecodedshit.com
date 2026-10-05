@@ -1,3 +1,4 @@
-export function unused(x) {
+function unused(x) {
   return x * 2;
 }
+module.exports = { unused };
