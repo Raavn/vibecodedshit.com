@@ -64,7 +64,9 @@ parameters:
       definition: >-
         Covered lines / coverable lines across all logic files, including
         logic files no test loads. A file no test loads counts as 0%
-        covered.
+        covered. For TypeScript and JavaScript the coverable lines are
+        health's code lines (lines with at least one token). A line counts as
+        covered when the innermost statement or function containing it ran.
       when_empty: 0
     scoring:
       method: piecewise_linear
@@ -83,10 +85,12 @@ parameters:
           descriptor: Well covered. No extra credit above this.
     measure:
       typescript_javascript: >-
-        v8 or istanbul coverage with the json-summary reporter (vitest
-        coverage.all, jest collectCoverageFrom over logic files, c8 for mocha
-        and node:test). Repository coverage thresholds are disabled so they
-        cannot fail the run.
+        v8 or istanbul coverage with the json-summary and json reporters
+        (vitest coverage.include, jest collectCoverageFrom over logic files, c8
+        for mocha and node:test). Lines are counted by health from the json
+        report's statement and function ranges, not taken from the tool, so
+        the same code gives the same count under every runner. Repository
+        coverage thresholds are disabled so they cannot fail the run.
       python: >-
         coverage.py through pytest-cov, with --cov set to every first-party
         package so files no test imports are included.
@@ -130,7 +134,10 @@ parameters:
           score: 100
           descriptor: Most decisions are tested both ways.
     measure:
-      typescript_javascript: Same coverage run as 1.2; branch totals from json-summary.
+      typescript_javascript: >-
+        Same coverage run as 1.2; branch totals from json-summary. They come
+        from the runner's coverage tool and can differ slightly between
+        runners on the same code.
       python: Same run as 1.2 with --cov-branch.
     not_applicable_when: null
     rationale: >-

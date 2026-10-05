@@ -6,6 +6,8 @@ export interface TsFileInfo {
   definesCallable: boolean;
   /** Non-blank lines that hold at least one token. Comment-only lines are not counted. */
   codeLines: number;
+  /** The 1-based numbers of the lines `codeLines` counts. */
+  codeLineNumbers: Set<number>;
 }
 
 const CALLABLE_KINDS = new Set<ts.SyntaxKind>([
@@ -61,9 +63,9 @@ export function analyzeTsFile(file: string, text: string): TsFileInfo {
   visit(sourceFile);
 
   const lines = text.split('\n');
-  let codeLines = 0;
+  const codeLineNumbers = new Set<number>();
   for (const line of lineHasToken) {
-    if ((lines[line] ?? '').trim() !== '') codeLines += 1;
+    if ((lines[line] ?? '').trim() !== '') codeLineNumbers.add(line + 1);
   }
-  return { sourceFile, definesCallable, codeLines };
+  return { sourceFile, definesCallable, codeLines: codeLineNumbers.size, codeLineNumbers };
 }

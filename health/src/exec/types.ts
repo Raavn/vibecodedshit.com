@@ -105,12 +105,21 @@ export interface FileCoverage {
   branches: { total: number; covered: number };
 }
 
+/** One statement or function of an istanbul `coverage-final.json`: its 1-based line span and how often it ran. */
+export interface CoverageRange {
+  start: number;
+  end: number;
+  hits: number;
+}
+
 export interface TestResult extends TestInvocation {
   outcome: StepOutcome;
   /** Case counts from the results report. Undefined when the run timed out or wrote no usable report. */
   results?: CaseCounts;
   /** Per repo-relative file, from the coverage report. Undefined when the run had no case, so no coverage was required. */
   coverage?: Map<string, FileCoverage>;
+  /** Per repo-relative file, the statement and function ranges of a TS/JS runner's coverage-final.json. 1.2 counts lines from these. */
+  ranges?: Map<string, CoverageRange[]>;
 }
 
 export interface ExecutionResults {
