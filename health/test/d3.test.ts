@@ -1,7 +1,11 @@
+import { mkdtempSync, symlinkSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import type { Measurement, UnitRaw } from '../src/measure/types.js';
 import { ToolError } from '../src/scope/types.js';
 import { cyclicFiles, d3Context, expected, fixtureContext, graphOf, measure, rulesOf, violations } from './helpers/d3.js';
+import { materializeFixture } from './helpers/fixture.js';
 import { fakeToolKit } from './helpers/tools.js';
 
 const FIXTURES = ['d3-nextjs', 'd3-express', 'd3-generic-ts', 'd3-declared-ts', 'd3-na-ts', 'd3-domain-ts'];
@@ -140,5 +144,19 @@ describe('D3 tsconfig aliases', () => {
     const { ctx } = await fixtureContext('d3-nextjs');
     const edges = (await graphOf(ctx)).units[0]?.edges ?? [];
     expect(edges.some((e) => e.from === 'src/app/page.tsx' && e.to === 'src/components/button.tsx')).toBe(true);
+  });
+});
+
+describe('D3 repository behind a symlink', () => {
+  it('3.2 gives the same ratio when the repository path is a symlink', async () => {
+    const real = materializeFixture('d3-na-ts');
+    const link = path.join(mkdtempSync(path.join(tmpdir(), 'health-link-')), 'repo');
+    symlinkSync(real, link, 'dir');
+    const ctx = await d3Context(link);
+    const want = expected('d3-na-ts') as Record<string, Record<string, { numerator: number; denominator: number }>>;
+    const measured = units(await measure(ctx, '3.2'));
+    for (const [pkg, exp] of Object.entries(want['3.2'] as Record<string, { numerator: number; denominator: number }>)) {
+      expect(ratio(measured.find((u) => u.package === pkg))).toEqual({ numerator: exp.numerator, denominator: exp.denominator });
+    }
   });
 });
