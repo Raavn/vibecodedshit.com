@@ -24,7 +24,10 @@ ARG PYTEST_VERSION=9.1.1
 ARG PYTEST_COV_VERSION=7.1.0
 ARG COVERAGE_VERSION=7.16.2
 ARG GO_VERSION=1.27.1
-ARG GO_SHA256=63d339f0da5ab53635a56f2490a7984dfe12dfcff22ad749f63edaf590168445
+ARG GO_SHA256_AMD64=63d339f0da5ab53635a56f2490a7984dfe12dfcff22ad749f63edaf590168445
+ARG GO_SHA256_ARM64=3450b45a3f9ee8568792736a5c5e70a1f2e9b36c35a8f74958c03e51d7d92bec
+# Set by BuildKit. Redeclared here so the stage can see it; empty on a legacy builder.
+ARG TARGETARCH
 
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update \
@@ -76,9 +79,16 @@ RUN uv venv /tmp/wheel-venv --python ${PYTHON_VERSION} \
  && /tmp/wheel-venv/bin/python -m pip download -d /opt/health/wheels pytest==${PYTEST_VERSION} pytest-cov==${PYTEST_COV_VERSION} coverage==${COVERAGE_VERSION} \
  && rm -rf /tmp/wheel-venv
 
-# Go, pinned by checksum. No parameter uses it yet.
-RUN curl -fsSL -o /tmp/go.tgz https://go.dev/dl/go${GO_VERSION}.linux-amd64.tar.gz \
- && echo "${GO_SHA256}  /tmp/go.tgz" | sha256sum -c - \
+# Go, pinned by checksum for amd64 and arm64. No parameter uses it yet.
+# TARGETARCH is empty without BuildKit, so it falls back to the Debian architecture name.
+RUN arch="${TARGETARCH:-$(dpkg --print-architecture)}" \
+ && case "${arch}" in \
+      amd64) go_sha256="${GO_SHA256_AMD64}" ;; \
+      arm64) go_sha256="${GO_SHA256_ARM64}" ;; \
+      *) echo "unsupported architecture for Go: ${arch}" >&2; exit 1 ;; \
+    esac \
+ && curl -fsSL -o /tmp/go.tgz "https://go.dev/dl/go${GO_VERSION}.linux-${arch}.tar.gz" \
+ && echo "${go_sha256}  /tmp/go.tgz" | sha256sum -c - \
  && tar -C /usr/local -xzf /tmp/go.tgz \
  && rm /tmp/go.tgz
 
