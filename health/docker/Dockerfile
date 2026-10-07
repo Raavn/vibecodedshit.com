@@ -60,8 +60,9 @@ COPY config/ /opt/health/
 COPY bin/ /opt/health/bin/
 RUN chmod +x /opt/health/bin/*
 
-# Python 3.12 from uv's pinned builds, then the Python tools.
-ENV UV_PYTHON_INSTALL_DIR=/opt/python UV_TOOL_BIN_DIR=/usr/local/bin UV_LINK_MODE=copy POETRY_VIRTUALENVS_IN_PROJECT=1 PIPENV_VENV_IN_PROJECT=1
+# Python 3.12 from uv's pinned builds, then the Python tools. Steps run as the host user, so the tool environments
+# live in /opt/uv-tools: uv's default is under /root, which no other user can enter.
+ENV UV_PYTHON_INSTALL_DIR=/opt/python UV_TOOL_DIR=/opt/uv-tools UV_TOOL_BIN_DIR=/usr/local/bin UV_LINK_MODE=copy POETRY_VIRTUALENVS_IN_PROJECT=1 PIPENV_VENV_IN_PROJECT=1
 RUN curl -LsSf https://astral.sh/uv/${UV_VERSION}/install.sh | sh \
  && mv /root/.local/bin/uv /root/.local/bin/uvx /usr/local/bin/ \
  && uv python install ${PYTHON_VERSION} \

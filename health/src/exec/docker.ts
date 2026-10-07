@@ -25,8 +25,24 @@ function run(spawn: Spawn, args: string[], onChild?: () => void): Promise<Finish
   });
 }
 
-/** `docker run` argv for one step. Network is off unless the step needs it. */
-export function dockerArgs(spec: StepSpec, name: string, runner: ExecutionConfig['runner']): string[] {
+/** Host uid and gid, or null where the platform has none (Windows). */
+export interface HostUser {
+  uid: number;
+  gid: number;
+}
+export const hostUser = (): HostUser | null =>
+  process.getuid && process.getgid ? { uid: process.getuid(), gid: process.getgid() } : null;
+
+/**
+ * `docker run` argv for one step. Network is off unless the step needs it. The container runs as the host user, so
+ * what a step writes into /work and /out stays removable on the host; HOME points at a directory any uid can write.
+ */
+export function dockerArgs(
+  spec: StepSpec,
+  name: string,
+  runner: ExecutionConfig['runner'],
+  user: HostUser | null = hostUser(),
+): string[] {
   return [
     'run',
     '--rm',
@@ -38,6 +54,7 @@ export function dockerArgs(spec: StepSpec, name: string, runner: ExecutionConfig
     String(runner.cpus),
     '--memory',
     `${runner.memory_gb}g`,
+    ...(user ? ['--user', `${user.uid}:${user.gid}`, '-e', 'HOME=/tmp'] : []),
     ...(spec.network ? [] : ['--network', 'none']),
     ...Object.entries(spec.env).flatMap(([key, value]) => ['-e', `${key}=${value}`]),
     '-v',

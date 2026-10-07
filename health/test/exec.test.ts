@@ -91,6 +91,14 @@ describe('docker runner', () => {
     expect(build).toContain(`-v /tmp/w:/work -v /tmp/o:/out -w /work ${runnerConfig.image} npm run build`);
   });
 
+  it('runs as the host user with a writable HOME, and as the image user where the host has no uid', () => {
+    const args = dockerArgs(spec(), 'n', runnerConfig, { uid: 1000, gid: 124 }).join(' ');
+    expect(args).toContain('--user 1000:124 -e HOME=/tmp');
+    const windows = dockerArgs(spec(), 'n', runnerConfig, null);
+    expect(windows).not.toContain('--user');
+    expect(windows.join(' ')).not.toContain('HOME=');
+  });
+
   it('passes env example pairs as -e and sets the working directory inside /work', () => {
     const args = dockerArgs(spec({ env: { A: '1', B: 'two' }, cwd: 'packages/api' }), 'n', runnerConfig);
     expect(args.join(' ')).toContain('-e A=1 -e B=two');
