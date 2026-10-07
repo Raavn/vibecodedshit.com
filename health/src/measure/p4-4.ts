@@ -94,13 +94,24 @@ function isDistributedPackage(repoPath: string, pkg: string, pyproject: Record<s
   return existsSync(path.join(dir, 'setup.py')) || existsSync(path.join(dir, 'setup.cfg'));
 }
 
-function scriptTargets(pyproject: Record<string, unknown> | undefined): Set<string> {
-  const targets = new Set<string>();
+interface ScriptTargets {
+  /** Dotted module names (`api.cli`). */
+  modules: Set<string>;
+  /** `module:qualname` a script calls (`api.cli:cli`, `api.app:App.run`); vulture sees no caller, so it counts as used. */
+  objects: Set<string>;
+}
+
+function scriptTargets(pyproject: Record<string, unknown> | undefined): ScriptTargets {
+  const targets: ScriptTargets = { modules: new Set(), objects: new Set() };
   const add = (scripts: unknown): void => {
     for (const value of Object.values(asRecord(scripts) ?? {})) {
       const text = typeof value === 'string' ? value : typeof asRecord(value)?.reference === 'string' ? String(asRecord(value)?.reference) : '';
-      const module = (text.split(':')[0] ?? '').trim();
-      if (module !== '') targets.add(module);
+      const [modulePart, objectPart] = text.split(':');
+      const module = (modulePart ?? '').trim();
+      if (module === '') continue;
+      targets.modules.add(module);
+      const object = (objectPart ?? '').trim();
+      if (object !== '') targets.objects.add(`${module}:${object}`);
     }
   };
   add(asRecord(pyproject?.project)?.scripts);
@@ -108,12 +119,12 @@ function scriptTargets(pyproject: Record<string, unknown> | undefined): Set<stri
   return targets;
 }
 
-function isEntryModule(mod: PyModule, scripts: Set<string>): boolean {
+function isEntryModule(mod: PyModule, scripts: ScriptTargets): boolean {
   const segments = mod.file.path.replace(/\.py$/, '').split('/');
   const base = segments[segments.length - 1] ?? '';
   if (ENTRY_NAMES.has(base)) return true;
   if (segments.slice(0, -1).includes('settings')) return true;
-  return [...mod.names].some((name) => scripts.has(name));
+  return [...mod.names].some((name) => scripts.modules.has(name));
 }
 
 /** Imported dotted name to the files that import it. */
@@ -241,6 +252,7 @@ async function measurePython(ctx: MeasureContext, tallies: Map<string, Tally>, w
       for (const hit of hitsByFile.get(mod.file.path) ?? []) {
         const symbol = matchSymbol(mod.info.symbols, hit.name, hit.line);
         if (!symbol || symbol.decorated || allNames.has(symbol.name)) continue;
+        if ([...mod.names].some((name) => scripts.objects.has(`${name}:${symbol.qualname}`))) continue;
         counted.add(symbol);
       }
       tally.numerator += counted.size;

@@ -112,9 +112,34 @@ describe('4.1 complex functions', () => {
     expect(run.dimensions.find((d) => d.id === 4)?.score).not.toBeNull();
   });
 
+  // complexipy 7.x and 8.x exit 1 when a function is over the threshold, --ignore-complexity or not, and still write the report.
+  function exitOne(stdout = ''): FakeTool {
+    return (args) => {
+      writeFileSync(args[args.indexOf('--output') + 1] as string, JSON.stringify(complexipyEntries));
+      return ok(stdout, 1);
+    };
+  }
+
+  it('reads the report when complexipy exits 1 for a function over the threshold', async () => {
+    const want = expected('d4-complexity') as never as Record<string, Record<string, never>>;
+    const run = await scan(materializeFixture('d4-complexity'), fakeToolKit({ complexipy: exitOne(), vulture: () => ok() }));
+    const p = param(run, '4.1');
+    expect(p.status).toBe('measured');
+    expect(pooled(p)).toEqual(want.p41?.pooled);
+    expect(run.warnings).toContain('4.1: 1 files could not be parsed');
+  });
+
+  it('counts Python files complexipy could not parse together with the TS ones', async () => {
+    const stdout = '\x1b[31merror\x1b[39m: Failed to process /tmp/x/broken.py - Please check file/folder exists or check syntax\n';
+    const run = await scan(materializeFixture('d4-complexity'), fakeToolKit({ complexipy: exitOne(stdout), vulture: () => ok() }));
+    expect(param(run, '4.1').status).toBe('measured');
+    expect(run.warnings).toContain('4.1: 2 files could not be parsed');
+  });
+
   it.each([
     ['exits with a failure code', (): FakeTool => () => ({ exitCode: 2, stdout: '', stderr: 'boom', timedOut: false }), /^complexipy exited with 2: boom/],
     ['prints no report', (): FakeTool => () => ok(), /^complexipy printed no parseable JSON report/],
+    ['exits 1 with no report', (): FakeTool => () => ok('', 1), /^complexipy printed no parseable JSON report/],
     ['writes an unexpected shape', (): FakeTool => (args) => {
       writeFileSync(args[args.indexOf('--output') + 1] as string, JSON.stringify([{ path: PY }]));
       return ok();
@@ -186,6 +211,8 @@ const vultureOutput = [
   `${CORE}:21: unused function 'decorated_fn' (60% confidence)`,
   `${CORE}:22: unused function 'decorated_fn' (60% confidence)`,
   `${CORE}:26: unused function 'exported_fn' (60% confidence)`,
+  // Real vulture reports the [project.scripts] target too (`api-cli = "api.cli:cli"`); it counts as used.
+  "packages/api/api/cli.py:1: unused function 'cli' (60% confidence)",
   `${DEAD}:1: unused function 'dm1' (60% confidence)`,
   `${DEAD}:5: unused function 'dm2' (60% confidence)`,
   'packages/api/tests/test_app.py:9: unused function \'helper\' (60% confidence)',

@@ -85,11 +85,19 @@ interface ComplexipyEntry {
   complexity?: unknown;
 }
 
-/** Python: complexipy in a work copy, so no repository config is read. */
+/** complexipy's line for a file it could not parse; the report still holds every other file. */
+const UNPARSED = /Failed to process /g;
+const ANSI = /\x1b\[[0-9;]*m/g;
+
+/**
+ * Python: complexipy in a work copy, so no repository config is read. complexipy exits 1 when any function is over
+ * --max-complexity-allowed (--ignore-complexity does not change that, 7.x and 8.x) or a file fails to parse; it still
+ * writes the report, so exit 1 is accepted and the report decides.
+ */
 async function runComplexipy(
   ctx: Parameters<Measurer['measure']>[0],
   files: ScopedFile[],
-): Promise<FileComplexity[] | Measurement> {
+): Promise<{ results: FileComplexity[]; unparsed: number } | Measurement> {
   const tool = await ctx.tools.resolve('complexipy');
   if (!tool) return unavailable(ctx, notFoundReason('complexipy'));
   const copy = await createWorkCopy(ctx.repoPath, files.map((f) => f.path));
@@ -101,7 +109,7 @@ async function runComplexipy(
       ['.', '--max-complexity-allowed', String(COMPLEXITY_THRESHOLD), '--no-ignore', '--ignore-complexity', '--output-format', 'json', '--output', outFile, '--quiet'],
       { cwd: copy.dir },
     );
-    const failure = failureReason(tool, result, [0]);
+    const failure = failureReason(tool, result, [0, 1]);
     if (failure) return unavailable(ctx, failure);
     let entries: ComplexipyEntry[];
     try {
@@ -127,7 +135,8 @@ async function runComplexipy(
       if (entry.complexity > 0) item.complexities.push(entry.complexity);
       perFile.set(rel, item);
     }
-    return [...perFile.values()];
+    const unparsed = `${result.stdout}\n${result.stderr}`.replace(ANSI, '').match(UNPARSED)?.length ?? 0;
+    return { results: [...perFile.values()], unparsed };
   } finally {
     await copy.cleanup();
     await rm(outDir, { recursive: true, force: true });
@@ -142,20 +151,23 @@ export const p41: Measurer = {
     const pyFiles = logicFiles(ctx.scope, 'python');
     const warnings: string[] = [];
     const perFile: FileComplexity[] = [];
+    let unparsed = 0;
 
     if (tsFiles.length > 0) {
-      const { results, unparsed } = await lintTypeScript(ctx.repoPath, tsFiles);
-      perFile.push(...results);
-      if (unparsed > 0) warnings.push(`4.1: ${unparsed} files could not be parsed`);
+      const ts = await lintTypeScript(ctx.repoPath, tsFiles);
+      perFile.push(...ts.results);
+      unparsed += ts.unparsed;
       ctx.tools.recordVersion('eslint', installedVersion('eslint'));
       ctx.tools.recordVersion('eslint-plugin-sonarjs', installedVersion('eslint-plugin-sonarjs'));
       ctx.tools.recordVersion('@typescript-eslint/parser', installedVersion('@typescript-eslint/parser'));
     }
     if (pyFiles.length > 0) {
       const py = await runComplexipy(ctx, pyFiles);
-      if (!Array.isArray(py)) return py;
-      perFile.push(...py);
+      if (!('results' in py)) return py;
+      perFile.push(...py.results);
+      unparsed += py.unparsed;
     }
+    if (unparsed > 0) warnings.push(`4.1: ${unparsed} files could not be parsed`);
 
     const tallies = emptyTallies([...tsFiles, ...pyFiles]);
     const byPath = new Map([...tsFiles, ...pyFiles].map((f) => [f.path, f]));
