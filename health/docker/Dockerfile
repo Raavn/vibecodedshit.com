@@ -49,8 +49,11 @@ RUN rm -rf /usr/local/bin/yarn /usr/local/bin/yarnpkg /opt/yarn-v* \
     c8@${C8_VERSION}
 
 # The pinned lint ruleset and its plugins live in /opt/health, never in a scanned repository.
+# type=module because bin/health-eslint is extensionless ESM; npm 11's `npm init -y` writes "type": "commonjs",
+# under which node exits 0 on it without running it.
 WORKDIR /opt/health
 RUN npm init -y >/dev/null \
+ && npm pkg set type=module \
  && npm install --save-exact \
     eslint@${ESLINT_VERSION} \
     typescript@${TYPESCRIPT_VERSION} \
