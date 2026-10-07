@@ -114,6 +114,12 @@ export const p55: Measurer = {
 
     for (const unit of units.filter((u) => u.group === 'python')) {
       const deps = await unitDeps(ctx, unit.package, unit.group);
+      // deptry exits 1 with no report when there is nothing to read dependencies from, so it is not run.
+      if (!deps.manifest) {
+        warnings.push(`5.5: ${unit.package} has no Python dependency manifest`);
+        counts.set(`${unit.package}\0${unit.group}`, { numerator: 0, denominator: 0 });
+        continue;
+      }
       const denominator = new Set((deps.manifest?.deps ?? []).map((d) => d.name)).size;
       if (denominator === 0) warnings.push(`5.5: ${unit.package} declares no dependencies`);
       const numerator = await deptryCount(ctx, ctx.tools, unit.package);

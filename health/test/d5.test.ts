@@ -1,3 +1,4 @@
+import { execFileSync } from 'node:child_process';
 import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -433,6 +434,19 @@ describe('5.5 dependency declaration errors', () => {
     const run = await scan(repo, fakeToolKit({ deptry: null }));
     expect(param(run, '5.5')).toMatchObject({ status: 'not_measured', reason: expect.stringMatching(/^deptry not found/) });
     await expect(scan(repo, fakeToolKit({ deptry: null }), 'full')).rejects.toBeInstanceOf(ToolError);
+  });
+
+  it('does not run deptry for a Python unit with no dependency manifest (deptry would exit 1 with no report)', async () => {
+    const repo = materializeFixture('d5-declarations');
+    execFileSync('git', ['-C', repo, 'rm', '-qf', 'packages/api/pyproject.toml']);
+    const calls: { cwd: string; pyproject: string }[] = [];
+    const run = await scan(repo, fakeToolKit({ deptry: fakeDeptry(calls) }));
+    const p = param(run, '5.5');
+    expect(p.status).toBe('measured');
+    expect(calls).toHaveLength(0);
+    // Without its pyproject.toml, app.py falls into the root package.
+    expect(p.units?.find((u) => u.group === 'python')).toMatchObject({ package: '.', raw: { kind: 'ratio', numerator: 0, denominator: 0, scale: 100 } });
+    expect(run.warnings).toContain('5.5: . has no Python dependency manifest');
   });
 
   it('does not need deptry for a TypeScript-only repository and scores 100 with no declared dependencies', async () => {
