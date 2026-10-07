@@ -1,11 +1,11 @@
 import { EventEmitter } from 'node:events';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { run } from '../src/cli.js';
-import { createDockerRunner, dockerArgs, type Spawn } from '../src/exec/docker.js';
+import { createDockerRunner, dockerArgs, packageCacheDir, type Spawn } from '../src/exec/docker.js';
 import { planExecution } from '../src/exec/plan.js';
 import { parseEslint, parseMypy, parsePyright, parseRuff, parseTsc } from '../src/exec/reports.js';
 import type { StepSpec } from '../src/exec/types.js';
@@ -144,6 +144,43 @@ describe('docker runner', () => {
     const outcome = await createDockerRunner(runnerConfig, spawn).runStep(spec({ timeoutSeconds: 0.01 }));
     expect(outcome.status).toBe('timeout');
     expect(calls.some((args) => args[0] === 'kill' && /^health-[0-9a-f]+-build-1$/.test(args[1] ?? ''))).toBe(true);
+  });
+
+  it('mounts the package cache and points every package manager at it in network-on steps only', () => {
+    const install = dockerArgs(spec({ step: 'install', network: true }), 'n', runnerConfig, null, '/c').join(' ');
+    expect(install).toContain('-v /tmp/o:/out -v /c:/cache -w /work');
+    for (const pair of [
+      'npm_config_cache=/cache/npm',
+      'PNPM_HOME=/cache/pnpm',
+      'YARN_GLOBAL_FOLDER=/cache/yarn',
+      'BUN_INSTALL_CACHE_DIR=/cache/bun',
+      'PIP_CACHE_DIR=/cache/pip',
+      'UV_CACHE_DIR=/cache/uv',
+      'POETRY_CACHE_DIR=/cache/poetry',
+      'PDM_CACHE_DIR=/cache/pdm',
+      'PIPENV_CACHE_DIR=/cache/pipenv',
+    ]) {
+      expect(install).toContain(`-e ${pair}`);
+    }
+    expect(dockerArgs(spec(), 'n', runnerConfig, null, '/c').join(' ')).not.toContain('/cache');
+    expect(dockerArgs(spec({ step: 'install', network: true }), 'n', runnerConfig, null, null).join(' ')).not.toContain('/cache');
+  });
+
+  it('takes the cache directory from HEALTH_PACKAGE_CACHE, then XDG_CACHE_HOME, then the home directory', () => {
+    expect(packageCacheDir({ HEALTH_PACKAGE_CACHE: '/x/y' }, '/h')).toBe('/x/y');
+    expect(packageCacheDir({ HEALTH_PACKAGE_CACHE: 'off', XDG_CACHE_HOME: '/xdg' }, '/h')).toBeNull();
+    expect(packageCacheDir({ XDG_CACHE_HOME: '/xdg' }, '/h')).toBe('/xdg/health/packages');
+    expect(packageCacheDir({}, '/h')).toBe('/h/.cache/health/packages');
+  });
+
+  it('creates the cache directory before a network-on step, not before the others', async () => {
+    const cache = path.join(mkdtempSync(path.join(tmpdir(), 'health-cache-')), 'packages');
+    await createDockerRunner(runnerConfig, fakeSpawn(0).spawn, cache).runStep(spec());
+    expect(existsSync(cache)).toBe(false);
+    const { spawn, calls } = fakeSpawn(0);
+    await createDockerRunner(runnerConfig, spawn, cache).runStep(spec({ step: 'install', network: true }));
+    expect(existsSync(cache)).toBe(true);
+    expect(calls[0]?.join(' ')).toContain(`-v ${cache}:/cache`);
   });
 });
 
