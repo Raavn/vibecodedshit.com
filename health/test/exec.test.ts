@@ -20,6 +20,7 @@ import { ToolError } from '../src/scope/types.js';
 import { trackedPaths } from '../src/scope/tracked.js';
 import { fixturesDir, materializeFixture } from './helpers/fixture.js';
 import { FAKE_DIGEST, fakeRunner, type FakeStep } from './helpers/exec.js';
+import { validKeyCheck } from './helpers/key.js';
 import { fakeToolKit } from './helpers/tools.js';
 
 const methodology = loadMethodology('1.0');
@@ -380,7 +381,7 @@ describe('tool errors', () => {
     const outDir = mkdtempSync(path.join(tmpdir(), 'health-cli-'));
     const outFile = path.join(outDir, 'run.json');
     const stderr: string[] = [];
-    const code = await run(['scan', dir, '--out', outFile], { stdout: () => undefined, stderr: (t) => stderr.push(t), cwd: outDir }, { execRunner: crashing, imageDigest: FAKE_DIGEST, tools: fakeToolKit(), measurers: executionMeasurers });
+    const code = await run(['scan', dir, '--out', outFile], { stdout: () => undefined, stderr: (t) => stderr.push(t), cwd: outDir }, { execRunner: crashing, imageDigest: FAKE_DIGEST, tools: fakeToolKit(), measurers: executionMeasurers, keyCheck: validKeyCheck });
     expect(code).toBe(4);
     const written = JSON.parse(readFileSync(outFile, 'utf8')) as RunFile;
     expect(written).toMatchObject({ valid: false, parameters: [], health: null, mode: 'full' });
@@ -393,7 +394,7 @@ describe('tool errors', () => {
     const outDir = mkdtempSync(path.join(tmpdir(), 'health-cli-'));
     const outFile = path.join(outDir, 'run.json');
     let stdout = '';
-    const code = await run(['scan', dir, '--out', outFile, '--as-of', '2026-10-04'], { stdout: (t) => (stdout += t), stderr: () => undefined, cwd: outDir }, { execRunner: healthy(), imageDigest: FAKE_DIGEST, tools: fakeToolKit(), measurers: executionMeasurers });
+    const code = await run(['scan', dir, '--out', outFile, '--as-of', '2026-10-04'], { stdout: (t) => (stdout += t), stderr: () => undefined, cwd: outDir }, { execRunner: healthy(), imageDigest: FAKE_DIGEST, tools: fakeToolKit(), measurers: executionMeasurers, keyCheck: validKeyCheck });
     expect(code).toBe(0);
     expect(stdout).toMatch(/not comparable/);
     expect((JSON.parse(readFileSync(outFile, 'utf8')) as RunFile).tools.image?.digest).toBe(FAKE_DIGEST);

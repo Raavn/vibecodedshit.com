@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "description": "Codebase Health benchmark CLI",
   "private": true,
+  "license": "Elastic-2.0",
   "type": "module",
   "engines": {
     "node": ">=22"

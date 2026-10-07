@@ -2,7 +2,9 @@ import path from 'node:path';
 import { parseArgs } from 'node:util';
 import { EXIT, type CliIo } from './commands/common.js';
 import { runDiff } from './commands/diff.js';
+import { runKeySet } from './commands/key.js';
 import { runReport } from './commands/report.js';
+import { checkKey, type KeyCheckResult } from './key/check.js';
 import { loadMethodology, MethodologyError, type Methodology } from './methodology/load.js';
 import type { RunFile } from './run/schema.js';
 import { invalidRun, NoLogicFilesError, runScan, type ScanOptions } from './run/scan.js';
@@ -15,8 +17,9 @@ export { EXIT, type CliIo } from './commands/common.js';
 const USAGE = `Usage: health scan <path> [--preview] [--as-of YYYY-MM-DD] [--out <file>] [--methodology <version>]
        health report <run.json> [--out <file>]
        health diff <before.json> <after.json> [--json]
+       health key set <key>
 
-Exit codes: 0 ok, 1 usage or unreadable input, 2 methodology error, 3 no logic file, 4 tool error, 5 diff refused.
+Exit codes: 0 ok, 1 usage or unreadable input, 2 methodology error, 3 no logic file, 4 tool error, 5 diff refused, 6 missing or invalid key.
 `;
 
 function round1(value: number): string {
@@ -54,12 +57,15 @@ export function summarize(run: RunFile, methodology: Methodology): string {
   return `${lines.join('\n')}\n`;
 }
 
-/** Test seams: the execution runner, image digest, static tool kit and parameters a scan uses. */
-export type CliDeps = Pick<ScanOptions, 'execRunner' | 'imageDigest' | 'tools' | 'measurers'>;
+/** Test seams: the execution runner, image digest, static tool kit, parameters and key check a scan uses. */
+export type CliDeps = Pick<ScanOptions, 'execRunner' | 'imageDigest' | 'tools' | 'measurers'> & {
+  keyCheck?: () => Promise<KeyCheckResult>;
+};
 
 export async function run(argv: string[], io: CliIo, deps: CliDeps = {}): Promise<number> {
   if (argv[0] === 'report') return runReport(argv.slice(1), io);
   if (argv[0] === 'diff') return runDiff(argv.slice(1), io);
+  if (argv[0] === 'key') return runKeySet(argv.slice(1), io);
   let parsed;
   try {
     parsed = parseArgs({
@@ -88,12 +94,24 @@ export async function run(argv: string[], io: CliIo, deps: CliDeps = {}): Promis
     return EXIT.usage;
   }
 
+  const { keyCheck: keyCheckDep, ...scanDeps } = deps;
+  const keyCheck = keyCheckDep ?? (() => checkKey());
+  const keyResult = await keyCheck();
+  if (!keyResult.ok) {
+    io.stderr(
+      keyResult.reason === 'missing'
+        ? 'No vibecodedshit key. Get a free one at https://vibecodedshit.com/#run, then run: health key set <key>\n'
+        : "That vibecodedshit key isn't valid. Get a new one at https://vibecodedshit.com/#run\n",
+    );
+    return EXIT.key;
+  }
+
   const opts: ScanOptions = {
     repoPath: path.resolve(io.cwd, target),
     methodologyVersion: parsed.values.methodology ?? '1.0',
     mode: parsed.values.preview ? 'preview' : 'full',
     asOf,
-    ...deps,
+    ...scanDeps,
   };
   const outFile = path.resolve(io.cwd, parsed.values.out ?? 'run.json');
 
