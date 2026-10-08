@@ -10,8 +10,8 @@ Snappy, sarcastic, slightly controversial — but always educative. Not preachy.
 
 ## Approach
 1. **The methodology**: Six dimensions, 30 parameters, fixed rubrics, one health score and a band (Vibe-coded, Fragile, Stable, Agent-ready). Published under CC BY 4.0. Source: `health/methodology/v1.0/` in this repository.
-2. **The skill**: A Claude Code plugin with `/codebase-health` (code under MIT). It runs the pinned scoring tool, then Claude explains the result. Without Docker it runs a static-only preview that is marked "not comparable" and cannot be submitted.
-3. **Submissions**: With the user's consent, the skill sends the scores to app.vibecodedshit.com. The repo name is off by default; a hash of the git remote URL is sent instead. An email is optional. The user sees the exact payload before anything is sent.
+2. **The skill**: A Claude Code plugin with `/codebase-health`. The engine (`health/`) is licensed under the Elastic License 2.0; every scan needs a free key, emailed after the user gives an email on vibecodedshit.com. It runs the pinned scoring tool, then Claude explains the result. Without Docker it runs a static-only preview that is marked "not comparable" and cannot be submitted.
+3. **Submissions**: With the user's consent, the skill sends the scores to app.vibecodedshit.com. The repo name is off by default; a hash of the git remote URL is sent instead. The submission is tied to the user's key, whose email is used for the vibecodedshit list and to reply about results. The user sees the exact payload before anything is sent.
 4. **The average**: The site shows the average score of submitted projects, counting each repo once (its latest full run, per methodology version). There is no public leaderboard.
 5. **Lead generation**: Vibe-coded and Fragile results end with one line offering Peter's help.
 
