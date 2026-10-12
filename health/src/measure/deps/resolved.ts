@@ -4,7 +4,8 @@ import type { Group } from '../../scope/types.js';
 import { compareVersions, parseVersion, satisfies as pySatisfies } from '../../util/pep440.js';
 import type { MeasureContext } from '../types.js';
 import { readManifest, type DeclaredDep, type Manifest } from './declared.js';
-import { entrySatisfies, findLockfiles, readLockfile, type LockfileRef, type LockReader } from './lockfiles.js';
+import { trackedIn } from './files.js';
+import { chooseJsLockfile, entrySatisfies, findLockfiles, jsLockfiles, readLockfile, type LockfileRef, type LockReader } from './lockfiles.js';
 
 export interface UnitDeps {
   package: string;
@@ -12,6 +13,8 @@ export interface UnitDeps {
   manifest: Manifest | undefined;
   /** Candidate lockfiles with their parsed content (undefined = unreadable). */
   lockfiles: { ref: LockfileRef; reader: LockReader | undefined }[];
+  /** Appended to run.json `warnings` by 5.3. */
+  warnings: string[];
 }
 
 export interface ResolvedDep {
@@ -26,10 +29,29 @@ export interface ResolvedDep {
 export function unitDeps(ctx: MeasureContext, pkg: string, group: Group): Promise<UnitDeps> {
   return ctx.tools.memo(`deps:${pkg}\0${group}`, async () => {
     const manifest = readManifest(ctx.repoPath, pkg, group);
-    const refs = manifest ? findLockfiles(ctx.repoPath, pkg, group) : [];
+    const found = manifest ? findLockfiles(ctx.repoPath, pkg, group) : [];
+    const { refs, warnings } = group === 'typescript_javascript' ? installedLockfile(ctx.repoPath, found) : { refs: found, warnings: [] };
     const lockfiles = refs.map((ref) => ({ ref, reader: readLockfile(ctx.repoPath, ref) }));
-    return { package: pkg, group, manifest, lockfiles };
+    return { package: pkg, group, manifest, lockfiles, warnings };
   });
+}
+
+/**
+ * With several JS lockfiles in the lockfile directory, keep only the one the install step uses
+ * (`chooseJsLockfile`) and warn. A binary `bun.lockb` cannot be read, so then every readable candidate stays.
+ */
+function installedLockfile(repoPath: string, refs: LockfileRef[]): { refs: LockfileRef[]; warnings: string[] } {
+  const dir = refs[0]?.dir;
+  if (dir === undefined) return { refs, warnings: [] };
+  const names = jsLockfiles(trackedIn(repoPath, dir).map((file) => path.posix.basename(file)));
+  if (names.length < 2) return { refs, warnings: [] };
+  const chosen = chooseJsLockfile(names);
+  const where = dir === '' ? 'the repository root' : dir;
+  const picked = refs.filter((ref) => path.posix.basename(ref.path) === chosen);
+  if (picked.length === 0) {
+    return { refs, warnings: [`5.3: ${where} has several JS lockfiles (${names.join(', ')}); install uses ${chosen}, which is binary, so 5.3 checks ${refs.map((r) => path.posix.basename(r.path)).join(', ')}`] };
+  }
+  return { refs: picked, warnings: [`5.3: ${where} has several JS lockfiles (${names.join(', ')}); install and 5.3 use ${chosen}`] };
 }
 
 /** The unit's package directory relative to a lockfile's directory ('' when they are the same). */

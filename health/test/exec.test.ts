@@ -232,6 +232,13 @@ describe('step commands', () => {
     expect(none.specs[0]?.argv).toEqual(['npm', 'install']);
   });
 
+  it('installs from the same lockfile 5.3 scores when there are several', async () => {
+    const want = JSON.parse(readFileSync(path.join(fixturesDir, 'd5-lock-multi', 'expected.json'), 'utf8')) as { install: string[] };
+    const runner = healthy();
+    await runScan(fullOpts(materializeFixture('d5-lock-multi'), runner));
+    expect(runner.specs[0]?.argv).toEqual(want.install);
+  });
+
   it('chooses Python installs and builds', async () => {
     const files = { 'pkg/__init__.py': 'x = 1\n', 'pkg/a.py': 'def f():\n    return 1\n', 'uv.lock': '', 'pyproject.toml': '[project]\nname = "p"\n' };
     const runner = healthy();
