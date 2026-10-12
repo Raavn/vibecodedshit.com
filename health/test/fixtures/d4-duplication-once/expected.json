@@ -1,0 +1,11 @@
+{
+  "note": "Hand counts. Every file is 12 physical lines: a head line, a 10-line block, a tail line (heads and tails differ in their first and last token, so jscpd's clones are exactly the 10 block lines). pair1.ts and pair2.ts share block P: one clone, 10 lines. tri1.ts, tri2.ts and tri3.ts share block T: jscpd reports two clones (tri1-tri2, tri1-tri3), 10 lines each. Each clone counts once: 10 + 10 + 10 = 30, all attributed to firstFile (pair1 10, tri1 20). Denominator 5 x 12 = 60. jscpd's own statistics.total: duplicatedLines 30, lines 60.",
+  "p43": {
+    "pooled": {
+      "numerator": 30,
+      "denominator": 60
+    },
+    "rawPercent": 50,
+    "score": 0
+  }
+}
