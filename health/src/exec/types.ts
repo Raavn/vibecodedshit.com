@@ -131,4 +131,6 @@ export interface ExecutionResults {
   lint: CheckResult[];
   /** One entry per test runner invocation. Empty when no supported runner was found or the checks did not run. */
   test: { invocations: TestResult[] };
+  /** The work copy the steps ran in, with the installed dependencies. Not written to run.json; removed after the scan. */
+  workDir: string;
 }

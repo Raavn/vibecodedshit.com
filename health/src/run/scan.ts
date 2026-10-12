@@ -11,6 +11,7 @@ import type { Measurement, Measurer } from '../measure/types.js';
 import { computeHotspots, type FileComplexitySum } from '../report-only/hotspots.js';
 import { loadMethodology, packageRoot, type Methodology } from '../methodology/load.js';
 import { buildScope } from '../scope/build.js';
+import type { Scope } from '../scope/types.js';
 import { poolParameter } from '../scoring/pool.js';
 import { createToolKit, type ToolKit } from '../tools/kit.js';
 import type { RunFile, RunParameter } from './schema.js';
@@ -94,16 +95,26 @@ export async function runScan(opts: ScanOptions, preloaded?: Methodology): Promi
   if (scope.logicFiles === 0) throw new NoLogicFilesError();
 
   let exec: ExecutionResults | undefined;
+  let cleanup: (() => Promise<void>) | undefined;
   if (opts.mode === 'full') {
     const tag = methodology.execution.runner.image;
-    exec = await runExecution({
+    ({ results: exec, cleanup } = await runExecution({
       repoPath,
       methodology,
       scope,
       runner: opts.execRunner ?? createDockerRunner(methodology.execution.runner),
       image: { tag, digest: opts.imageDigest ?? (await imageDigest(tag)) },
-    });
+    }));
   }
+  try {
+    return await measureAll(opts, methodology, repoPath, scope, exec);
+  } finally {
+    await cleanup?.();
+  }
+}
+
+/** Every measurer, then scoring. The execution work copy (`exec.workDir`) still exists while this runs. */
+async function measureAll(opts: ScanOptions, methodology: Methodology, repoPath: string, scope: Scope, exec: ExecutionResults | undefined): Promise<RunFile> {
 
   const tools = opts.tools ?? createToolKit();
   const warnings = [...scope.warnings];

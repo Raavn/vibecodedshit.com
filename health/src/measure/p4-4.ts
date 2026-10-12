@@ -40,6 +40,7 @@ async function measureTypeScript(ctx: MeasureContext, tallies: Map<string, Tally
   if (files.length === 0) return null;
   const knip = await runKnip(ctx);
   if (!isOutcome(knip)) return knip;
+  warnings.push(...knip.warnings.map((w) => `4.4: ${w}`));
 
   const perUnit = new Map<string, { numerator: number; denominator: number }>();
   for (const file of files) {

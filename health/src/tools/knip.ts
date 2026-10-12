@@ -18,6 +18,8 @@ export interface KnipFileIssues {
 export interface KnipOutcome {
   /** Repo-relative posix path to issues. */
   files: Map<string, KnipFileIssues>;
+  /** For the run.json warnings of 4.4 and 5.5. */
+  warnings: string[];
 }
 
 interface RawEntry {
@@ -64,35 +66,46 @@ export function knipRoots(repoPath: string): string[] {
   return roots;
 }
 
+/** The install root whose dependency install failed in a full run, or undefined. */
+function failedInstall(ctx: MeasureContext): string | undefined {
+  if (ctx.mode !== 'full' || !ctx.exec || ctx.exec.checksRan) return undefined;
+  return ctx.exec.roots.find((root) => root.install !== null && root.install.status !== 'ok')?.dir ?? '.';
+}
+
 /**
  * One knip run per scan, shared by 4.4 and 5.5. The repository's own knip config is not used
- * (an empty --config), framework plugins stay enabled.
+ * (an empty --config), framework plugins stay enabled. A full run whose installs all worked runs
+ * knip in the execution work copy, so plugins can load configs such as vitest.config.ts and
+ * script binaries map to their packages; otherwise knip runs in the repository.
  */
 export function runKnip(ctx: MeasureContext): Promise<KnipOutcome | Measurement> {
   return ctx.tools.memo('knip', async () => {
     const tool = await ctx.tools.resolve('knip');
     if (!tool) return unavailable(ctx, notFoundReason('knip'));
-    const outcome: KnipOutcome = { files: new Map() };
+    const installed = ctx.mode === 'full' && ctx.exec?.checksRan === true ? ctx.exec.workDir : undefined;
+    const failed = failedInstall(ctx);
+    const hint = failed === undefined ? '' : ` (dependency install failed in ${failed}, likely cause)`;
+    const outcome: KnipOutcome = { files: new Map(), warnings: [] };
     const configDir = await mkdtemp(path.join(tmpdir(), 'health-knip-'));
     try {
       const configFile = path.join(configDir, 'knip.json');
       await writeFile(configFile, '{}');
       for (const root of knipRoots(ctx.repoPath)) {
-        const cwd = path.join(ctx.repoPath, root);
+        const cwd = path.join(installed ?? ctx.repoPath, root);
         const result = await ctx.tools.run(
           tool,
           ['--reporter', 'json', '--no-progress', '--no-config-hints', '--config', configFile],
           { cwd },
         );
         const failure = failureReason(tool, result, [0, 1]);
-        if (failure) return unavailable(ctx, failure);
+        if (failure) return unavailable(ctx, `${failure}${hint}`);
         let issues: RawIssue[];
         try {
           const parsed = JSON.parse(result.stdout) as { issues?: unknown };
           if (!Array.isArray(parsed.issues)) throw new Error('no issues array');
           issues = parsed.issues as RawIssue[];
         } catch {
-          return unavailable(ctx, 'knip printed no parseable JSON report');
+          return unavailable(ctx, `knip printed no parseable JSON report${hint}`);
         }
         for (const issue of issues) {
           if (typeof issue.file !== 'string') return unavailable(ctx, 'knip report has an unexpected shape');
@@ -114,6 +127,9 @@ export function runKnip(ctx: MeasureContext): Promise<KnipOutcome | Measurement>
       }
     } finally {
       await rm(configDir, { recursive: true, force: true });
+    }
+    if (failed !== undefined) {
+      outcome.warnings.push(`knip ran without installed dependencies because the dependency install failed in ${failed}; unused dependencies may be overcounted`);
     }
     return outcome;
   });
