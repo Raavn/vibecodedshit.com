@@ -168,3 +168,34 @@ From the section "Deviations from the grilling, to confirm with Peter" as of 202
 - laya-server's numbers rest on 192 logic lines, so one finding moves a parameter a lot.
 - Root causes in section 5 are likely causes from reading the code and reproducing the tool call, not confirmed fixes.
 - Run files (uncommitted, deleted with the session): `run.json` and `report.html` for each run under the session scratchpad, in `cal/out/<repository>/`.
+
+## 9. Rerun after the defect fixes (2026-10-12)
+
+The six defects above were fixed in PRs #31 to #36 (W1 knip on the installed copy, W2 alias imports in D3, W3 4.4 Python overrides, W4 4.3 counted once, W5 one lockfile choice, W6 scan summary). Mind task 163fbc37: "Wait for other fixes to complete, then rerun".
+
+**Setup.** Same as section 1 except the CLI: commit `a153f6c3aeb9db94e8a1188115aed1da9d0b90cd` (`health` 0.1.2). Same image digest (`sha256:8b7198554b89…`), same as-of date 2026-10-12, same method (`git clone --no-hardlinks`, full scan, `health report`). Repository commits: laya-server `bb60330`, aimeko-os `b91292f`, offer-roast `5f22839`, ovai `07cd8f8`. `health diff` refuses to compare these runs with the section 3 runs (`tools.health` differs), so the table compares the printed numbers.
+
+| Repository | Exit | Health | D1 | D2 | D3 | D4 | D5 | D6 | Scan time | Change since section 3 |
+|---|---|---|---|---|---|---|---|---|---|---|
+| laya-server | 0 | 73 → **78** | 93 | 51 | 79 | 75 → **100** | 85 | 58 | 13 s | 4.4: 4/16 → 0/16 (W3) |
+| aimeko-os | 4 → **0** | **62** (`*` run: 61) | 75 | 78 | 46 | 59 → **66** | 50 | 55 | 124 s | Valid without a workaround (W1). 4.3: 18.4% → 12.9%, score 8 → 36 (W4). 5.5 6.9%, the same as the `*` run |
+| offer-roast | 0 | 30 (capped by D1) | 0 | 79 | 79 → **43** | 72 → 76 | 42 → **57** | 30 | 51 s | 3.2: 0/9 → 2/87 edges, score 100 → 17.5 (W2). 5.5: 38.1% → 0/21 (W1) |
+| ovai | 4 | not scored | | | | | | | 10 s | Still a tool error, see R1 |
+| ovai `*` | 0 | 35 | 29 | 26 | 63 → **67** | 53 → 58 | 25 → **15** | 13 | 38 s | 3.2: 507 → 1,591 edges (W2). 5.3 TS unit `in_sync` → `out_of_sync` (W5). 5.1 896 → 521 points, see R2 |
+
+`*` = the section 3 workaround (`npm ci --ignore-scripts` in the copy before the scan). Only ovai needed it this time.
+
+**All six defects are confirmed fixed on these runs.** The suspect verdicts in section 4 resolve as follows:
+- 3.2 and 3.3 now count alias imports. offer-roast's two violations are real: `components/out-of-rounds-screen.tsx → app/pack-actions.ts` (routes-are-leaves) and `lib/roast/create-offer.ts → components/pixel/fighter-portrait.tsx` (lib-does-not-import-ui). No cycles in any repository.
+- 4.4 laya-server = 100.
+- 5.3 ovai = `out_of_sync`.
+- 5.5 offer-roast = 0%.
+
+**New findings.**
+- **R1. An install failure plus a vitest config still makes the run invalid.** ovai's install fails (stale `bun.lock`, which install now correctly uses; 6.1 = 0 in the `*` run). knip then runs without dependencies, cannot load `vitest.config.ts`, and the scan exits 4 with `(dependency install failed in ., likely cause)`. This follows the W1 decision ("full mode, install failed: a knip failure stays a ToolError"). The effect is that a repository failure (a broken install, which the methodology scores as 0) becomes a tool error with no score. Proposal P9: in full mode, when the install failed and knip fails, record 4.4 and 5.5 as `failed` (score 0, like the other install-dependent parameters) instead of a tool error.
+- **R2. 5.1 and 5.2 now read the lockfile that install uses.** For ovai that is the stale `bun.lock`, so 5.1 dropped from 896 to 521 severity points. This is consistent with W5 (score what gets installed), but a stale lockfile now lowers the vulnerability count. 5.3 = `out_of_sync` already flags it.
+- **R3. `routes-are-leaves` flags server actions colocated under `app/`.** 5 of the 6 3.2 violations across aimeko-os and offer-roast are a component importing a server-action file under `app/` (`actions.ts`, `pack-actions.ts`, each starting with `'use server'`). That is the usual Next.js server-action layout. Proposal P10: in the nextjs preset, leave files with a top-level `'use server'` directive out of the routes layer. aimeko-os 3.2 would be 0/194 and offer-roast 1/87.
+- The workaround run's 4.4/5.5 warning ("knip ran without installed dependencies") is inaccurate there, because the copy has `node_modules`. This only affects the labelled workaround.
+- 6.3 for aimeko-os was 48.0 s in section 3 and 26.8 s here (typecheck 13.6 → 4.1 s, lint 14.6 → 7.6 s). This is variance between runs, as section 8 expects, not a change in the CLI.
+
+Run files: `run.json` and `report.html` per repository, in the session scratchpad (not committed).
