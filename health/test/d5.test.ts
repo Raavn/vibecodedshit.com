@@ -123,6 +123,13 @@ describe('5.3 lockfile', () => {
     expect(await levels('d5-lockfile')).toEqual((expected('d5-lockfile') as never as { levels: Record<string, string> }).levels);
   });
 
+  it('scores the lockfile the install step uses when there are several, and warns', async () => {
+    const want = expected('d5-lock-multi') as never as { level: string; warning: string };
+    const run = await scan(materializeFixture('d5-lock-multi'), fakeToolKit());
+    expect((param(run, '5.3').units ?? []).map((u) => u.raw)).toEqual([{ kind: 'level', level: want.level }]);
+    expect(run.warnings).toContain(want.warning);
+  });
+
   it('finds the lockfile of a workspace member at the repository root', async () => {
     expect(await levels('d5-lock-ws')).toEqual({ member: 'in_sync' });
   });

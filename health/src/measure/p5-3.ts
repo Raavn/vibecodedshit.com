@@ -10,7 +10,7 @@ export const p53: Measurer = {
     const warnings: string[] = [];
     for (const unit of scopeUnits(ctx)) {
       const deps = await unitDeps(ctx, unit.package, unit.group);
-      warnings.push(...(deps.manifest?.warnings ?? []));
+      warnings.push(...(deps.manifest?.warnings ?? []), ...deps.warnings);
       units.push({
         package: unit.package,
         group: unit.group,
@@ -18,6 +18,6 @@ export const p53: Measurer = {
         raw: { kind: 'level', level: lockLevel(deps) },
       });
     }
-    return { status: 'measured', units, warnings };
+    return { status: 'measured', units, warnings: [...new Set(warnings)] };
   },
 };

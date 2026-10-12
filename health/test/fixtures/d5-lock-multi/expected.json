@@ -1,0 +1,6 @@
+{
+  "note": "Two JS lockfiles at the root. package-lock.json holds alpha 1.4.2, which satisfies package.json's ^1.0.0 (in sync on its own). bun.lock is stale: it records the specifier ^0.9.0 and alpha 0.9.1. Install prefers bun.lock over package-lock.json, so install and 5.3 both use bun.lock: out_of_sync. index.js is 3 logic lines.",
+  "level": "out_of_sync",
+  "warning": "5.3: the repository root has several JS lockfiles (bun.lock, package-lock.json); install and 5.3 use bun.lock",
+  "install": ["bun", "install", "--frozen-lockfile"]
+}
