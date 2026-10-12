@@ -1,0 +1,27 @@
+{
+  "note": "Hand counts. A Next-style tree whose tsconfig maps @/* to ./src/* without a baseUrl (the create-next-app default). 6 logic files. 6 internal edges, 5 of them through the alias: a>b, b>a, util>button, page>a, page>util (alias) and plain>util (relative). Violation: util>button (lib-does-not-import-ui), through the alias. Cycle: a<>b, only through alias imports.",
+  "3.1": {
+    ".": "none"
+  },
+  "3.2": {
+    ".": {
+      "numerator": 1,
+      "denominator": 6,
+      "violating": [
+        "src/lib/util.ts -> src/components/button.tsx (lib-does-not-import-ui)"
+      ]
+    }
+  },
+  "3.3": {
+    ".": {
+      "numerator": 2,
+      "denominator": 6,
+      "files": [
+        "src/lib/a.ts",
+        "src/lib/b.ts"
+      ]
+    }
+  },
+  "3.4": "not_applicable",
+  "3.5": "not_applicable"
+}

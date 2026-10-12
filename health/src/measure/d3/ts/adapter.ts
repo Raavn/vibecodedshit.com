@@ -153,7 +153,14 @@ async function runCruise(cruise: Cruise, input: CruiseInput, extensions: string[
       ...(hasRules ? { ruleSet: input.ruleSet } : {}),
       ...(tsConfig === undefined ? {} : { tsConfig: { fileName: tsConfig } }),
     };
-    const result = await cruise(input.files, options, resolveOptions, parsed === undefined ? undefined : { tsConfig: parsed });
+    // dependency-cruiser gives tsconfig-paths-webpack-plugin `baseUrl: "./"` when the config has no baseUrl, and the plugin resolves
+    // that against the process cwd, so `paths` without `baseUrl` (the Next.js default) pointed at the wrong directory and every alias
+    // import was unresolved. With a baseUrl in the transpile options it passes none and the plugin uses the config's own directory.
+    const transpile =
+      parsed !== undefined && parsed.options.paths !== undefined && parsed.options.baseUrl === undefined
+        ? { ...parsed, options: { ...parsed.options, baseUrl: String(parsed.options.pathsBasePath ?? path.dirname(tsConfig as string)) } }
+        : parsed;
+    const result = await cruise(input.files, options, resolveOptions, transpile === undefined ? undefined : { tsConfig: transpile });
     const output = result.output as { modules?: DcModule[]; summary?: { violations?: DcViolation[] } };
     return { modules: output.modules ?? [], violations: output.summary?.violations ?? [] };
   };
