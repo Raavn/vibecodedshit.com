@@ -44,6 +44,26 @@ const NAMED: Record<string, LockKind> = {
   'Pipfile.lock': 'pipfile',
 };
 
+/**
+ * JS lockfiles in the install step's preference order. With several in one directory, the first one
+ * present is the one that gets installed, so D5 reads that one too. `bun.lockb` is binary: install
+ * uses it, D5 cannot read it.
+ */
+const JS_LOCK_ORDER = ['pnpm-lock.yaml', 'yarn.lock', 'bun.lock', 'bun.lockb', 'npm-shrinkwrap.json', 'package-lock.json'] as const;
+
+export type JsLockfileName = (typeof JS_LOCK_ORDER)[number];
+
+/** The JS lockfile names among `names`, in preference order. */
+export function jsLockfiles(names: Iterable<string>): JsLockfileName[] {
+  const present = new Set(names);
+  return JS_LOCK_ORDER.filter((name) => present.has(name));
+}
+
+/** The one JS lockfile the install step and D5 use, among the file names of one directory. */
+export function chooseJsLockfile(names: Iterable<string>): JsLockfileName | undefined {
+  return jsLockfiles(names)[0];
+}
+
 /** What a lockfile says about one declared dependency. */
 export interface LockEntry {
   present: boolean;

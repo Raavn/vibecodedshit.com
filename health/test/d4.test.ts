@@ -190,6 +190,15 @@ describe('4.3 duplication', () => {
     expect(run.tools.static?.jscpd).toMatch(/^\d/);
   });
 
+  it('counts each clone once, as jscpd duplicatedLines does', async () => {
+    const want = expected('d4-duplication-once') as never as Record<string, Record<string, never>>;
+    const run = await scan(materializeFixture('d4-duplication-once'), fakeToolKit({ complexipy: fakeComplexipy(), vulture: () => ok() }));
+    const p = param(run, '4.3');
+    expect(p.status).toBe('measured');
+    expect(pooled(p)).toEqual(want.p43?.pooled);
+    expect(p.score).toBeCloseTo(Number(want.p43?.score), 3);
+  });
+
   it('is not_measured with the tool name when jscpd is missing', async () => {
     const run = await scan(materializeFixture('d4-duplication'), fakeToolKit({ jscpd: null, complexipy: fakeComplexipy(), vulture: () => ok() }));
     const p = param(run, '4.3');
