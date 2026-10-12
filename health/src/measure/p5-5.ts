@@ -100,6 +100,7 @@ export const p55: Measurer = {
     if (units.some((u) => u.group === 'typescript_javascript')) {
       const knip = await runKnip(ctx);
       if (!isOutcome(knip)) return knip;
+      warnings.push(...knip.warnings.map((w) => `5.5: ${w}`));
       for (const unit of units.filter((u) => u.group === 'typescript_javascript')) {
         const deps = await unitDeps(ctx, unit.package, unit.group);
         if (!deps.manifest) {

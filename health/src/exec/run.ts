@@ -76,10 +76,12 @@ async function readTest(invocation: TestInvocation, outcome: StepOutcome): Promi
 /**
  * Install, then build per install root, then (when every install worked) typecheck per workspace
  * package and lint per install root. One `docker run` each, run one after another on a temp copy
- * of the tracked files; reports go to a separate temp directory. Both are deleted afterwards.
+ * of the tracked files; reports go to a separate temp directory, deleted afterwards. The work copy
+ * outlives the call so static tools can read the installed dependencies (`results.workDir`); the
+ * caller removes it with `cleanup`. On a throw both are deleted here.
  * Throws `ToolError` from the runner; a repository failure is only recorded in the results.
  */
-export async function runExecution(opts: ExecutionOptions): Promise<ExecutionResults> {
+export async function runExecution(opts: ExecutionOptions): Promise<{ results: ExecutionResults; cleanup: () => Promise<void> }> {
   const { repoPath, methodology, scope, runner, image } = opts;
   const timeouts = methodology.execution.timeouts_seconds;
   const tracked = trackedPaths(repoPath);
@@ -158,9 +160,14 @@ export async function runExecution(opts: ExecutionOptions): Promise<ExecutionRes
       }
     }
 
-    return { image, roots, checksRan, typecheck: typecheckResults, lint: lintResults, test: { invocations: testResults } };
-  } finally {
+    return {
+      results: { image, roots, checksRan, typecheck: typecheckResults, lint: lintResults, test: { invocations: testResults }, workDir: work.dir },
+      cleanup: () => work.cleanup(),
+    };
+  } catch (err) {
     await work.cleanup();
+    throw err;
+  } finally {
     await rm(out, { recursive: true, force: true });
   }
 }

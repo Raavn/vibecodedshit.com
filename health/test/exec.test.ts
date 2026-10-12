@@ -1,5 +1,5 @@
 import { EventEmitter } from 'node:events';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -11,6 +11,8 @@ import { parseEslint, parseMypy, parsePyright, parseRuff, parseTsc } from '../sr
 import type { StepSpec } from '../src/exec/types.js';
 import { p21 } from '../src/measure/p2-1.js';
 import { p25 } from '../src/measure/p2-5.js';
+import { p44 } from '../src/measure/p4-4.js';
+import { p55 } from '../src/measure/p5-5.js';
 import { p61 } from '../src/measure/p6-1.js';
 import { loadMethodology } from '../src/methodology/load.js';
 import { runScan } from '../src/run/scan.js';
@@ -405,5 +407,91 @@ describe('tool errors', () => {
     expect(code).toBe(0);
     expect(stdout).toMatch(/not comparable/);
     expect((JSON.parse(readFileSync(outFile, 'utf8')) as RunFile).tools.image?.digest).toBe(FAKE_DIGEST);
+  });
+});
+
+// ---- knip on the installed work copy (4.4, 5.5) ----------------------------------------------
+
+describe('knip on the installed work copy', () => {
+  const want = JSON.parse(readFileSync(path.join(fixturesDir, 'exec-knip-vitest', 'expected.json'), 'utf8')) as {
+    full: { p55: { numerator: number; denominator: number }; p44: { numerator: number; denominator: number } };
+    previewReason: string;
+    failedInstallReason: string;
+  };
+  const knipMeasurers = [p44, p55, p61];
+
+  /** What `npm install` would leave behind: vitest (with vitest/config) and prisma (with its binary). */
+  function installPackages(workDir: string): void {
+    const write = (rel: string, text: string): void => {
+      mkdirSync(path.dirname(path.join(workDir, rel)), { recursive: true });
+      writeFileSync(path.join(workDir, rel), text);
+    };
+    write('node_modules/vitest/package.json', JSON.stringify({ name: 'vitest', version: '3.2.4', type: 'module', exports: { '.': './index.js', './config': './config.js' }, bin: { vitest: 'vitest.mjs' } }));
+    write('node_modules/vitest/config.js', 'export function defineConfig(config) { return config; }\n');
+    write('node_modules/vitest/index.js', 'export {};\n');
+    write('node_modules/vitest/vitest.mjs', '\n');
+    write('node_modules/prisma/package.json', JSON.stringify({ name: 'prisma', version: '6.0.0', bin: { prisma: 'build/index.js' } }));
+    write('node_modules/prisma/build/index.js', '\n');
+  }
+
+  /** A real tool kit (knip is real) that records the directory every tool ran in. */
+  function recordingKit(): { kit: ReturnType<typeof fakeToolKit>; cwds: { name: string; cwd: string }[] } {
+    const kit = fakeToolKit();
+    const cwds: { name: string; cwd: string }[] = [];
+    const runTool = kit.run.bind(kit);
+    kit.run = (tool, args, opts) => {
+      cwds.push({ name: tool.name, cwd: opts.cwd });
+      return runTool(tool, args, opts);
+    };
+    return { kit, cwds };
+  }
+
+  const ratioOf = (result: RunFile, id: string): { numerator: number; denominator: number } => {
+    const raw = param(result, id).raw;
+    if (raw?.kind !== 'ratio') throw new Error(`${id} is not a ratio`);
+    return { numerator: raw.numerator, denominator: raw.denominator };
+  };
+
+  it('runs knip in the installed copy in a full run, then removes the copy', async () => {
+    const dir = materializeFixture('exec-knip-vitest');
+    const runner = healthy((spec) => {
+      if (spec.step !== 'install') return undefined;
+      installPackages(spec.workDir);
+      return { exitCode: 0 };
+    });
+    const { kit, cwds } = recordingKit();
+    const outDir = mkdtempSync(path.join(tmpdir(), 'health-cli-'));
+    const outFile = path.join(outDir, 'run.json');
+    const code = await run(['scan', dir, '--out', outFile, '--as-of', '2026-10-04'], { stdout: () => undefined, stderr: () => undefined, cwd: outDir }, {
+      execRunner: runner,
+      imageDigest: FAKE_DIGEST,
+      tools: kit,
+      measurers: knipMeasurers,
+      keyCheck: validKeyCheck,
+    });
+    expect(code).toBe(0);
+    const written = JSON.parse(readFileSync(outFile, 'utf8')) as RunFile;
+    expect(ratioOf(written, '5.5')).toEqual(want.full.p55);
+    expect(ratioOf(written, '4.4')).toEqual(want.full.p44);
+    const workDir = runner.specs[0]?.workDir as string;
+    expect(cwds.filter((c) => c.name === 'knip').map((c) => c.cwd)).toEqual([path.join(workDir, '.')]);
+    expect(existsSync(workDir)).toBe(false);
+  });
+
+  it('is not measured in preview when knip cannot load a config', async () => {
+    const result = await runScan({ repoPath: materializeFixture('exec-knip-vitest'), methodologyVersion: '1.0', mode: 'preview', asOf: '2026-10-04', tools: fakeToolKit(), measurers: knipMeasurers });
+    for (const id of ['4.4', '5.5']) {
+      expect(param(result, id).status).toBe('not_measured');
+      expect(param(result, id).reason).toContain(want.previewReason);
+    }
+  });
+
+  it('names the failed install when knip then fails in a full run', async () => {
+    const dir = materializeFixture('exec-knip-vitest');
+    const runner = healthy((spec) => (spec.step === 'install' ? { exitCode: 1 } : undefined));
+    const { kit, cwds } = recordingKit();
+    await expect(runScan({ ...fullOpts(dir, runner), tools: kit, measurers: knipMeasurers })).rejects.toThrow(want.failedInstallReason);
+    expect(cwds.find((c) => c.name === 'knip')?.cwd).toBe(path.join(path.resolve(dir), '.'));
+    expect(existsSync(runner.specs[0]?.workDir as string)).toBe(false);
   });
 });
