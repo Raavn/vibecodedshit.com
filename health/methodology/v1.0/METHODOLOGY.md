@@ -727,9 +727,9 @@ Scores are interpolated between anchors and clamped outside them. If there is no
 **How it is measured.**
 
 - TypeScript / JavaScript: knip (unused files, exports and types), with framework plugins enabled.
-- Python: vulture with min-confidence 60 for unused functions, classes and methods; decorated definitions are treated as used. Unused modules: modules no other module imports, excluding entry modules (__main__, manage.py, wsgi, asgi, settings, conftest, targets of [project.scripts], Django convention modules such as models, admin, apps, urls, views, and FastAPI main.py).
+- Python: vulture with min-confidence 60 for unused functions, classes and methods; decorated definitions are treated as used. A method is also treated as used when its class, directly or through base classes defined in the repository, has a base class defined outside the repository (standard library or third party), or when a base class defined in the repository has a method of the same name; object and Generic do not count as bases. Unused modules: modules no other module imports, excluding entry modules (__main__, manage.py, wsgi, asgi, settings, conftest, targets of [project.scripts], Django convention modules such as models, admin, apps, urls, views, and FastAPI main.py).
 
-**Why.** Dead code costs reading time and looks like a place to make a change. An agent that edits an unused function gets no test failure and no effect. Decorated Python definitions are treated as used because frameworks register them by decorator (routes, fixtures, signals).
+**Why.** Dead code costs reading time and looks like a place to make a change. An agent that edits an unused function gets no test failure and no effect. Decorated Python definitions are treated as used because frameworks register them by decorator (routes, fixtures, signals). Methods that override a base class are treated as used for the same reason: frameworks and the standard library call hooks such as do_GET, setUp or emit by name, which vulture cannot see.
 
 **Sources.**
 

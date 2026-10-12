@@ -18,9 +18,23 @@ export interface PythonImport {
   names: string[];
 }
 
+/** A class base: `file` and `class` are set when it resolves to a class defined in a scanned file. */
+export interface PythonBase {
+  name: string;
+  file: string | null;
+  class: string | null;
+}
+
 export type PythonDeadCodeInfo =
   | { ok: false }
-  | { ok: true; symbols: PythonSymbol[]; allNames: string[] | null; imports: PythonImport[] };
+  | {
+      ok: true;
+      symbols: PythonSymbol[];
+      allNames: string[] | null;
+      imports: PythonImport[];
+      /** Bases of every module-level class (`object` and `Generic[...]` left out). */
+      classes: Record<string, { bases: PythonBase[] }>;
+    };
 
 const helperPath = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -30,7 +44,7 @@ const helperPath = path.resolve(
   'dead_code_helper.py',
 );
 
-/** Symbols, `__all__` and imports of every file, with one helper process. */
+/** Symbols, `__all__`, imports and class bases of every file, with one helper process. */
 export function analyzePythonDeadCode(repoPath: string, files: string[]): Record<string, PythonDeadCodeInfo> {
   if (files.length === 0) return {};
   const result = spawnSync('python3', [helperPath], {

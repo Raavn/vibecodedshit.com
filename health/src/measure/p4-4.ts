@@ -167,6 +167,34 @@ function importGraph(modules: PyModule[], tests: PyModule[], pkg: string): Map<s
   return importedBy;
 }
 
+/**
+ * A method vulture flags is used when it may be called through a base class (methodology 4.4): its class,
+ * directly or through base classes defined in the repository, has a base defined outside the scanned files
+ * (a framework or standard-library hook), or a base class defined in the repository has a method of the same name.
+ */
+export function isOverride(infos: Record<string, PythonDeadCodeInfo>, file: string, qualname: string): boolean {
+  const dot = qualname.indexOf('.');
+  if (dot === -1) return false;
+  const method = qualname.slice(dot + 1);
+  const seen = new Set<string>([`${file}\0${qualname.slice(0, dot)}`]);
+  const queue: [string, string][] = [[file, qualname.slice(0, dot)]];
+  for (let next = queue.shift(); next; next = queue.shift()) {
+    const [classFile, className] = next;
+    const info = infos[classFile];
+    const cls = info?.ok ? info.classes[className] : undefined;
+    for (const base of cls?.bases ?? []) {
+      if (base.file === null || base.class === null) return true;
+      const key = `${base.file}\0${base.class}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      const baseInfo = infos[base.file];
+      if (baseInfo?.ok && baseInfo.symbols.some((s) => s.kind === 'method' && s.qualname === `${base.class}.${method}`)) return true;
+      queue.push([base.file, base.class]);
+    }
+  }
+  return false;
+}
+
 function matchSymbol(symbols: PythonSymbol[], name: string, line: number): PythonSymbol | undefined {
   return symbols.find((s) => s.name === name && s.startLine <= line && line <= s.line);
 }
@@ -252,6 +280,7 @@ async function measurePython(ctx: MeasureContext, tallies: Map<string, Tally>, w
       for (const hit of hitsByFile.get(mod.file.path) ?? []) {
         const symbol = matchSymbol(mod.info.symbols, hit.name, hit.line);
         if (!symbol || symbol.decorated || allNames.has(symbol.name)) continue;
+        if (symbol.kind === 'method' && isOverride(infos, mod.file.path, symbol.qualname)) continue;
         if ([...mod.names].some((name) => scripts.objects.has(`${name}:${symbol.qualname}`))) continue;
         counted.add(symbol);
       }
