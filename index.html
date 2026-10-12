@@ -58,6 +58,12 @@
       scroll-behavior: smooth;
     }
 
+    @media (prefers-reduced-motion: reduce) {
+      html {
+        scroll-behavior: auto;
+      }
+    }
+
     body {
       background: var(--bg);
       color: var(--fg);
@@ -589,7 +595,8 @@
           Run one command. Get a score. Find out if you shipped software or a vibe.
         </p>
         <div class="actions">
-          <button class="btn primary" id="subscribe-open" type="button">Get benchmark updates</button>
+          <a class="btn primary" id="get-key" href="#run">Get a free key</a>
+          <button class="btn" id="subscribe-open" type="button">Get benchmark updates</button>
         </div>
       </div>
     </section>
@@ -846,6 +853,24 @@
           submitBtn.disabled = false;
           submitBtn.textContent = 'Notify me';
         }
+      });
+    })();
+  </script>
+
+  <script>
+    // ---- Hero "Get a free key": scroll to the key form and focus the email field ----
+    (function () {
+      const link = document.getElementById('get-key');
+      const run = document.getElementById('run');
+      if (!link || !run) return;
+      link.addEventListener('click', function (e) {
+        e.preventDefault();
+        const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        run.scrollIntoView({ behavior: reduce ? 'instant' : 'smooth', block: 'start' });
+        // The key form is replaced after a successful submit, so look the field up now.
+        const email = document.getElementById('key-email');
+        if (email) email.focus({ preventScroll: true });
+        history.pushState(null, '', '#run');
       });
     })();
   </script>
