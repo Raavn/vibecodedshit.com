@@ -17,7 +17,7 @@ interface Fragment {
   end?: unknown;
 }
 
-interface Clone {
+export interface Clone {
   firstFile?: Fragment;
   secondFile?: Fragment;
 }
@@ -29,17 +29,27 @@ function physicalLines(text: string): number {
   return text.endsWith('\n') || text.endsWith('\r') ? lines.length - 1 : lines.length;
 }
 
-/** Union of inclusive line ranges. */
-function coveredLines(ranges: [number, number][]): number {
-  const sorted = [...ranges].sort((a, b) => a[0] - b[0]);
-  let total = 0;
-  let end = 0;
-  for (const [from, to] of sorted) {
-    const start = Math.max(from, end + 1);
-    if (to >= start) total += to - start + 1;
-    end = Math.max(end, to);
+type Range = { name: string; start: number; end: number };
+
+function isRange(fragment: Fragment | undefined): fragment is Range {
+  return !!fragment && typeof fragment.name === 'string' && typeof fragment.start === 'number' && typeof fragment.end === 'number';
+}
+
+/**
+ * Duplicated lines per file, the way jscpd's `duplicatedLines` counts them: each clone once, with the
+ * lines of the fragment it is attributed to. A clone belongs to its firstFile, or to its secondFile when
+ * firstFile is out of scope; a clone with neither file in scope is dropped. Returns null on a malformed clone.
+ */
+export function attributeClones(clones: Clone[], inScope: (file: string) => boolean, rel: (name: string) => string): Map<string, number> | null {
+  const byFile = new Map<string, number>();
+  for (const clone of clones) {
+    if (!isRange(clone.firstFile) || !isRange(clone.secondFile)) return null;
+    const target = [clone.firstFile, clone.secondFile].find((f) => inScope(rel(f.name)));
+    if (!target) continue;
+    const file = rel(target.name);
+    byFile.set(file, (byFile.get(file) ?? 0) + target.end - target.start + 1);
   }
-  return total;
+  return byFile;
 }
 
 export const p43: Measurer = {
@@ -84,29 +94,24 @@ export const p43: Measurer = {
         return unavailable(ctx, 'jscpd report is missing or has an unexpected shape');
       }
 
-      const rangesByFile = new Map<string, [number, number][]>();
-      for (const clone of duplicates) {
-        for (const fragment of [clone.firstFile, clone.secondFile]) {
-          if (!fragment || typeof fragment.name !== 'string' || typeof fragment.start !== 'number' || typeof fragment.end !== 'number') {
-            return unavailable(ctx, 'jscpd report has an unexpected shape');
-          }
-          const rel = path.relative(copy.dir, path.resolve(copy.dir, fragment.name)).split(path.sep).join('/');
-          const list = rangesByFile.get(rel) ?? [];
-          list.push([fragment.start, fragment.end]);
-          rangesByFile.set(rel, list);
-        }
-      }
-
-      // jscpd 5 reports line totals per format, not per file, so the per-file numbers are rebuilt here:
+      // jscpd 5 reports line totals per format, not per file, so the per-unit numbers are rebuilt here:
       // lines are the file's physical lines (jscpd skips files shorter than min-lines), duplicated
-      // lines are the union of the clone ranges that cover the file.
+      // lines are the clones attributed to the file, each clone counted once.
+      const counted = new Map<string, number>();
+      for (const file of files) {
+        const lines = physicalLines(readFileSync(path.join(copy.dir, file.path), 'utf8'));
+        if (lines >= Number(MIN_LINES)) counted.set(file.path, lines);
+      }
+      const rel = (name: string): string => path.relative(copy.dir, path.resolve(copy.dir, name)).split(path.sep).join('/');
+      const duplicated = attributeClones(duplicates, (file) => counted.has(file), rel);
+      if (!duplicated) return unavailable(ctx, 'jscpd report has an unexpected shape');
+
       for (const file of files) {
         const tally = tallies.get(unitId(file));
-        if (!tally) continue;
-        const lines = physicalLines(readFileSync(path.join(copy.dir, file.path), 'utf8'));
-        if (lines < Number(MIN_LINES)) continue;
+        const lines = counted.get(file.path);
+        if (!tally || lines === undefined) continue;
         tally.denominator += lines;
-        tally.numerator += coveredLines(rangesByFile.get(file.path) ?? []);
+        tally.numerator += duplicated.get(file.path) ?? 0;
       }
       return { status: 'measured', units: tallyUnits(tallies) };
     } finally {
