@@ -8,7 +8,7 @@ import { cyclicFiles, d3Context, expected, fixtureContext, graphOf, measure, rul
 import { materializeFixture } from './helpers/fixture.js';
 import { fakeToolKit } from './helpers/tools.js';
 
-const FIXTURES = ['d3-nextjs', 'd3-express', 'd3-generic-ts', 'd3-declared-ts', 'd3-na-ts', 'd3-domain-ts'];
+const FIXTURES = ['d3-nextjs', 'd3-alias-ts', 'd3-express', 'd3-generic-ts', 'd3-declared-ts', 'd3-na-ts', 'd3-domain-ts'];
 
 function units(m: Measurement): UnitRaw[] {
   if (m.status !== 'measured') throw new Error(`not measured: ${JSON.stringify(m)}`);
