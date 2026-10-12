@@ -317,6 +317,16 @@ describe('4.4 unused exports and files', () => {
     expect(run.warnings).toContain('4.4: 1 Python files could not be parsed');
   });
 
+  it('treats framework hooks and overrides of repository base methods as used', async () => {
+    const want = expected('d4-deadcode-callbacks') as never as { vulture: string[]; p44: Record<string, never> };
+    const run = await scan(materializeFixture('d4-deadcode-callbacks'), deadKit(fakeVulture([], want.vulture.join('\n'))));
+    const p = param(run, '4.4');
+    expect(p.status).toBe('measured');
+    expect(unitRatios(p)).toEqual({ core: want.p44.core, app: want.p44.app });
+    expect(pooled(p)).toEqual(want.p44.pooled);
+    expect(p.score).toBeCloseTo(Number(want.p44.score), 3);
+  });
+
   it('warns about invalid TOML and treats the package as not distributed', async () => {
     const run = await scan(materializeFixture('d4-deadcode', {}, { 'packages/api/pyproject.toml': '[project\n' }), deadKit());
     expect(run.warnings).toContain('packages/api/pyproject.toml: invalid TOML, ignored');

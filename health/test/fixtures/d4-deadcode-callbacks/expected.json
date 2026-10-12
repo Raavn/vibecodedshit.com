@@ -1,0 +1,26 @@
+{
+  "note": "Hand counts. Two Python packages, so vulture runs once per unit. core: base.py has Base, Base.execute, Base.run; main.py (an entry module) has start, which it calls and which calls execute, which calls self.run = 4 symbols. Real vulture flags nothing counted in core (only the variable RESULT): 0/4. app: main.py (an entry module) has Handler, Handler.do_GET, Child, Child.run, Plain, Plain.helper = 6 symbols. Real vulture (2.16, min-confidence 60) on app flags do_GET, run and helper. do_GET is used: Handler has a base defined outside the repository (http.server.BaseHTTPRequestHandler). Child.run is used: Child's base core.base.Base is defined in the repository and has a method run. Plain.helper stays unused: 1/6. Pooled 1/10 = 10%.",
+  "vulture": [
+    "packages/core/core/main.py:8: unused variable 'RESULT' (60% confidence)",
+    "packages/app/app/main.py:7: unused method 'do_GET' (60% confidence)",
+    "packages/app/app/main.py:12: unused method 'run' (60% confidence)",
+    "packages/app/app/main.py:17: unused method 'helper' (60% confidence)",
+    "packages/app/app/main.py:21: unused variable 'HANDLERS' (60% confidence)"
+  ],
+  "p44": {
+    "core": {
+      "numerator": 0,
+      "denominator": 4
+    },
+    "app": {
+      "numerator": 1,
+      "denominator": 6
+    },
+    "pooled": {
+      "numerator": 1,
+      "denominator": 10
+    },
+    "rawPercent": 10,
+    "score": 41.666667
+  }
+}
