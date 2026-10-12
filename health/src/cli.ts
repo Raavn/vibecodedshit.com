@@ -4,15 +4,16 @@ import { EXIT, type CliIo } from './commands/common.js';
 import { runDiff } from './commands/diff.js';
 import { runKeySet } from './commands/key.js';
 import { runReport } from './commands/report.js';
+import { summarize } from './commands/summary.js';
 import { checkKey, type KeyCheckResult } from './key/check.js';
 import { loadMethodology, MethodologyError, type Methodology } from './methodology/load.js';
-import type { RunFile } from './run/schema.js';
 import { invalidRun, NoLogicFilesError, runScan, type ScanOptions } from './run/scan.js';
 import { writeRun } from './run/write.js';
 import { NotAGitRepositoryError } from './scope/build.js';
 import { ToolError } from './scope/types.js';
 
 export { EXIT, type CliIo } from './commands/common.js';
+export { summarize } from './commands/summary.js';
 
 const USAGE = `Usage: health scan <path> [--preview] [--as-of YYYY-MM-DD] [--out <file>] [--methodology <version>]
        health report <run.json> [--out <file>]
@@ -21,41 +22,6 @@ const USAGE = `Usage: health scan <path> [--preview] [--as-of YYYY-MM-DD] [--out
 
 Exit codes: 0 ok, 1 usage or unreadable input, 2 methodology error, 3 no logic file, 4 tool error, 5 diff refused, 6 missing or invalid key.
 `;
-
-function round1(value: number): string {
-  return (Math.round(value * 10) / 10).toFixed(1);
-}
-
-export function summarize(run: RunFile, methodology: Methodology): string {
-  const lines: string[] = [];
-  if (run.health) {
-    const band = methodology.bands.find((b) => b.key === run.health?.band);
-    lines.push(`Health ${run.health.displayed} ${band?.name ?? run.health.band} (${run.mode === 'preview' ? 'preview, ' : ''}${run.comparable ? 'comparable' : 'not comparable'})`);
-  }
-  for (const dimension of run.dimensions) {
-    if (dimension.score === null) continue;
-    const def = methodology.dimensions.find((d) => d.id === dimension.id);
-    lines.push(`Dimension ${dimension.id} ${def?.name ?? dimension.key}: ${Math.floor(dimension.score + 0.5 + 1e-9)}`);
-  }
-  const names = new Map(methodology.dimensions.flatMap((d) => d.parameters).map((p) => [p.id, p.name]));
-  for (const param of run.parameters) {
-    if (param.status === 'not_measured' && param.reason && !/^(execution layer|not implemented)/.test(param.reason)) {
-      lines.push(`${param.id} ${names.get(param.id) ?? ''}: not measured (${param.reason})`);
-      continue;
-    }
-    if (param.status !== 'measured') continue;
-    const raw = param.raw;
-    const levels = [...new Set((param.units ?? []).flatMap((u) => (u.raw.kind === 'level' ? [u.raw.level] : [])))];
-    const shown =
-      raw && raw.kind === 'ratio'
-        ? `${round1((raw.numerator / raw.denominator) * raw.scale)}%`
-        : levels.length > 0
-          ? levels.join(', ')
-          : 'n/a';
-    lines.push(`${param.id} ${names.get(param.id) ?? ''}: ${shown} -> ${Math.floor((param.score ?? 0) + 0.5 + 1e-9)}`);
-  }
-  return `${lines.join('\n')}\n`;
-}
 
 /** Test seams: the execution runner, image digest, static tool kit, parameters and key check a scan uses. */
 export type CliDeps = Pick<ScanOptions, 'execRunner' | 'imageDigest' | 'tools' | 'measurers'> & {
