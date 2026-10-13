@@ -1,4 +1,4 @@
-import { chmodSync, existsSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { chmodSync, existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -67,6 +67,15 @@ describe('work copy', () => {
     expect(existsSync(path.join(copy.dir, 'packages/web/package.json'))).toBe(false);
     await copy.cleanup();
     expect(existsSync(copy.dir)).toBe(false);
+  });
+
+  it('skips tracked files that are deleted from the working tree', async () => {
+    const repo = materializeFixture('d4-deadcode', {}, { 'supabase/.temp/cli-latest': 'v1\n' });
+    rmSync(path.join(repo, 'supabase'), { recursive: true });
+    const copy = await createWorkCopy(repo, ['supabase/.temp/cli-latest', 'packages/web/src/mod.ts']);
+    expect(existsSync(path.join(copy.dir, 'supabase'))).toBe(false);
+    expect(existsSync(path.join(copy.dir, 'packages/web/src/mod.ts'))).toBe(true);
+    await copy.cleanup();
   });
 });
 
