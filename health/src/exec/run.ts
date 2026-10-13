@@ -1,4 +1,3 @@
-import { existsSync } from 'node:fs';
 import { mkdir, mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -88,7 +87,7 @@ export async function runExecution(opts: ExecutionOptions): Promise<{ results: E
   const trackedSet = new Set(tracked);
   const plan = planExecution(scope, tracked);
 
-  const work = await createWorkCopy(repoPath, tracked.filter((rel) => existsSync(path.join(repoPath, rel))));
+  const work = await createWorkCopy(repoPath, tracked);
   const out = await mkdtemp(path.join(tmpdir(), 'health-out-'));
   let counter = 0;
   try {
