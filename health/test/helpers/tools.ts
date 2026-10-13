@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { createToolKit, type ResolvedTool, type ToolKit, type ToolName, type ToolResult } from '../../src/tools/kit.js';
 
-export type FakeTool = (args: string[], cwd: string) => ToolResult | Promise<ToolResult>;
+export type FakeTool = (args: string[], cwd: string, env?: Record<string, string>) => ToolResult | Promise<ToolResult>;
 
 export interface FakeKit extends ToolKit {
   /** Every tool name `resolve` was asked for, in order. */
@@ -51,7 +51,7 @@ export function fakeToolKit(
       if (tool.command.startsWith('fake:') || tool.command === FAKE_INTERPRETER) {
         const fake = fakes[tool.name];
         if (!fake) throw new Error(`no fake for ${tool.name}`);
-        return fake(args, runOpts.cwd);
+        return fake(args, runOpts.cwd, runOpts.env);
       }
       return real.run(tool, args, runOpts);
     },

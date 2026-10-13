@@ -46,6 +46,22 @@ function names(value: unknown): string[] {
     .filter((n): n is string => typeof n === 'string');
 }
 
+/**
+ * Knip's JSON report. A config knip loads can print to stdout first (dotenv 17 prints an
+ * "injected env" banner), so when stdout is not JSON as a whole, the report is read from the last
+ * line that starts with `{` to the end.
+ */
+function parseKnipReport(stdout: string): unknown {
+  try {
+    return JSON.parse(stdout);
+  } catch (err) {
+    const lines = stdout.split('\n');
+    const start = lines.findLastIndex((line) => line.startsWith('{'));
+    if (start <= 0) throw err;
+    return JSON.parse(lines.slice(start).join('\n'));
+  }
+}
+
 /** Knip roots: the repository root when it has a tracked package.json, else each shallowest directory holding one. */
 export function knipRoots(repoPath: string): string[] {
   const result = spawnSync('git', ['-C', repoPath, 'ls-files', '-z', '--', 'package.json', '**/package.json'], {
@@ -95,13 +111,13 @@ export function runKnip(ctx: MeasureContext): Promise<KnipOutcome | Measurement>
         const result = await ctx.tools.run(
           tool,
           ['--reporter', 'json', '--no-progress', '--no-config-hints', '--config', configFile],
-          { cwd },
+          { cwd, env: { DOTENV_CONFIG_QUIET: 'true' } },
         );
         const failure = failureReason(tool, result, [0, 1]);
         if (failure) return unavailable(ctx, `${failure}${hint}`);
         let issues: RawIssue[];
         try {
-          const parsed = JSON.parse(result.stdout) as { issues?: unknown };
+          const parsed = parseKnipReport(result.stdout) as { issues?: unknown };
           if (!Array.isArray(parsed.issues)) throw new Error('no issues array');
           issues = parsed.issues as RawIssue[];
         } catch {

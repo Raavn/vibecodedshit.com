@@ -7,6 +7,7 @@ import { recompute } from '../src/run/recompute.js';
 import type { RunFile, RunParameter } from '../src/run/schema.js';
 import { runScan } from '../src/run/scan.js';
 import { ToolError } from '../src/scope/types.js';
+import { createToolKit } from '../src/tools/kit.js';
 import { fixturesDir, materializeFixture } from './helpers/fixture.js';
 import { fakeToolKit, ok, type FakeKit, type FakeTool } from './helpers/tools.js';
 
@@ -265,6 +266,27 @@ describe('4.4 unused exports and files', () => {
     // The work copy has the unit's test files (so test use counts) and no repository config.
     expect((calls[0] as VultureCall).hasTestFile).toBe(true);
     expect((calls[0] as VultureCall).hasRepoConfig).toBe(false);
+  });
+
+  it('reads the knip report when a config knip loads prints a dotenv banner first', async () => {
+    const want = expected('d4-deadcode') as never as Record<string, Record<string, never>>;
+    const real = createToolKit();
+    const knip = await real.resolve('knip');
+    if (!knip) throw new Error('knip not installed');
+    const envs: (Record<string, string> | undefined)[] = [];
+    const bannerKnip: FakeTool = async (args, cwd, env) => {
+      envs.push(env);
+      const result = await real.run(knip, args, { cwd, env });
+      return { ...result, stdout: `◇ injected env (13) from .env // tip: ⌘ suppress logs { quiet: true }\n${result.stdout}` };
+    };
+    const run = await scan(
+      materializeFixture('d4-deadcode'),
+      fakeToolKit({ knip: bannerKnip, complexipy: fakeComplexipy(), vulture: fakeVulture() }),
+    );
+    const p = param(run, '4.4');
+    expect(p.status).toBe('measured');
+    expect(unitRatios(p)).toEqual({ web: want.p44?.web, api: want.p44?.api });
+    expect(envs).toEqual([{ DOTENV_CONFIG_QUIET: 'true' }]);
   });
 
   it('reproduces D4 as a complete score in a preview run, and recompute agrees', async () => {
