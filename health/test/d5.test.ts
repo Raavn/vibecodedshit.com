@@ -457,6 +457,34 @@ describe('5.5 dependency declaration errors', () => {
     expect(run.warnings).toContain('5.5: . has no Python dependency manifest');
   });
 
+  const noSpec: FakeTool = () => ({
+    exitCode: 1,
+    stdout: '',
+    stderr: "deptry.exceptions.DependencySpecificationNotFoundError: No file called 'pyproject.toml' with a [tool.poetry.dependencies], [tool.pdm] or [project] section or file(s) called 'requirements.txt' found. Exiting.\n",
+    timedOut: false,
+  });
+
+  it('gives 0/0 when deptry finds no dependency specification in a unit that declares nothing', async () => {
+    const repo = materializeFixture('d5-declarations', {}, { 'packages/api/pyproject.toml': '[tool.other]\nx = 1\n' });
+    const run = await scan(repo, fakeToolKit({ deptry: noSpec }));
+    const p = param(run, '5.5');
+    expect(p.status).toBe('measured');
+    expect(p.units?.find((u) => u.group === 'python')).toMatchObject({ raw: { kind: 'ratio', numerator: 0, denominator: 0, scale: 100 } });
+    expect(run.warnings).toContain('5.5: deptry found no dependency specification in packages/api');
+  });
+
+  it('is not_measured when deptry cannot read dependencies the unit declares', async () => {
+    const repo = materializeFixture('d5-declarations', {}, {
+      'packages/api/pyproject.toml': '[tool.other]\nx = 1\n',
+      'packages/api/requirements-dev.txt': 'flask==3.0.0\n',
+    });
+    const run = await scan(repo, fakeToolKit({ deptry: noSpec }));
+    expect(param(run, '5.5')).toMatchObject({
+      status: 'not_measured',
+      reason: 'deptry cannot read the dependencies declared in packages/api/pyproject.toml',
+    });
+  });
+
   it('does not need deptry for a TypeScript-only repository and scores 100 with no declared dependencies', async () => {
     const run = await scan(materializeFixture('d5-secret'), fakeToolKit());
     const p = param(run, '5.5');

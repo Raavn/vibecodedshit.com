@@ -35,8 +35,11 @@ function knipCounts(ctx: MeasureContext, knip: KnipOutcome, pkg: string): number
 
 const DEPTRY_CODES = new Set(['DEP001', 'DEP002', 'DEP003']);
 
+/** deptry found no section or file it reads dependencies from (a pyproject.toml without [project], poetry or pdm tables, and no requirements.txt). */
+const NO_SPEC = 'no-spec';
+
 /** deptry on a work copy of the unit with the repository's [tool.deptry] settings removed. */
-async function deptryCount(ctx: MeasureContext, tools: ToolKit, pkg: string): Promise<number | Measurement> {
+async function deptryCount(ctx: MeasureContext, tools: ToolKit, pkg: string): Promise<number | Measurement | typeof NO_SPEC> {
   const tool = await tools.resolve('deptry');
   if (!tool) return unavailable(ctx, notFoundReason('deptry'));
   const dir = pkg === '.' ? '' : pkg;
@@ -68,6 +71,7 @@ async function deptryCount(ctx: MeasureContext, tools: ToolKit, pkg: string): Pr
     try {
       text = await readFile(report, 'utf8');
     } catch {
+      if (result.exitCode === 1 && `${result.stdout}${result.stderr}`.includes('DependencySpecificationNotFoundError')) return NO_SPEC;
       if (result.exitCode === 1) return unavailable(ctx, 'deptry wrote no report');
     }
     let violations: unknown;
@@ -124,6 +128,13 @@ export const p55: Measurer = {
       const denominator = new Set((deps.manifest?.deps ?? []).map((d) => d.name)).size;
       if (denominator === 0) warnings.push(`5.5: ${unit.package} declares no dependencies`);
       const numerator = await deptryCount(ctx, ctx.tools, unit.package);
+      if (numerator === NO_SPEC) {
+        // Nothing declared and nothing deptry can read: the same 0/0 as a unit with no manifest.
+        if (denominator > 0) return unavailable(ctx, `deptry cannot read the dependencies declared in ${deps.manifest.file}`);
+        warnings.push(`5.5: deptry found no dependency specification in ${unit.package}`);
+        counts.set(`${unit.package}\0${unit.group}`, { numerator: 0, denominator: 0 });
+        continue;
+      }
       if (typeof numerator !== 'number') return numerator;
       counts.set(`${unit.package}\0${unit.group}`, { numerator, denominator });
     }
