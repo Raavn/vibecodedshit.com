@@ -1,6 +1,6 @@
 import type { Group } from '../scope/types.js';
 
-export type StepName = 'install' | 'build' | 'typecheck' | 'lint' | 'coverage-install' | 'test';
+export type StepName = 'install' | 'build' | 'typecheck' | 'lint' | 'knip' | 'coverage-install' | 'test';
 
 /** One container run. `cwd` is relative to the work copy, posix. */
 export interface StepSpec {
@@ -50,6 +50,7 @@ export interface StepCommand {
   argv: string[];
   /** Typecheck and lint steps: the tool, whose stdout `health-capture` writes to /out/<report>. */
   tool?: CheckTool;
+  /** Typecheck, lint and knip steps: the file under /out that `health-capture` writes the tool's stdout to. */
   report?: string;
 }
 
@@ -80,6 +81,15 @@ export interface CheckResult {
   group: Group;
   outcome: StepOutcome;
   /** Contents of the report file, null when none was written. */
+  report: string | null;
+}
+
+/** One knip step, with its JSON report. */
+export interface KnipResult {
+  /** Knip root, repo-relative posix. */
+  dir: string;
+  outcome: StepOutcome;
+  /** Contents of knip.json, null when none was written. */
   report: string | null;
 }
 
@@ -129,6 +139,8 @@ export interface ExecutionResults {
   checksRan: boolean;
   typecheck: CheckResult[];
   lint: CheckResult[];
+  /** One knip run per knip root, read by 4.4 and 5.5. Empty when the checks did not run. */
+  knip: KnipResult[];
   /** One entry per test runner invocation. Empty when no supported runner was found or the checks did not run. */
   test: { invocations: TestResult[] };
   /** The work copy the steps ran in, with the installed dependencies. Not written to run.json; removed after the scan. */

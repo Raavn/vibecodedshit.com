@@ -20,6 +20,8 @@ ARG PIPENV_VERSION=2026.8.0
 ARG RUFF_VERSION=0.16.10
 ARG MYPY_VERSION=2.4.0
 ARG C8_VERSION=12.0.0
+# Same version as the host's knip in package.json, so preview and full runs report the same issues.
+ARG KNIP_VERSION=6.39.0
 ARG PYTEST_VERSION=9.1.1
 ARG PYTEST_COV_VERSION=7.1.0
 ARG COVERAGE_VERSION=7.16.2
@@ -46,7 +48,8 @@ RUN rm -rf /usr/local/bin/yarn /usr/local/bin/yarnpkg /opt/yarn-v* \
     typescript@${TYPESCRIPT_VERSION} \
     eslint@${ESLINT_VERSION} \
     pyright@${PYRIGHT_VERSION} \
-    c8@${C8_VERSION}
+    c8@${C8_VERSION} \
+    knip@${KNIP_VERSION}
 
 # The pinned lint ruleset and its plugins live in /opt/health, never in a scanned repository.
 # type=module because bin/health-eslint is extensionless ESM; npm 11's `npm init -y` writes "type": "commonjs",
