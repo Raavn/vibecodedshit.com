@@ -11,6 +11,3 @@ A preview scan runs the static layer only, measures the parameters implemented s
 
 Needs Node 22 or later, `git`, and `python3` for repositories with Python files.
 
-## Key
-
-Every scan needs a free vibecodedshit key: get one at https://vibecodedshit.com/#run (it arrives by email), then put it in the `VIBECODEDSHIT_KEY` env var or run `health key set <key>`. With no key, or a key the server rejects, `scan` exits 6 and does not run. `VIBECODEDSHIT_APP_URL` overrides the host the key is validated against (for local testing).
