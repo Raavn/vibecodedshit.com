@@ -17,7 +17,6 @@ Run commands from this directory (`npm --prefix health <cmd>` from the repositor
 - `npm run health -- scan <path> --preview` runs a preview scan and writes `./run.json`. Without `--preview` it is a full run: the execution steps run in the `health:1.0` image (Docker needed).
 - `npm run health -- report <run.json> [--out <file>]` writes one self-contained HTML file (default `./health-report.html`, git-ignored) and prints its absolute path
 - `npm run health -- diff <before.json> <after.json> [--json]` compares two runs (after minus before); `--json` prints one object, schema in `src/diff/compare.ts`
-- `npm run health -- key set <key>` saves a vibecodedshit key to `$XDG_CONFIG_HOME/vibecodedshit/key` (default `~/.config/vibecodedshit/key`), mode 0600
 
 ## Layout
 
@@ -45,4 +44,4 @@ Adding a parameter: add `src/measure/p<d>-<n>.ts` and a test beside it, add one 
 
 ## Exit codes
 
-0 ok, 1 usage error or unreadable input, 2 methodology error (no run.json), 3 no logic file (no run.json), 4 tool error (run.json with `valid: false`), 5 `diff` refused (the runs are not comparable), 6 missing or invalid vibecodedshit key (`scan` only, no run.json). A regression flag never changes the exit code.
+0 ok, 1 usage error or unreadable input, 2 methodology error (no run.json), 3 no logic file (no run.json), 4 tool error (run.json with `valid: false`), 5 `diff` refused (the runs are not comparable). A regression flag never changes the exit code.

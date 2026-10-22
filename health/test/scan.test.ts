@@ -9,7 +9,6 @@ import type { RunFile } from '../src/run/schema.js';
 import { runScan } from '../src/run/scan.js';
 import { buildScope } from '../src/scope/build.js';
 import { fixturesDir, materializeFixture } from './helpers/fixture.js';
-import { validKeyCheck } from './helpers/key.js';
 import { fakeToolKit } from './helpers/tools.js';
 
 const methodology = loadMethodology('1.0');
@@ -155,7 +154,7 @@ describe('health scan CLI', () => {
     const cwd = mkdtempSync(path.join(tmpdir(), 'health-cwd-'));
     const repo = materializeFixture('typescript');
     const { out, io: cliIo } = io(cwd);
-    const code = await run(['scan', repo, '--preview', '--as-of', '2026-10-04'], cliIo, { keyCheck: validKeyCheck });
+    const code = await run(['scan', repo, '--preview', '--as-of', '2026-10-04'], cliIo);
     expect(code).toBe(0);
     const text = out.join('');
     expect(text).toMatch(/^Health \d+ \w+ \(preview, not comparable\)$/m);
@@ -173,7 +172,7 @@ describe('health scan CLI', () => {
     const cwd = mkdtempSync(path.join(tmpdir(), 'health-cwd-'));
     const target = path.join(cwd, 'custom.json');
     const { io: cliIo } = io(cwd);
-    expect(await run(['scan', materializeFixture('python'), '--preview', '--out', target], cliIo, { keyCheck: validKeyCheck })).toBe(0);
+    expect(await run(['scan', materializeFixture('python'), '--preview', '--out', target], cliIo)).toBe(0);
     expect(existsSync(target)).toBe(true);
     expect(existsSync(path.join(cwd, 'run.json'))).toBe(false);
   });
@@ -181,7 +180,7 @@ describe('health scan CLI', () => {
   it('fails on an unknown methodology version with exit 2 and no run.json', async () => {
     const cwd = mkdtempSync(path.join(tmpdir(), 'health-cwd-'));
     const { err, io: cliIo } = io(cwd);
-    const code = await run(['scan', materializeFixture('python'), '--preview', '--methodology', '9.9'], cliIo, { keyCheck: validKeyCheck });
+    const code = await run(['scan', materializeFixture('python'), '--preview', '--methodology', '9.9'], cliIo);
     expect(code).toBe(2);
     expect(err.join('')).toMatch(/Unknown methodology version/);
     expect(existsSync(path.join(cwd, 'run.json'))).toBe(false);
@@ -191,7 +190,7 @@ describe('health scan CLI', () => {
     const cwd = mkdtempSync(path.join(tmpdir(), 'health-cwd-'));
     const empty = materializeFixture('typescript', {}, { '.healthignore': 'src/**\ntest/**\n' });
     const { io: cliIo } = io(cwd);
-    expect(await run(['scan', empty, '--preview'], cliIo, { keyCheck: validKeyCheck })).toBe(3);
+    expect(await run(['scan', empty, '--preview'], cliIo)).toBe(3);
     expect(existsSync(path.join(cwd, 'run.json'))).toBe(false);
   });
 

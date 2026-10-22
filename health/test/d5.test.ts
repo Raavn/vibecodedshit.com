@@ -4,7 +4,6 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { run as runCli } from '../src/cli.js';
-import { validKeyCheck } from './helpers/key.js';
 import { band, cvss3BaseScore } from '../src/measure/deps/cvss.js';
 import { isMajorBehind, latestStable, majorsBehind } from '../src/measure/deps/registry.js';
 import { severityPoints } from '../src/measure/deps/osv.js';
@@ -500,7 +499,7 @@ describe('--as-of', () => {
   it('defaults to today and is stored in run.json', async () => {
     const cwd = mkdtempSync(path.join(tmpdir(), 'health-cwd-'));
     const io = { stdout: () => undefined, stderr: () => undefined, cwd };
-    expect(await runCli(['scan', materializeFixture('d5-secret'), '--preview'], io, { keyCheck: validKeyCheck })).toBe(0);
+    expect(await runCli(['scan', materializeFixture('d5-secret'), '--preview'], io)).toBe(0);
     const file = JSON.parse(readFileSync(path.join(cwd, 'run.json'), 'utf8')) as RunFile;
     expect(file.asOf).toBe(new Date().toISOString().slice(0, 10));
   });

@@ -467,11 +467,11 @@
 
     .modal-close:hover { background: var(--surface); border-color: var(--border); }
 
-    #subscribe-form, #key-form { display: flex; flex-direction: column; gap: 0.75rem; }
+    #subscribe-form { display: flex; flex-direction: column; gap: 0.75rem; }
 
-    #subscribe-form label, #key-form label { font-size: 0.85rem; font-weight: 700; }
+    #subscribe-form label { font-size: 0.85rem; font-weight: 700; }
 
-    #subscribe-form input[type="email"], #key-form input[type="email"] {
+    #subscribe-form input[type="email"] {
       font: inherit;
       color: var(--fg);
       padding: 0.75rem 0.9rem;
@@ -481,7 +481,7 @@
       outline: none;
     }
 
-    #subscribe-form input[type="email"]:focus, #key-form input[type="email"]:focus {
+    #subscribe-form input[type="email"]:focus {
       border-color: var(--fg);
       background: rgba(255, 255, 255, 0.8);
     }
@@ -496,18 +496,16 @@
       overflow: hidden !important;
     }
 
-    #subscribe-form button[type="submit"], #key-form button[type="submit"] {
+    #subscribe-form button[type="submit"] {
       margin-top: 0.25rem;
       font: inherit;
       cursor: pointer;
     }
 
-    #subscribe-form button[type="submit"]:disabled, #key-form button[type="submit"]:disabled {
+    #subscribe-form button[type="submit"]:disabled {
       opacity: 0.6;
       cursor: wait;
     }
-
-    .consent-line { font-size: 0.85rem; color: var(--fg-muted); }
 
     .form-status { font-size: 0.9rem; min-height: 1.2em; }
     .form-status.error { color: #7a1a1a; }
@@ -595,7 +593,7 @@
           Run one command. Get a score. Find out if you shipped software or a vibe.
         </p>
         <div class="actions">
-          <a class="btn primary" id="get-key" href="#run">Get a free key</a>
+          <a class="btn primary" id="run-link" href="#run">Run it</a>
           <button class="btn" id="subscribe-open" type="button">Get benchmark updates</button>
         </div>
       </div>
@@ -671,20 +669,23 @@
     <section class="section" id="run">
       <div class="section-header">
         <h2>Run it</h2>
-        <p class="lede">Get a free key by email. It comes with the install steps.</p>
+        <p class="lede">Three steps, inside Claude Code.</p>
       </div>
 
-      <form id="key-form" novalidate>
-        <label for="key-email">Email</label>
-        <input id="key-email" name="email" type="email" required maxlength="254" autocomplete="email" inputmode="email" placeholder="you@example.com">
-        <div class="hp-field" aria-hidden="true">
-          <label for="key-company">Company (leave empty)</label>
-          <input id="key-company" name="company" type="text" tabindex="-1" autocomplete="off">
-        </div>
-        <p class="consent-line">We email you a free key and the install steps, and add you to the vibecodedshit list for benchmark updates. <a href="https://app.vibecodedshit.com/privacy" target="_blank" rel="noreferrer">Privacy</a></p>
-        <button class="btn primary" type="submit" id="key-submit">Email me a key</button>
-        <div class="form-status" id="key-status" role="status" aria-live="polite"></div>
-      </form>
+      <ol class="steps">
+        <li>
+          <p>Add the marketplace.</p>
+          <pre><code>/plugin marketplace add Raavn/vibecodedshit.com</code></pre>
+        </li>
+        <li>
+          <p>Install the plugin.</p>
+          <pre><code>/plugin install codebase-health@vibecodedshit</code></pre>
+        </li>
+        <li>
+          <p>Run it on your repo.</p>
+          <pre><code>/codebase-health</code></pre>
+        </li>
+      </ol>
 
       <p class="note">With Docker you get a full score you can compare with other projects. Without Docker the skill runs a preview, marked "not comparable".</p>
     </section>
@@ -858,80 +859,16 @@
   </script>
 
   <script>
-    // ---- Hero "Get a free key": scroll to the key form and focus the email field ----
+    // ---- Hero "Run it": smooth scroll to the install steps ----
     (function () {
-      const link = document.getElementById('get-key');
+      const link = document.getElementById('run-link');
       const run = document.getElementById('run');
       if (!link || !run) return;
       link.addEventListener('click', function (e) {
         e.preventDefault();
         const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
         run.scrollIntoView({ behavior: reduce ? 'instant' : 'smooth', block: 'start' });
-        // The key form is replaced after a successful submit, so look the field up now.
-        const email = document.getElementById('key-email');
-        if (email) email.focus({ preventScroll: true });
         history.pushState(null, '', '#run');
-      });
-    })();
-  </script>
-
-  <script>
-    // ---- Key request form ----
-    (function () {
-      'use strict';
-
-      const KEYS_URL = 'https://app.vibecodedshit.com/api/keys';
-      const renderedAt = Date.now();
-
-      const form = document.getElementById('key-form');
-      const emailInput = document.getElementById('key-email');
-      const companyInput = document.getElementById('key-company');
-      const submitBtn = document.getElementById('key-submit');
-      const statusEl = document.getElementById('key-status');
-
-      if (!form || !emailInput || !companyInput || !submitBtn || !statusEl) return;
-
-      function setStatus(text, kind) {
-        statusEl.textContent = text || '';
-        statusEl.classList.remove('error', 'success');
-        if (kind) statusEl.classList.add(kind);
-      }
-
-      form.addEventListener('submit', async function (e) {
-        e.preventDefault();
-        const email = (emailInput.value || '').trim();
-        if (!email) {
-          setStatus('Please enter an email.', 'error');
-          return;
-        }
-        submitBtn.disabled = true;
-        submitBtn.textContent = 'Sending…';
-        setStatus('', null);
-
-        try {
-          const res = await fetch(KEYS_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              email: email,
-              company: companyInput.value || '',
-              renderedAt: renderedAt,
-            }),
-          });
-          if (!res.ok) {
-            let msg = 'Something went wrong. Try again in a moment.';
-            if (res.status === 400) msg = 'That email looks off. Try again?';
-            setStatus(msg, 'error');
-            submitBtn.disabled = false;
-            submitBtn.textContent = 'Email me a key';
-            return;
-          }
-          form.innerHTML = '<p role="status">Check your inbox. Your key and the install steps are on the way.</p>';
-        } catch (err) {
-          setStatus('Network error. Try again?', 'error');
-          submitBtn.disabled = false;
-          submitBtn.textContent = 'Email me a key';
-        }
       });
     })();
   </script>
