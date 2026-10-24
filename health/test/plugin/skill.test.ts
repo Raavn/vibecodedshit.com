@@ -27,9 +27,22 @@ describe('SKILL.md', () => {
     expect(skill).not.toContain('to fix.');
   });
 
-  it('offers to build the image instead of handing the user a command', () => {
+  it('builds a missing image in the background instead of handing the user a command', () => {
     expect(skill).toContain('Never hand them a command to run.');
-    expect(skill).toContain('Build the image only after the user said yes.');
+    expect(skill).not.toContain('Never build the image yourself');
+    expect(skill).not.toContain('Build the image only after the user said yes.');
+    expect(skill).toContain('Docker is running but the image is missing');
+    expect(skill).toContain('in the background, without asking first');
+  });
+
+  it('asks before anything that needs Docker installed or started', () => {
+    expect(skill).toContain('Never install Docker or start its daemon yourself');
+    expect(skill).toContain('Docker is not installed');
+    expect(skill).toContain('Docker is installed but not running');
+  });
+
+  it('opens with the repository name', () => {
+    expect(skill).toContain("I'm going to take you through the health scan of");
   });
 
   it('is started only by the user and takes a path', () => {

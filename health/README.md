@@ -21,7 +21,7 @@ The CLI ships as a Claude Code plugin with a `/codebase-health` skill. The plugi
 /codebase-health [path]
 ```
 
-The namespaced form `/codebase-health:codebase-health` also works. The skill runs a full scan when Docker and the `health:1.0` image are available. Otherwise it runs a preview scan and says the result is not comparable. It then renders the HTML report and explains `run.json`: the health score and band, the weakest dimension and the three parameters most worth fixing. Claude only reads the scores. It never computes, adjusts or submits them.
+The namespaced form `/codebase-health:codebase-health` also works. The skill runs a full scan when Docker and the `health:1.0` image are available. When Docker is running but the image is missing, it builds the image in the background while it runs a preview scan, then runs the full scan. When Docker is missing or not running, it asks whether to run a preview scan, which is not comparable, or wait while you install or start Docker. It then renders the HTML report and explains `run.json`: the health score and band, the weakest dimension and the three parameters most worth fixing. Claude only reads the scores. It never computes, adjusts or submits them.
 
 Installing by the GitHub slug works only for users whose git credentials can read the repository.
 

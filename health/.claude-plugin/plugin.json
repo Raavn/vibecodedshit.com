@@ -1,6 +1,6 @@
 {
   "name": "codebase-health",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "Scan a codebase with the Codebase Health benchmark and get an explained report.",
   "author": {
     "name": "Peter Kisel"
