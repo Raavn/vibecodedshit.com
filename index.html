@@ -267,6 +267,7 @@
     .steps {
       list-style: none;
       display: grid;
+      grid-template-columns: minmax(0, 1fr);
       gap: 1rem;
       margin-top: 2rem;
       counter-reset: step;
@@ -306,8 +307,36 @@
       border: 1px solid var(--border);
       border-radius: var(--radius-md);
       padding: 0.75rem 0.9rem;
-      overflow-x: auto;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
       user-select: all;
+    }
+
+    /* ---- What it measures (inverted) ---- */
+    #measures {
+      --section-pad: var(--page-margin);
+      max-width: none;
+      background: var(--fg);
+      color: var(--bg);
+      padding-left: max(var(--section-pad), calc((100% - var(--container-max)) / 2 + var(--section-pad)));
+      padding-right: max(var(--section-pad), calc((100% - var(--container-max)) / 2 + var(--section-pad)));
+    }
+
+    #measures .section-header .lede {
+      color: rgba(206, 165, 199, 0.75);
+    }
+
+    #measures .more a {
+      color: var(--bg);
+    }
+
+    #measures .card {
+      background: linear-gradient(var(--surface), var(--surface)), var(--bg);
+      color: var(--fg);
+    }
+
+    #measures .card p {
+      color: var(--fg-muted);
     }
 
     .note {
@@ -367,6 +396,44 @@
     .nav a:hover {
       opacity: 1;
     }
+
+    .nav-toggle {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      width: 2.5rem;
+      height: 2.5rem;
+      padding: 0;
+      background: none;
+      border: 0;
+      border-radius: var(--radius-sm);
+      color: var(--fg);
+      cursor: pointer;
+    }
+
+    .nav-toggle span,
+    .nav-toggle span::before,
+    .nav-toggle span::after {
+      display: block;
+      width: 1.5rem;
+      height: 2px;
+      background: var(--fg);
+      border-radius: 2px;
+    }
+
+    .nav-toggle span {
+      position: relative;
+    }
+
+    .nav-toggle span::before,
+    .nav-toggle span::after {
+      content: "";
+      position: absolute;
+      left: 0;
+    }
+
+    .nav-toggle span::before { top: -7px; }
+    .nav-toggle span::after { top: 7px; }
 
     /* ---- Buttons ---- */
     .actions {
@@ -537,6 +604,10 @@
         padding: 4rem 1.5rem 4rem;
       }
 
+      #measures {
+        --section-pad: 1.5rem;
+      }
+
       .average {
         padding: 0 1.5rem;
       }
@@ -555,11 +626,36 @@
         padding: 0;
       }
 
+      .nav-toggle {
+        display: inline-flex;
+      }
+
+      .nav {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        flex-direction: column;
+        gap: 0;
+        padding: 0.5rem 1rem 0.75rem;
+        background: rgba(206, 165, 199, 0.72);
+        backdrop-filter: blur(10px);
+        border-bottom: 1px solid var(--border);
+      }
+
+      .nav.open {
+        display: flex;
+      }
+
       .nav a {
-        font-size: 0.9rem;
+        font-size: 1rem;
+        padding: 0.75rem 0.7rem;
       }
 
       .hero {
+        min-height: auto;
+        justify-content: flex-start;
         padding: 1.5rem;
         gap: 1.5rem;
       }
@@ -572,7 +668,8 @@
     <header class="topbar">
       <div class="topbar-inner">
         <a class="brand" href="#top">vibecodedsh*t</a>
-        <nav class="nav" aria-label="Primary">
+        <button class="nav-toggle" type="button" aria-label="Menu" aria-expanded="false" aria-controls="primary-nav"><span></span></button>
+        <nav class="nav" id="primary-nav" aria-label="Primary">
           <a href="#measures">What it measures</a>
           <a href="#run">Run it</a>
           <a href="https://github.com/Raavn/vibecodedshit.com/blob/main/health/methodology/v1.0/METHODOLOGY.md" target="_blank" rel="noreferrer">Methodology</a>
@@ -725,6 +822,32 @@
       </form>
     </div>
   </dialog>
+
+  <script>
+    // ---- Mobile nav toggle ----
+    (function () {
+      'use strict';
+
+      const toggle = document.querySelector('.nav-toggle');
+      const nav = document.getElementById('primary-nav');
+      if (!toggle || !nav) return;
+
+      function setOpen(open) {
+        nav.classList.toggle('open', open);
+        toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+      }
+
+      toggle.addEventListener('click', function () {
+        setOpen(!nav.classList.contains('open'));
+      });
+      nav.addEventListener('click', function (e) {
+        if (e.target.closest('a')) setOpen(false);
+      });
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') setOpen(false);
+      });
+    })();
+  </script>
 
   <script>
     // ---- Live average ----
