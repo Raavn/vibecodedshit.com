@@ -1,0 +1,10 @@
+{
+  "name": "codebase-health",
+  "version": "0.1.2",
+  "description": "Scan a codebase with the Codebase Health benchmark and get an explained report.",
+  "author": {
+    "name": "Peter Kisel"
+  },
+  "homepage": "https://vibecodedshit.com",
+  "license": "Elastic-2.0"
+}

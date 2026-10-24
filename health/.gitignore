@@ -1,5 +1,4 @@
 /node_modules/
-/dist/
 /run.json
 /coverage/
 /health-report.html
