@@ -310,6 +310,51 @@
       white-space: pre-wrap;
       overflow-wrap: anywhere;
       user-select: all;
+      padding-right: 5.5rem;
+    }
+
+    .copy-wrap {
+      position: relative;
+    }
+
+    .copy-btn {
+      position: absolute;
+      top: 50%;
+      right: 0.6rem;
+      transform: translateY(-50%);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
+      font-size: 0.72rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--fg);
+      background: var(--surface-strong);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-full);
+      padding: 0.35rem 0.7rem;
+      cursor: pointer;
+      transition: transform 120ms ease, background 120ms ease;
+    }
+
+    .copy-btn:hover {
+      transform: translateY(-50%) scale(0.95);
+      background: rgba(255, 255, 255, 0.75);
+    }
+
+    .copy-btn:focus-visible {
+      outline: 2px solid var(--fg);
+      outline-offset: 2px;
+    }
+
+    .visually-hidden {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      margin: -1px;
+      padding: 0;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
     }
 
     /* ---- What it measures (inverted) ---- */
@@ -992,6 +1037,73 @@
         const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
         run.scrollIntoView({ behavior: reduce ? 'instant' : 'smooth', block: 'start' });
         history.pushState(null, '', '#run');
+      });
+    })();
+  </script>
+
+  <script>
+    // ---- Copy buttons on the install steps ----
+    (function () {
+      'use strict';
+      const blocks = document.querySelectorAll('.steps pre');
+      const run = document.getElementById('run');
+      if (!blocks.length || !run) return;
+
+      const status = document.createElement('span');
+      status.className = 'visually-hidden';
+      status.setAttribute('role', 'status');
+      status.setAttribute('aria-live', 'polite');
+      run.appendChild(status);
+
+      const isMac = /Mac/.test(navigator.platform || navigator.userAgent);
+      const fallbackLabel = isMac ? 'Press ⌘C' : 'Press Ctrl+C';
+
+      blocks.forEach(function (pre) {
+        const code = pre.querySelector('code');
+        if (!code) return;
+        const text = code.textContent.trim();
+
+        const wrap = document.createElement('div');
+        wrap.className = 'copy-wrap';
+        pre.parentNode.insertBefore(wrap, pre);
+        wrap.appendChild(pre);
+
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'copy-btn';
+        btn.textContent = 'Copy';
+        btn.setAttribute('aria-label', 'Copy command: ' + text);
+        wrap.appendChild(btn);
+
+        let timer = null;
+        function flash(label, announce) {
+          btn.textContent = label;
+          status.textContent = announce || '';
+          clearTimeout(timer);
+          timer = setTimeout(function () {
+            btn.textContent = 'Copy';
+            status.textContent = '';
+          }, 1500);
+        }
+
+        function selectText() {
+          const range = document.createRange();
+          range.selectNodeContents(code);
+          const sel = window.getSelection();
+          sel.removeAllRanges();
+          sel.addRange(range);
+          flash(fallbackLabel, fallbackLabel + ' to copy');
+        }
+
+        btn.addEventListener('click', function () {
+          if (!navigator.clipboard || !navigator.clipboard.writeText) {
+            selectText();
+            return;
+          }
+          navigator.clipboard.writeText(text).then(function () {
+            flash('Copied', 'Copied to clipboard');
+          }, selectText);
+        });
       });
     })();
   </script>
