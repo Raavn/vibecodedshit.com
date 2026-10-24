@@ -22,6 +22,16 @@ describe('SKILL.md', () => {
     expect(skill).toContain('https://vibecodedshit.com');
   });
 
+  it('only scans and never suggests fixing the codebase', () => {
+    expect(skill).toContain('Never suggest, offer or start fixing the codebase.');
+    expect(skill).not.toContain('to fix.');
+  });
+
+  it('offers to build the image instead of handing the user a command', () => {
+    expect(skill).toContain('Never hand them a command to run.');
+    expect(skill).toContain('Build the image only after the user said yes.');
+  });
+
   it('is started only by the user and takes a path', () => {
     expect(skill).toContain('disable-model-invocation: true');
     expect(skill).toContain('argument-hint: "[path]"');
