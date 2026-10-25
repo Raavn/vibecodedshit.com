@@ -577,6 +577,8 @@
     .form-status { font-size: 0.9rem; min-height: 1.2em; }
     .form-status.error { color: #7a1a1a; }
     .form-status.success { color: var(--fg); font-weight: 700; }
+    #subscribe-form.is-done > :not(.form-status) { display: none; }
+    #subscribe-form.is-done .form-status { font-size: 1.1rem; }
 
     /* ---- Footer ---- */
     footer {
@@ -814,8 +816,8 @@
         <label for="subscribe-email">Email</label>
         <input id="subscribe-email" name="email" type="email" required maxlength="254" autocomplete="email" inputmode="email" placeholder="you@example.com">
         <div class="hp-field" aria-hidden="true">
-          <label for="subscribe-company">Company (leave empty)</label>
-          <input id="subscribe-company" name="company" type="text" tabindex="-1" autocomplete="off">
+          <label for="subscribe-trap">Leave this field empty</label>
+          <input id="subscribe-trap" name="trap_field" type="text" tabindex="-1" autocomplete="off">
         </div>
         <button class="btn primary" type="submit" id="subscribe-submit">Notify me</button>
         <div class="form-status" id="subscribe-status" role="status" aria-live="polite"></div>
@@ -896,13 +898,14 @@
       const closeBtn = document.getElementById('subscribe-close');
       const form = document.getElementById('subscribe-form');
       const emailInput = document.getElementById('subscribe-email');
-      const companyInput = document.getElementById('subscribe-company');
+      const companyInput = document.getElementById('subscribe-trap');
       const submitBtn = document.getElementById('subscribe-submit');
       const statusEl = document.getElementById('subscribe-status');
 
       if (!openBtn || !modal || !form) return;
 
-      let renderedAt = 0;
+      // Taken at page load so autofilled, immediate submits clear the server's min-time check.
+      const renderedAt = Date.now();
 
       function setStatus(text, kind) {
         statusEl.textContent = text || '';
@@ -911,8 +914,8 @@
       }
 
       function openModal() {
-        renderedAt = Date.now();
         setStatus('', null);
+        form.classList.remove('is-done');
         form.reset();
         submitBtn.disabled = false;
         submitBtn.textContent = 'Notify me';
@@ -951,16 +954,20 @@
         submitBtn.textContent = 'Sending…';
         setStatus('', null);
 
+        const controller = new AbortController();
+        const timer = setTimeout(function () { controller.abort(); }, 10000);
         try {
           const res = await fetch(AIMEKO_API_BASE + '/api/public/subscribe/vibecodedshit', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
+            signal: controller.signal,
             body: JSON.stringify({
               email: email,
               company: companyInput.value || '',
               renderedAt: renderedAt,
             }),
           });
+          clearTimeout(timer);
           if (!res.ok) {
             let msg = 'Something went wrong. Try again in a moment.';
             if (res.status === 400) msg = 'That email looks off. Try again?';
@@ -970,9 +977,9 @@
             return;
           }
           setStatus("You're on the list. We'll be in touch.", 'success');
-          submitBtn.textContent = 'Done';
-          setTimeout(closeModal, 2200);
+          form.classList.add('is-done');
         } catch (err) {
+          clearTimeout(timer);
           setStatus('Network error. Try again?', 'error');
           submitBtn.disabled = false;
           submitBtn.textContent = 'Notify me';
