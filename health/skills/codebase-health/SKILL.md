@@ -17,7 +17,8 @@ Scan a repository with the Codebase Health benchmark and explain the result. The
 - Show the help line only when health.band is vibe_coded or fragile.
 - Never change, delete or update anything on your own. That includes old runs and the plugin itself.
 - This is a scan. Its job is to finish the scan and report the result. Never suggest, offer or start fixing the codebase.
-- Assume the user does not know Docker or the terminal. Never hand them a command to run. When the scan needs something the plugin can set up, offer to do it and do it on a yes.
+- Assume the user does not know Docker or the terminal. Never hand them a command to run. Never install Docker or start its daemon yourself; ask the user to do that.
+- Narrate in plain words, tailored to this repository. The wording below is guidance, not a script.
 - Sorting stored values is allowed. Recomputing or estimating a score is not.
 
 ## Steps
@@ -40,19 +41,23 @@ Write everything for this run there. Never write `run.json` or the report into t
 
 ### 2. Full scan or preview
 
+Open with one line naming the repository: "I'm going to take you through the health scan of <basename of the target path>."
+
 Run `docker info` and `docker image inspect health:1.0`.
 
 - Both succeed: tell the user in one line that a full scan runs their install, tests and build inside Docker, with network access only during dependency install. Then scan:
   `node "${CLAUDE_PLUGIN_ROOT}/dist/bin.js" scan <target> --out "<RUN_DIR>/run.json"`
-- `docker info` fails: say in one line that Docker is not available, so this is a quick preview scan and its result is not comparable. Run the preview scan below.
-- Only the image is missing: ask the user with AskUserQuestion whether to set up the full scan now. Explain in one line that it is a one-time setup that prepares the scan environment in Docker and can take several minutes. Options: "Set it up and run the full scan (Recommended)" and "Run a quick preview instead".
-  - Set it up: say in one line that the setup is running, run `npm --prefix "${CLAUDE_PLUGIN_ROOT}" run image:build` with the Bash tool in the background and wait for the completion notice. When it succeeds, run the full scan above. When it fails, show the last lines of its output, say that the setup failed so this is a quick preview scan whose result is not comparable, and run the preview scan below.
-  - Preview: say in one line that the result is not comparable, and run the preview scan below.
+- Docker is running but the image is missing: say in one or two lines that Docker is running but the `health:1.0` image is not there, and what the image is for: it is the pinned environment that runs install, build, typecheck, lint and tests, which makes a full scan reproducible and comparable. Without it only the static checks run. Say you will run the parts that do not need the image while you build it. Then start both with the Bash tool in the background, without asking first:
+  - the build: `npm --prefix "${CLAUDE_PLUGIN_ROOT}" run image:build`
+  - the preview scan below, writing to `<RUN_DIR>/preview/run.json`
+
+  When the preview finishes first, give one interim line with its health and band, say it is not comparable and that the full scan follows. Do not explain the preview further. When the build succeeds, run the full scan above and continue with steps 3 to 6 on the full run. When the build fails, show the last lines of its output, say the full scan could not run so the preview result is not comparable, copy the preview run to `<RUN_DIR>/run.json`, and continue with steps 3 to 6 on the preview run.
+- `docker` is not found: say Docker is not installed. `docker info` fails: say Docker is installed but not running. Then ask the user with AskUserQuestion. Options: "Run a quick preview scan now" (static checks only, result not comparable) and "I'll install Docker or start it" (when the user says it is ready, run the checks above again). On the preview option, say in one line that the result is not comparable, and run the preview scan below.
 
 Preview scan:
   `node "${CLAUDE_PLUGIN_ROOT}/dist/bin.js" scan <target> --preview --out "<RUN_DIR>/run.json"`
 
-Build the image only after the user said yes. Never retry a failed full scan as a preview.
+Never retry a failed full scan as a preview.
 
 A full scan can take many minutes. Run it with the Bash tool in the background and wait for the completion notice. Do not poll with `sleep`.
 
