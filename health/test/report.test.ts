@@ -88,7 +88,28 @@ describe('report: rendering rules', () => {
     // A URL inside a tool's reason is text, not a request; only attributes and url() can fetch.
     expect(html).not.toMatch(/url\(/);
     expect(html).not.toContain('<script');
-    expect(html).not.toMatch(/\s(src|href)=/);
+    expect(html).not.toMatch(/\ssrc=/);
+    // The one allowed link is the help line.
+    expect(html.replaceAll(' href="https://vibecodedshit.com"', '')).not.toMatch(/\shref=/);
+  });
+
+  it('allows exactly one link, to vibecodedshit.com, and only for a vibe_coded or fragile run', () => {
+    const link = '<a href="https://vibecodedshit.com">';
+    for (const scores of [[10, 10, 10, 10, 10, 10], [50, 50, 50, 50, 50, 50]]) {
+      const html = renderReport(makeRun({ scores }), methodology);
+      expect(html.split(link)).toHaveLength(2);
+      expect(html.match(/\shref=/g)).toHaveLength(1);
+      expect(html).toContain('If you want help working through this roadmap to Stable, Peter Kisel takes on this work: ');
+      expect(html).not.toMatch(/\ssrc=|url\(|<script/);
+    }
+    for (const scores of [[70, 70, 70, 70, 70, 70], [90, 90, 90, 90, 90, 90]]) {
+      const html = renderReport(makeRun({ scores }), methodology);
+      expect(html).not.toContain('href=');
+      expect(html).not.toContain('Peter Kisel');
+    }
+    const none = renderReport(makeRun({ health: null }), methodology);
+    expect(none).not.toContain('href=');
+    expect(none).toContain('no roadmap');
   });
 
   it('escapes untrusted strings', () => {
@@ -144,6 +165,25 @@ describe('report: rendering rules', () => {
   });
 });
 
+describe('report: roadmap', () => {
+  it('shows the Roadmap after the dimensions and before the parameters, with Gain and the next anchor', () => {
+    const run = makeRun({
+      scores: [50, 50, 50, 50, 50, 50],
+      parameters: params.map((d) => ({ id: d.id, status: 'measured' as const, weight: d.weight, score: 50 })),
+    });
+    const html = renderReport(run, methodology);
+    expect(html.indexOf('<h2>Dimensions</h2>')).toBeLessThan(html.indexOf('<h2>Roadmap</h2>'));
+    expect(html.indexOf('<h2>Roadmap</h2>')).toBeLessThan(html.indexOf('<h2>Parameters</h2>'));
+    expect(html).toMatch(/<td class="num">\+\d+<\/td>|\+0 · no gain/);
+    expect(html).toContain('<th class="num">Gain</th>');
+  });
+
+  it('says execution-layer parameters are not ranked in a preview', () => {
+    expect(renderReport(preview, methodology)).toContain('Execution-layer parameters were not measured, so they are not ranked.');
+    expect(renderReport(makeRun(), methodology)).not.toContain('Execution-layer parameters were not measured');
+  });
+});
+
 describe('report: nearest descriptor', () => {
   const def = (id: string) => {
     const found = params.find((p) => p.id === id);
@@ -169,22 +209,32 @@ describe('report: nearest descriptor', () => {
 });
 
 describe('report command', () => {
-  it('writes ./health-report.html in the working directory and prints only its path', async () => {
+  it('prints the path, then up to 3 Roadmap lines', async () => {
+    const cwd = mkdtempSync(path.join(tmpdir(), 'health-report-rm-'));
+    const run = makeRun({ scores: [50, 50, 50, 50, 50, 50], parameters: params.map((d) => ({ id: d.id, status: 'measured' as const, weight: d.weight, score: 50 })) });
+    const out = await cli(['report', save('roadmap.json', run)], cwd);
+    const lines = out.stdout.trimEnd().split('\n');
+    expect(lines[0]).toBe(path.join(cwd, 'health-report.html'));
+    expect(lines).toHaveLength(4);
+    expect(lines[1]).toMatch(/^1\. \d\.\d .+ \(.+\) (\+\d+|\+0 · no gain)( — .+)?$/);
+  });
+
+  it('writes ./health-report.html in the working directory and prints only its path when there is no Roadmap', async () => {
     const cwd = mkdtempSync(path.join(tmpdir(), 'health-report-cwd-'));
-    const input = save('good.json', preview);
+    const input = save('good.json', makeRun({ health: null }));
     const out = await cli(['report', input], cwd);
     expect(out.code).toBe(EXIT.ok);
     const file = path.join(cwd, 'health-report.html');
     expect(out.stdout).toBe(`${file}\n`);
     expect(out.stderr).toBe('');
-    expect(readFileSync(file, 'utf8')).toBe(renderReport(preview, methodology));
+    expect(readFileSync(file, 'utf8')).toBe(renderReport(makeRun({ health: null }), methodology));
   });
 
   it('writes to --out', async () => {
     const target = path.join(mkdtempSync(path.join(tmpdir(), 'health-report-out-')), 'custom.html');
     const out = await cli(['report', save('good2.json', preview), '--out', target]);
     expect(out.code).toBe(EXIT.ok);
-    expect(out.stdout).toBe(`${target}\n`);
+    expect(out.stdout.split('\n')[0]).toBe(target);
     expect(existsSync(target)).toBe(true);
   });
 

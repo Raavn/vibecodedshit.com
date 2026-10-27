@@ -28,3 +28,7 @@ This rule applies to vibecodedshit.com only. The benchmark code in `health/` is 
 ## Repository layout
 - Repository root: the static site (`index.html`, `DESIGN.md`, this file). Vercel deploys it from the root with no build step.
 - `health/`: the codebase-health benchmark. `health/methodology/v1.0/` holds the versioned methodology; the `health` CLI and the Claude Code plugin are built there. It moved here on 2026-10-04 from the local-only `vibevibevibe.com` folder.
+
+## Glossary
+- **Gain**: the whole health points the displayed health would rise by if that one parameter alone reached 100. Zero shows as `+0 · no gain`. Gains are independent and do not add up, because the dimension means and the cap interact.
+- **Roadmap**: the parameters ranked by Gain. The report shows the top 10; `health report` prints the top 3 after the report path.

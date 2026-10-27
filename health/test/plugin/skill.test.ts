@@ -9,7 +9,7 @@ const methodology = parse(readFileSync(path.join(pluginRoot, 'methodology/v1.0/m
 
 describe('SKILL.md', () => {
   it('forbids Claude from computing scores and from submitting results', () => {
-    expect(skill).toContain('You never measure, compute, estimate, round or adjust a score. Every number you state is copied from run.json or the methodology YAML.');
+    expect(skill).toContain('You never measure, compute, estimate, round or adjust a score. Every number you state is copied from run.json, the methodology YAML or the health CLI\'s output.');
     expect(skill).toContain('Never submit results anywhere. This version has no submission.');
   });
 
