@@ -4,8 +4,10 @@ import { SHALLOW_WARNING } from '../report-only/hotspots.js';
 import type { RunFile } from '../run/schema.js';
 import { escapeHtml as e } from './escape.js';
 import { nearestDescriptor, rawText, scoreText, statusText } from './format.js';
+import { buildRoadmap, gainText, ROADMAP_LIMIT } from './roadmap.js';
 import { STYLE } from './style.js';
 
+export const HELP_URL = 'https://vibecodedshit.com';
 const NOT_COLLECTED = '<p class="muted">not collected</p>';
 
 function table(head: { text: string; num?: boolean }[], rows: string[][]): string {
@@ -14,6 +16,12 @@ function table(head: { text: string; num?: boolean }[], rows: string[][]): strin
     .map((row) => `<tr>${row.map((cell, i) => `<td${head[i]?.num ? ' class="num"' : ''}>${cell}</td>`).join('')}</tr>`)
     .join('\n');
   return `<table><thead><tr>${th}</tr></thead><tbody>\n${body}\n</tbody></table>`;
+}
+
+function bar(percent: number, marks: number[] = []): string {
+  const width = Math.max(0, Math.min(100, percent));
+  const ticks = marks.map((m) => `<i style="left:${m}%"></i>`).join('');
+  return `<div class="bar"><span style="width:${width}%"></span>${ticks}</div>`;
 }
 
 function asRecords(value: unknown): Record<string, unknown>[] | null {
@@ -35,6 +43,7 @@ function header(run: RunFile, methodology: Methodology): string {
     const band = methodology.bands.find((b) => b.key === run.health?.band);
     parts.push(
       `<div class="health"><span class="score">${e(run.health.displayed)}</span><span class="band">${e(band?.name ?? run.health.band)}</span></div>`,
+      bar(run.health.displayed, methodology.bands.slice(1).map((b) => b.min)),
       `<p>${e(band?.meaning?.replace(/\s+/g, ' ').trim() ?? '')}</p>`,
     );
   } else {
@@ -46,9 +55,50 @@ function header(run: RunFile, methodology: Methodology): string {
 function dimensionsSection(run: RunFile, methodology: Methodology): string {
   const rows = methodology.dimensions.map((def) => {
     const score = run.dimensions.find((d) => d.id === def.id)?.score ?? null;
-    return [e(`${def.id}`), e(def.name), score === null ? '<span class="muted">not scored</span>' : e(scoreText(score))];
+    return [
+      e(`${def.id}`),
+      e(def.name),
+      score === null ? '<span class="muted">not scored</span>' : e(scoreText(score)),
+      score === null ? '' : bar(score),
+    ];
   });
-  return `<h2>Dimensions</h2>\n${table([{ text: '#' }, { text: 'Dimension' }, { text: 'Score', num: true }], rows)}`;
+  return `<h2>Dimensions</h2>\n${table([{ text: '#' }, { text: 'Dimension' }, { text: 'Score', num: true }, { text: '' }], rows)}`;
+}
+
+function roadmapSection(run: RunFile, methodology: Methodology): string {
+  const parts = ['<h2>Roadmap</h2>'];
+  const items = buildRoadmap(run, methodology);
+  if (!run.health) {
+    parts.push('<p class="muted">no roadmap</p>');
+    return parts.join('\n');
+  }
+  parts.push(
+    `<p class="muted">The parameters ranked by Gain: the whole health points the health would rise by if that one parameter alone reached 100. Gains are independent and do not add up, because the dimension means and the cap interact. Top ${ROADMAP_LIMIT}.</p>`,
+  );
+  if (run.mode === 'preview') parts.push('<p class="muted">Execution-layer parameters were not measured, so they are not ranked.</p>');
+  if (items.length === 0) parts.push('<p class="muted">no parameter is below 100</p>');
+  else {
+    const top = Math.max(1, ...items.map((i) => i.gain));
+    parts.push(
+      table(
+        [{ text: '#', num: true }, { text: 'Parameter' }, { text: 'Dimension' }, { text: 'Raw value' }, { text: 'Score', num: true }, { text: 'Gain', num: true }, { text: '' }, { text: 'Next anchor' }],
+        items.map((item, i) => [
+          String(i + 1),
+          `${e(item.id)} ${e(item.name)}`,
+          e(item.dimensionName),
+          item.raw === null ? '–' : e(item.raw),
+          e(scoreText(item.score)),
+          e(gainText(item.gain)),
+          bar((item.gain / top) * 100),
+          item.target ? e(item.target) : '–',
+        ]),
+      ),
+    );
+  }
+  if (run.health.band === 'vibe_coded' || run.health.band === 'fragile') {
+    parts.push(`<p>If you want help working through this roadmap to Stable, Peter Kisel takes on this work: <a href="${HELP_URL}">${HELP_URL}</a></p>`);
+  }
+  return parts.join('\n');
 }
 
 function parametersSection(run: RunFile, methodology: Methodology): string {
@@ -142,6 +192,7 @@ export function renderReport(run: RunFile, methodology: Methodology): string {
   const sections = [
     header(run, methodology),
     dimensionsSection(run, methodology),
+    roadmapSection(run, methodology),
     parametersSection(run, methodology),
     breakdownSection(run, methodology),
     excludedSection(run),

@@ -16,6 +16,10 @@ table { width: 100%; border-collapse: collapse; background: var(--card); font-si
 th, td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
 th { font-weight: 600; color: var(--muted); }
 td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+.bar { position: relative; min-width: 80px; height: 10px; background: var(--line); border-radius: 5px; overflow: hidden; margin: 6px 0; }
+.bar span { display: block; height: 100%; background: var(--accent); }
+.bar i { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--bg); }
+a { color: var(--accent); }
 code { font: 13px ui-monospace, monospace; word-break: break-all; }
 .status-not_measured, .status-not_applicable { color: var(--muted); }
 .status-failed { color: var(--warn); font-weight: 600; }

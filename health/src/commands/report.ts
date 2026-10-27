@@ -3,6 +3,7 @@ import path from 'node:path';
 import { parseArgs } from 'node:util';
 import { loadMethodology, MethodologyError } from '../methodology/load.js';
 import { renderReport } from '../report/render.js';
+import { roadmapLines } from '../report/roadmap.js';
 import { readRun, RunReadError } from '../run/read.js';
 import { EXIT, type CliIo } from './common.js';
 
@@ -32,7 +33,7 @@ export function runReport(argv: string[], io: CliIo): number {
     }
     const methodology = loadMethodology(run.methodology.version);
     writeFileSync(outFile, renderReport(run, methodology), 'utf8');
-    io.stdout(`${outFile}\n`);
+    io.stdout(`${[outFile, ...roadmapLines(run, methodology)].join('\n')}\n`);
     return EXIT.ok;
   } catch (err) {
     if (err instanceof RunReadError) {
