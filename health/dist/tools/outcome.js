@@ -1,17 +1,11 @@
-import { ToolError } from '../scope/types.js';
-import { catalog } from './catalog.js';
 /**
  * A tool that is missing, crashed, exited unexpectedly, printed output we cannot parse or
- * hit a network failure. Preview mode: the parameter is not_measured. Full mode: invalid run.
- * Never a score of 0 in either mode.
+ * hit a network failure: the parameter is not_measured with the reason, in both modes, and the
+ * rest of the run still scores. A full run with any not_measured parameter is not comparable
+ * (`scan.ts`). Never a score of 0.
  */
-export function unavailable(ctx, reason) {
-    if (ctx.mode === 'preview')
-        return { status: 'not_measured', reason };
-    throw new ToolError(reason);
-}
-export function notFoundReason(name) {
-    return `${name} not found, install: ${catalog[name].install}`;
+export function unavailable(reason) {
+    return { status: 'not_measured', reason };
 }
 /** Why a finished run counts as a failure, or null when its exit code is one of `okCodes`. */
 export function failureReason(tool, result, okCodes) {

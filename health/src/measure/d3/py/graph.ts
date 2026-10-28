@@ -7,7 +7,7 @@ import { readPythonImports, type PythonImportsInfo } from '../../../python/impor
 import { trackedPaths } from '../../../scope/tracked.js';
 import type { ScopedFile } from '../../../scope/types.js';
 import { createWorkCopy } from '../../../tools/workcopy.js';
-import { failureReason, notFoundReason } from '../../../tools/outcome.js';
+import { failureReason } from '../../../tools/outcome.js';
 import type { MeasureContext } from '../../types.js';
 import { edgeKey, type D3Edge, type D3Graph, type D3GraphResult } from '../types.js';
 import { presetContracts, type ContractMeta, type ForbiddenContract } from './contracts.js';
@@ -105,7 +105,7 @@ export function externalTypeOnly(info: PythonImportsInfo | undefined, name: stri
 
 export async function buildPyGraph(ctx: MeasureContext, units: PyUnit[]): Promise<D3GraphResult> {
   const tool = await ctx.tools.resolve(TOOL);
-  if (tool === undefined) return { unavailable: notFoundReason(TOOL) };
+  if (tool === undefined) return { unavailable: ctx.tools.notFoundReason(TOOL) };
   const found = pyInterpreter(tool);
   if ('unavailable' in found) return found;
   ctx.tools.recordVersion(TOOL, tool.version);

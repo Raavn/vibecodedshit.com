@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { packageOf } from '../scope/packages.js';
 import { trackedPaths } from '../scope/tracked.js';
-import { failureReason, notFoundReason, unavailable } from '../tools/outcome.js';
+import { failureReason, unavailable } from '../tools/outcome.js';
 import { createWorkCopy } from '../tools/workcopy.js';
 import { scopeUnits } from './deps/units.js';
 import type { Measurement, MeasureContext, Measurer, UnitRaw } from './types.js';
@@ -34,7 +34,7 @@ function relative(file: string, root: string): string {
 
 async function scanWorkingTree(ctx: MeasureContext, outDir: string, config: string): Promise<Finding[] | Measurement> {
   const tool = await ctx.tools.resolve('gitleaks');
-  if (!tool) return unavailable(ctx, notFoundReason('gitleaks'));
+  if (!tool) return unavailable(ctx.tools.notFoundReason('gitleaks'));
   const copy = await createWorkCopy(ctx.repoPath, trackedPaths(ctx.repoPath));
   try {
     const report = path.join(outDir, 'tree.json');
@@ -45,15 +45,15 @@ async function scanWorkingTree(ctx: MeasureContext, outDir: string, config: stri
       { cwd: copy.dir },
     );
     const failure = failureReason(tool, result, [0]);
-    if (failure) return unavailable(ctx, failure);
+    if (failure) return unavailable(failure);
     let text: string;
     try {
       text = await readFile(report, 'utf8');
     } catch {
-      return unavailable(ctx, 'gitleaks wrote no report');
+      return unavailable('gitleaks wrote no report');
     }
     const findings = parseFindings(text);
-    if (!findings) return unavailable(ctx, 'gitleaks printed no parseable JSON report');
+    if (!findings) return unavailable('gitleaks printed no parseable JSON report');
     return findings.map((f) => ({ ...f, File: typeof f.File === 'string' ? relative(f.File, copy.dir) : f.File }));
   } finally {
     await copy.cleanup();

@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { parse } from 'yaml';
+import { IMAGE_REVISION_LABEL } from '../../src/exec/docker.js';
 
 const pluginRoot = path.resolve(import.meta.dirname, '../..');
 const skill = readFileSync(path.join(pluginRoot, 'skills/codebase-health/SKILL.md'), 'utf8');
@@ -52,6 +53,12 @@ describe('SKILL.md', () => {
 
   it('checks for the image tag of the bundled methodology', () => {
     expect(skill).toContain(`health:${methodology.version}`);
+  });
+
+  it('treats an image built for an older revision like a missing one', () => {
+    expect(skill).toContain(`index .Config.Labels "${IMAGE_REVISION_LABEL}"`);
+    expect(skill).toContain(`LABEL ${IMAGE_REVISION_LABEL}`);
+    expect(skill).toContain('the image is missing or out of date');
   });
 
   it('uses the update endpoint and the image build script', () => {

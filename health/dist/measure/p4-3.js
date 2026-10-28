@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { failureReason, notFoundReason, unavailable } from '../tools/outcome.js';
+import { failureReason, unavailable } from '../tools/outcome.js';
 import { createWorkCopy } from '../tools/workcopy.js';
 import { emptyTallies, logicFiles, tallyUnits, unitId } from './units.js';
 /** Methodology 4.3: min-tokens 50, min-lines 5. */
@@ -46,7 +46,7 @@ export const p43 = {
             return { status: 'measured', units: [] };
         const tool = await ctx.tools.resolve('jscpd');
         if (!tool)
-            return unavailable(ctx, notFoundReason('jscpd'));
+            return unavailable(ctx.tools.notFoundReason('jscpd'));
         const copy = await createWorkCopy(ctx.repoPath, files.map((f) => f.path));
         const outDir = await mkdtemp(path.join(tmpdir(), 'health-jscpd-'));
         try {
@@ -64,7 +64,7 @@ export const p43 = {
             ], { cwd: copy.dir });
             const failure = failureReason(tool, result, [0]);
             if (failure)
-                return unavailable(ctx, failure);
+                return unavailable(failure);
             let duplicates;
             try {
                 const report = JSON.parse(readFileSync(path.join(outDir, 'jscpd-report.json'), 'utf8'));
@@ -73,7 +73,7 @@ export const p43 = {
                 duplicates = report.duplicates;
             }
             catch {
-                return unavailable(ctx, 'jscpd report is missing or has an unexpected shape');
+                return unavailable('jscpd report is missing or has an unexpected shape');
             }
             // jscpd 5 reports line totals per format, not per file, so the per-unit numbers are rebuilt here:
             // lines are the file's physical lines (jscpd skips files shorter than min-lines), duplicated
@@ -87,7 +87,7 @@ export const p43 = {
             const rel = (name) => path.relative(copy.dir, path.resolve(copy.dir, name)).split(path.sep).join('/');
             const duplicated = attributeClones(duplicates, (file) => counted.has(file), rel);
             if (!duplicated)
-                return unavailable(ctx, 'jscpd report has an unexpected shape');
+                return unavailable('jscpd report has an unexpected shape');
             for (const file of files) {
                 const tally = tallies.get(unitId(file));
                 const lines = counted.get(file.path);

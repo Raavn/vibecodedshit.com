@@ -4,24 +4,30 @@ import path from 'node:path';
 import { parseEnvExample } from '../measure/ops/env-example.js';
 import { dirsUpward } from '../measure/ops/entry-points.js';
 import { readTracked, trackedPaths } from '../scope/tracked.js';
+import { knipRoots } from '../tools/knip.js';
 import { createWorkCopy } from '../tools/workcopy.js';
 import { ToolError } from '../scope/types.js';
 import { planExecution } from './plan.js';
 import { build } from './steps/build.js';
 import { install } from './steps/install.js';
+import { knip } from './steps/knip.js';
 import { lint } from './steps/lint.js';
 import { coverageInstall } from './steps/coverage-install.js';
 import { test } from './steps/test.js';
 import { typecheck } from './steps/typecheck.js';
 import { detectInvocations } from './test-runners/detect.js';
 import { RUNNERS } from './test-runners/index.js';
-/** `timeouts_seconds` names the test step `tests` and has no entry for the coverage provider install, which is bounded like install. */
+/**
+ * `timeouts_seconds` names the test step `tests` and has no entry for the coverage provider install,
+ * which is bounded like install, or for knip, which is bounded like lint.
+ */
 const TIMEOUT_KEY = {
     install: 'install',
     'coverage-install': 'install',
     build: 'build',
     typecheck: 'typecheck',
     lint: 'lint',
+    knip: 'lint',
     test: 'tests',
 };
 function envFor(repoPath, dir, methodology) {
@@ -65,7 +71,7 @@ async function readTest(invocation, outcome) {
 }
 /**
  * Install, then build per install root, then (when every install worked) typecheck per workspace
- * package and lint per install root. One `docker run` each, run one after another on a temp copy
+ * package, lint per install root and knip per knip root. One `docker run` each, run one after another on a temp copy
  * of the tracked files; reports go to a separate temp directory, deleted afterwards. The work copy
  * outlives the call so static tools can read the installed dependencies (`results.workDir`); the
  * caller removes it with `cleanup`. On a throw both are deleted here.
@@ -120,6 +126,7 @@ export async function runExecution(opts) {
         const checksRan = roots.every((root) => root.install === null || root.install.status === 'ok');
         const typecheckResults = [];
         const lintResults = [];
+        const knipResults = [];
         const testResults = [];
         if (checksRan) {
             const collect = async (step, ctx, into, envDir) => {
@@ -133,6 +140,13 @@ export async function runExecution(opts) {
                 await collect(typecheck, context(pkg.dir, pkg.group, pkg.sourceFiles), typecheckResults, pkg.root);
             for (const root of plan.roots)
                 await collect(lint, context(root.dir, root.group, root.sourceFiles), lintResults, root.dir);
+            for (const dir of knipRoots(repoPath)) {
+                const result = await run(knip, context(dir, 'typescript_javascript', []), dir);
+                if (result === null || !result.command.report)
+                    continue;
+                const report = await readFile(path.join(result.outcome.outputDir, result.command.report), 'utf8').catch(() => null);
+                knipResults.push({ dir, outcome: result.outcome, report });
+            }
             const invocations = detectInvocations({ roots: plan.roots, scope, tracked: trackedSet, read: (rel) => readTracked(repoPath, rel) });
             for (const invocation of invocations) {
                 const files = plan.roots
@@ -151,7 +165,7 @@ export async function runExecution(opts) {
             }
         }
         return {
-            results: { image, roots, checksRan, typecheck: typecheckResults, lint: lintResults, test: { invocations: testResults }, workDir: work.dir },
+            results: { image, roots, checksRan, typecheck: typecheckResults, lint: lintResults, knip: knipResults, test: { invocations: testResults }, workDir: work.dir },
             cleanup: () => work.cleanup(),
         };
     }

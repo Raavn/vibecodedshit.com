@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { readPythonImports } from '../../../python/imports.js';
 import { trackedPaths } from '../../../scope/tracked.js';
 import { createWorkCopy } from '../../../tools/workcopy.js';
-import { failureReason, notFoundReason } from '../../../tools/outcome.js';
+import { failureReason } from '../../../tools/outcome.js';
 import { edgeKey } from '../types.js';
 import { presetContracts } from './contracts.js';
 import { declaredDomainModules, domainFilesOf, isImpure } from './domain.js';
@@ -93,7 +93,7 @@ export function externalTypeOnly(info, name) {
 export async function buildPyGraph(ctx, units) {
     const tool = await ctx.tools.resolve(TOOL);
     if (tool === undefined)
-        return { unavailable: notFoundReason(TOOL) };
+        return { unavailable: ctx.tools.notFoundReason(TOOL) };
     const found = pyInterpreter(tool);
     if ('unavailable' in found)
         return found;

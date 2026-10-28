@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { failureReason, notFoundReason, unavailable } from '../tools/outcome.js';
+import { failureReason, unavailable } from '../tools/outcome.js';
 import { createWorkCopy } from '../tools/workcopy.js';
 import { emptyTallies, logicFiles, tallyUnits, unitId } from './units.js';
 import type { Measurer } from './types.js';
@@ -61,7 +61,7 @@ export const p43: Measurer = {
     if (files.length === 0) return { status: 'measured', units: [] };
 
     const tool = await ctx.tools.resolve('jscpd');
-    if (!tool) return unavailable(ctx, notFoundReason('jscpd'));
+    if (!tool) return unavailable(ctx.tools.notFoundReason('jscpd'));
 
     const copy = await createWorkCopy(ctx.repoPath, files.map((f) => f.path));
     const outDir = await mkdtemp(path.join(tmpdir(), 'health-jscpd-'));
@@ -83,7 +83,7 @@ export const p43: Measurer = {
         { cwd: copy.dir },
       );
       const failure = failureReason(tool, result, [0]);
-      if (failure) return unavailable(ctx, failure);
+      if (failure) return unavailable(failure);
 
       let duplicates: Clone[];
       try {
@@ -91,7 +91,7 @@ export const p43: Measurer = {
         if (!Array.isArray(report.duplicates)) throw new Error('no duplicates array');
         duplicates = report.duplicates as Clone[];
       } catch {
-        return unavailable(ctx, 'jscpd report is missing or has an unexpected shape');
+        return unavailable('jscpd report is missing or has an unexpected shape');
       }
 
       // jscpd 5 reports line totals per format, not per file, so the per-unit numbers are rebuilt here:
@@ -104,7 +104,7 @@ export const p43: Measurer = {
       }
       const rel = (name: string): string => path.relative(copy.dir, path.resolve(copy.dir, name)).split(path.sep).join('/');
       const duplicated = attributeClones(duplicates, (file) => counted.has(file), rel);
-      if (!duplicated) return unavailable(ctx, 'jscpd report has an unexpected shape');
+      if (!duplicated) return unavailable('jscpd report has an unexpected shape');
 
       for (const file of files) {
         const tally = tallies.get(unitId(file));

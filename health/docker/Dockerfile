@@ -1,4 +1,4 @@
-# health:1.0, the pinned runner for the execution layer. Build: npm run image:build
+# health:1.0, the pinned runner for the execution layer and, in full runs, every static tool. Build: npm run image:build
 # Every tool is pinned by an exact version below. The base image is pinned by digest.
 ARG NODE_IMAGE=node:22.20.0-bookworm@sha256:915acd9e9b885ead0c620e27e37c81b74c226e0e1c8177f37a60217b6eabb0d7
 FROM ${NODE_IMAGE}
@@ -22,6 +22,18 @@ ARG MYPY_VERSION=2.4.0
 ARG C8_VERSION=12.0.0
 # Same version as the host's knip in package.json, so preview and full runs report the same issues.
 ARG KNIP_VERSION=6.39.0
+ARG JSCPD_VERSION=5.4.0
+ARG COMPLEXIPY_VERSION=8.0.1
+ARG VULTURE_VERSION=2.16
+ARG DEPTRY_VERSION=0.25.1
+ARG IMPORT_LINTER_VERSION=2.15
+ARG GRIMP_VERSION=3.17
+ARG GITLEAKS_VERSION=8.30.1
+ARG GITLEAKS_SHA256_AMD64=551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb
+ARG GITLEAKS_SHA256_ARM64=e4a487ee7ccd7d3a7f7ec08657610aa3606637dab924210b3aee62570fb4b080
+ARG OSV_SCANNER_VERSION=2.7.0
+ARG OSV_SCANNER_SHA256_AMD64=160c6253e2922e9e0a6a9771c5c4c40a4b3c6090b34a3cdd5e80c96cc2e4218b
+ARG OSV_SCANNER_SHA256_ARM64=4061ef4c021ed3c47f203b818f337e351336cc5cd67c0274fc36bd1dfc728dd7
 ARG PYTEST_VERSION=9.1.1
 ARG PYTEST_COV_VERSION=7.1.0
 ARG COVERAGE_VERSION=7.16.2
@@ -49,7 +61,8 @@ RUN rm -rf /usr/local/bin/yarn /usr/local/bin/yarnpkg /opt/yarn-v* \
     eslint@${ESLINT_VERSION} \
     pyright@${PYRIGHT_VERSION} \
     c8@${C8_VERSION} \
-    knip@${KNIP_VERSION}
+    knip@${KNIP_VERSION} \
+    jscpd@${JSCPD_VERSION}
 
 # The pinned lint ruleset and its plugins live in /opt/health, never in a scanned repository.
 # type=module because bin/health-eslint is extensionless ESM; npm 11's `npm init -y` writes "type": "commonjs",
@@ -80,6 +93,13 @@ RUN curl -LsSf https://astral.sh/uv/${UV_VERSION}/install.sh | sh \
  && uv tool install --python ${PYTHON_VERSION} ruff==${RUFF_VERSION} \
  && uv tool install --python ${PYTHON_VERSION} mypy==${MYPY_VERSION}
 
+# The static tools of a full run (4.1, 4.4, 5.5 and D3 for Python). import-linter's environment also holds grimp,
+# which python/graph_helper.py imports; the helper runs with /opt/uv-tools/import-linter/bin/python.
+RUN uv tool install --python ${PYTHON_VERSION} complexipy==${COMPLEXIPY_VERSION} \
+ && uv tool install --python ${PYTHON_VERSION} vulture==${VULTURE_VERSION} \
+ && uv tool install --python ${PYTHON_VERSION} deptry==${DEPTRY_VERSION} \
+ && uv tool install --python ${PYTHON_VERSION} import-linter==${IMPORT_LINTER_VERSION} --with grimp==${GRIMP_VERSION}
+
 # pytest, pytest-cov and coverage as wheels, for repositories whose environment has none (the test step has no network). `health-pytest` installs them offline.
 RUN uv venv /tmp/wheel-venv --python ${PYTHON_VERSION} \
  && uv pip install --python /tmp/wheel-venv/bin/python pip \
@@ -99,5 +119,24 @@ RUN arch="${TARGETARCH:-$(dpkg --print-architecture)}" \
  && tar -C /usr/local -xzf /tmp/go.tgz \
  && rm /tmp/go.tgz
 
+# gitleaks (5.4) and osv-scanner (5.1), release binaries pinned by checksum for amd64 and arm64.
+RUN arch="${TARGETARCH:-$(dpkg --print-architecture)}" \
+ && case "${arch}" in \
+      amd64) gitleaks_arch=x64; gitleaks_sha256="${GITLEAKS_SHA256_AMD64}"; osv_sha256="${OSV_SCANNER_SHA256_AMD64}" ;; \
+      arm64) gitleaks_arch=arm64; gitleaks_sha256="${GITLEAKS_SHA256_ARM64}"; osv_sha256="${OSV_SCANNER_SHA256_ARM64}" ;; \
+      *) echo "unsupported architecture for gitleaks and osv-scanner: ${arch}" >&2; exit 1 ;; \
+    esac \
+ && curl -fsSL -o /tmp/gitleaks.tgz "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_${gitleaks_arch}.tar.gz" \
+ && echo "${gitleaks_sha256}  /tmp/gitleaks.tgz" | sha256sum -c - \
+ && tar -C /usr/local/bin -xzf /tmp/gitleaks.tgz gitleaks \
+ && rm /tmp/gitleaks.tgz \
+ && curl -fsSL -o /usr/local/bin/osv-scanner "https://github.com/google/osv-scanner/releases/download/v${OSV_SCANNER_VERSION}/osv-scanner_linux_${arch}" \
+ && echo "${osv_sha256}  /usr/local/bin/osv-scanner" | sha256sum -c - \
+ && chmod +x /usr/local/bin/osv-scanner
+
 ENV PATH=/opt/health/bin:/usr/local/go/bin:$PATH
 WORKDIR /work
+
+# Bumped whenever the set of tools a full run needs from the image changes. A full scan refuses an image whose
+# label differs from IMAGE_REVISION in src/exec/docker.ts, so an image built before the change is rebuilt.
+LABEL dev.vibecodedshit.health.revision="2"

@@ -2,7 +2,7 @@ import { spawnSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import ts from 'typescript';
-import { createDockerRunner, imageDigest } from '../exec/docker.js';
+import { createDockerRunner, imageDigest, type Spawn } from '../exec/docker.js';
 import { runExecution } from '../exec/run.js';
 import type { ExecRunner, ExecutionResults } from '../exec/types.js';
 import { feedbackLoop } from '../measure/p6-3.js';
@@ -13,6 +13,7 @@ import { loadMethodology, packageRoot, type Methodology } from '../methodology/l
 import { buildScope } from '../scope/build.js';
 import type { Scope } from '../scope/types.js';
 import { poolParameter } from '../scoring/pool.js';
+import { createImageToolKit } from '../tools/image.js';
 import { createToolKit, type ToolKit } from '../tools/kit.js';
 import type { RunFile, RunParameter } from './schema.js';
 import { breakdownFor, dimensionScores, healthFrom } from './score-run.js';
@@ -31,8 +32,10 @@ export interface ScanOptions {
   asOf: string;
   /** Package root holding `methodology/`. Defaults to this package. */
   rootDir?: string;
-  /** Tool kit for static tools. Defaults to the real one; tests pass fakes. */
+  /** Tool kit for static tools. Defaults to the host's in preview and the image's in full mode; tests pass fakes. */
   tools?: ToolKit;
+  /** Full mode: spawns `docker` for the default execution runner and image tool kit. Tests pass a fake. */
+  dockerSpawn?: Spawn;
   /** Full mode: runs the execution steps. Defaults to Docker; tests pass a fake. */
   execRunner?: ExecRunner;
   /** Full mode: the image digest. Defaults to `docker image inspect`; tests pass a value. */
@@ -102,8 +105,8 @@ export async function runScan(opts: ScanOptions, preloaded?: Methodology): Promi
       repoPath,
       methodology,
       scope,
-      runner: opts.execRunner ?? createDockerRunner(methodology.execution.runner),
-      image: { tag, digest: opts.imageDigest ?? (await imageDigest(tag)) },
+      runner: opts.execRunner ?? createDockerRunner(methodology.execution.runner, opts.dockerSpawn),
+      image: { tag, digest: opts.imageDigest ?? (await imageDigest(tag, opts.dockerSpawn)) },
     }));
   }
   try {
@@ -116,7 +119,10 @@ export async function runScan(opts: ScanOptions, preloaded?: Methodology): Promi
 /** Every measurer, then scoring. The execution work copy (`exec.workDir`) still exists while this runs. */
 async function measureAll(opts: ScanOptions, methodology: Methodology, repoPath: string, scope: Scope, exec: ExecutionResults | undefined): Promise<RunFile> {
 
-  const tools = opts.tools ?? createToolKit();
+  const tools = opts.tools
+    ?? (opts.mode === 'full'
+      ? createImageToolKit({ runner: methodology.execution.runner, repoPath, ...(opts.dockerSpawn ? { spawn: opts.dockerSpawn } : {}) })
+      : createToolKit());
   const warnings = [...scope.warnings];
   const reportOnly: Record<string, unknown> = {};
   const parameters: RunParameter[] = [];
@@ -177,7 +183,7 @@ async function measureAll(opts: ScanOptions, methodology: Methodology, repoPath:
 
   const dimensions = dimensionScores(methodology, parameters);
   const base = baseRun(opts);
-  const unmeasured = parameters.filter((p) => p.status === 'not_measured').map((p) => p.id);
+  const unmeasured = parameters.filter((p) => p.status === 'not_measured').map((p) => `${p.id} (${p.reason})`);
   return {
     ...base,
     ...(opts.mode === 'full'

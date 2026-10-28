@@ -1,5 +1,5 @@
 {
-  "note": "Hand counts. vitest.config.ts imports vitest/config, so knip's vitest plugin can only load it with vitest installed; prisma is used only by the postinstall script. Full run (the fake install writes vitest and prisma into node_modules of the work copy): knip reports nothing, 5.5 = 0 of 2 declared dependencies, 4.4 = 0 of 1 exported symbol (add, used by the test). Preview (nothing installed): knip exits 2 with 'Error loading vitest.config.ts', so 4.4 and 5.5 are not measured. Full run with a failed install: the same knip failure is a tool error naming the install.",
+  "note": "Hand counts. vitest.config.ts imports vitest/config, so knip's vitest plugin can only load it with vitest installed; prisma is used only by the postinstall script. Full run (the fake install writes vitest and prisma into node_modules of the work copy): knip reports nothing, 5.5 = 0 of 2 declared dependencies, 4.4 = 0 of 1 exported symbol (add, used by the test). Preview (nothing installed): knip exits 2 with 'Error loading vitest.config.ts', so 4.4 and 5.5 are not measured. Full run with a failed install: knip runs on the uninstalled work copy, fails the same way, and 4.4 and 5.5 are not measured with a reason naming the install.",
   "full": {
     "p55": { "numerator": 0, "denominator": 2 },
     "p44": { "numerator": 0, "denominator": 1 }

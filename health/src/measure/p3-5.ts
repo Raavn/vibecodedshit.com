@@ -10,7 +10,7 @@ export const p35: Measurer = {
     const gap = d3Gap(ctx);
     if (gap !== undefined) return { status: 'not_measured', reason: gap };
     const graph = await getD3Graph(ctx);
-    if ('unavailable' in graph) return unavailable(ctx, graph.unavailable);
+    if ('unavailable' in graph) return unavailable(graph.unavailable);
     const units: UnitRaw[] = graph.units
       .filter((unit) => unit.domain.files.length > 0)
       .map((unit) => ({

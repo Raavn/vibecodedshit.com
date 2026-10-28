@@ -394,7 +394,7 @@ describe('fixtures through a fake runner', () => {
     expect(result.mode).toBe('full');
     expect(result.layers).toEqual(['static', 'execution']);
     expect(result.comparable).toBe(false);
-    expect(result.comparableReason).toMatch(/not measured: 1\.1, 1\.2, 1\.3.*6\.3/);
+    expect(result.comparableReason).toMatch(/not measured: 1\.1 \(.+\), 1\.2 \(.+\), 1\.3 \(.+6\.3 \(/);
   });
 });
 
@@ -512,12 +512,21 @@ describe('knip on the installed work copy', () => {
     }
   });
 
-  it('names the failed install when knip then fails in a full run', async () => {
+  it('scores the rest of a full run when knip then fails, with 4.4 and 5.5 not measured and the run not comparable', async () => {
     const dir = materializeFixture('exec-knip-vitest');
     const runner = healthy((spec) => (spec.step === 'install' ? { exitCode: 1 } : undefined));
     const { kit, cwds } = recordingKit();
-    await expect(runScan({ ...fullOpts(dir, runner), tools: kit, measurers: knipMeasurers })).rejects.toThrow(want.failedInstallReason);
-    expect(cwds.find((c) => c.name === 'knip')?.cwd).toBe(path.join(path.resolve(dir), '.'));
+    const result = await runScan({ ...fullOpts(dir, runner), tools: kit, measurers: [...knipMeasurers, p21, p25] });
+    expect(result.valid).toBe(true);
+    expect(result.health).not.toBeNull();
+    for (const id of ['4.4', '5.5']) {
+      expect(param(result, id).status).toBe('not_measured');
+      expect(param(result, id).reason).toContain(want.failedInstallReason);
+    }
+    expect(param(result, '6.1').status).toBe('measured');
+    expect(result.comparable).toBe(false);
+    expect(result.comparableReason).toMatch(/4\.4 \(knip exited with 2/);
+    expect(cwds.find((c) => c.name === 'knip')?.cwd).toBe(path.join(runner.specs[0]?.workDir as string, '.'));
     expect(existsSync(runner.specs[0]?.workDir as string)).toBe(false);
   });
 });

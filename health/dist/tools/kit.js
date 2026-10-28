@@ -1,4 +1,5 @@
 import { spawn as nodeSpawn } from 'node:child_process';
+import { catalog } from './catalog.js';
 import { resolveTool } from './resolve.js';
 /** Same as the typecheck and lint timeouts in methodology.yaml. */
 export const DEFAULT_TIMEOUT_MS = 600_000;
@@ -61,6 +62,9 @@ export function createToolKit(deps = {}) {
             const made = make();
             memos.set(key, made);
             return made;
+        },
+        notFoundReason(name) {
+            return `${name} not found, install: ${catalog[name].install}`;
         },
     };
     return kit;

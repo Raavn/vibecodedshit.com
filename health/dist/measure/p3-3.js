@@ -11,7 +11,7 @@ export const p33 = {
             return { status: 'not_measured', reason: gap };
         const graph = await getD3Graph(ctx);
         if ('unavailable' in graph)
-            return unavailable(ctx, graph.unavailable);
+            return unavailable(graph.unavailable);
         const cyclic = new Map();
         for (const group of new Set(graph.units.map((u) => u.group))) {
             const members = graph.units.filter((u) => u.group === group);

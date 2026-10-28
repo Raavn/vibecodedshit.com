@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import { getD3Graph } from '../src/measure/d3/index.js';
 import type { Measurement, UnitRaw } from '../src/measure/types.js';
 import { poolParameter } from '../src/scoring/pool.js';
-import { ToolError } from '../src/scope/types.js';
 import { cyclicFiles, d3Context, expected, graphOf, measure, methodology, rulesOf, violations } from './helpers/d3.js';
 import { fakeGraphHelper } from './helpers/d3py.js';
 import { materializeFixture } from './helpers/fixture.js';
@@ -223,10 +222,10 @@ describe('D3 Python when the tool is unavailable', () => {
     expect((await measure(ctx, '3.1')).status).toBe('measured');
   });
 
-  it('is a ToolError in full mode', async () => {
+  it('is not_measured in full mode too', async () => {
     const repoPath = materializeFixture('d3-na-py');
     const ctx = await d3Context(repoPath, fakeToolKit({ 'import-linter': null }), 'full');
-    await expect(measure(ctx, '3.2')).rejects.toBeInstanceOf(ToolError);
+    expect(await measure(ctx, '3.2')).toEqual({ status: 'not_measured', reason: expect.stringMatching(/^import-linter not found/) });
   });
 
   it('a helper that exits non-zero is unavailable', async () => {

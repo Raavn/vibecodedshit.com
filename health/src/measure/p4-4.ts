@@ -3,7 +3,7 @@ import path from 'node:path';
 import { analyzePythonDeadCode, type PythonDeadCodeInfo, type PythonSymbol } from '../python/deadcode.js';
 import type { ScopedFile } from '../scope/types.js';
 import { isOutcome, runKnip } from '../tools/knip.js';
-import { failureReason, notFoundReason, unavailable } from '../tools/outcome.js';
+import { failureReason, unavailable } from '../tools/outcome.js';
 import { createWorkCopy } from '../tools/workcopy.js';
 import { readToml } from '../util/toml.js';
 import { countExportedSymbols } from './ts/exports.js';
@@ -206,7 +206,7 @@ async function measurePython(ctx: MeasureContext, tallies: Map<string, Tally>, w
   const tests = ctx.scope.files.filter((f) => f.role === 'test' && f.group === 'python');
 
   const vulture = await ctx.tools.resolve('vulture');
-  if (!vulture) return unavailable(ctx, notFoundReason('vulture'));
+  if (!vulture) return unavailable(ctx.tools.notFoundReason('vulture'));
 
   const infos = analyzePythonDeadCode(ctx.repoPath, [...logic, ...tests].map((f) => f.path));
   let unparsed = 0;
@@ -252,7 +252,7 @@ async function measurePython(ctx: MeasureContext, tallies: Map<string, Tally>, w
     try {
       const result = await ctx.tools.run(vulture, ['.', '--min-confidence', VULTURE_MIN_CONFIDENCE], { cwd: copy.dir });
       const failure = failureReason(vulture, result, [0, 3]);
-      if (failure) return unavailable(ctx, failure);
+      if (failure) return unavailable(failure);
       hits = [];
       for (const line of result.stdout.split('\n')) {
         const match = VULTURE_LINE.exec(line.trim());
