@@ -718,8 +718,8 @@
         <button class="nav-toggle" type="button" aria-label="Menu" aria-expanded="false" aria-controls="primary-nav"><span></span></button>
         <nav class="nav" id="primary-nav" aria-label="Primary">
           <a href="#measures">What it measures</a>
-          <a href="#run">Run it</a>
-          <a href="https://github.com/Raavn/vibecodedshit.com/blob/main/health/methodology/v1.0/METHODOLOGY.md" target="_blank" rel="noreferrer">Methodology</a>
+          <a href="#run" data-track-click="click_run" data-track-source="nav">Run it</a>
+          <a href="https://github.com/Raavn/vibecodedshit.com/blob/main/health/methodology/v1.0/METHODOLOGY.md" target="_blank" rel="noreferrer" data-track-click="click_methodology" data-track-source="nav">Methodology</a>
         </nav>
       </div>
     </header>
@@ -737,20 +737,20 @@
           Run one command. Get a score. Find out if you shipped software or a vibe.
         </p>
         <div class="actions">
-          <a class="btn primary" id="run-link" href="#run">Run it</a>
-          <button class="btn" id="subscribe-open" type="button">Get benchmark updates</button>
+          <a class="btn primary" id="run-link" href="#run" data-track-click="click_run" data-track-source="hero">Run it</a>
+          <button class="btn" id="subscribe-open" type="button" data-track-click="click_subscribe" data-track-source="hero">Get benchmark updates</button>
         </div>
       </div>
     </section>
 
-    <section class="average" id="average" hidden>
+    <section class="average" id="average" data-track-section="average" hidden>
       <div class="average-inner">
         <span class="average-number" id="average-number"></span>
         <span class="average-label" id="average-label"></span>
       </div>
     </section>
 
-    <section class="section" id="measures">
+    <section class="section" id="measures" data-track-section="measures">
       <div class="section-header">
         <h2>What it measures</h2>
         <p class="lede">Six dimensions, 30 parameters, one score out of 100. Each dimension asks a plain question about your repo.</p>
@@ -784,7 +784,7 @@
       </div>
 
       <h3 class="subhead">Four bands</h3>
-      <div class="cards bands">
+      <div class="cards bands" data-track-section="bands">
         <article class="card">
           <span class="pill">0-39</span>
           <h3>Vibe-coded</h3>
@@ -807,25 +807,25 @@
         </article>
       </div>
 
-      <p class="more"><a href="https://github.com/Raavn/vibecodedshit.com/blob/main/health/methodology/v1.0/METHODOLOGY.md" target="_blank" rel="noreferrer">Read the methodology →</a></p>
+      <p class="more"><a href="https://github.com/Raavn/vibecodedshit.com/blob/main/health/methodology/v1.0/METHODOLOGY.md" target="_blank" rel="noreferrer" data-track-click="click_methodology" data-track-source="measures">Read the methodology →</a></p>
     </section>
 
-    <section class="section" id="run">
+    <section class="section" id="run" data-track-section="run">
       <div class="section-header">
         <h2>Run it</h2>
         <p class="lede">Three steps, inside Claude Code.</p>
       </div>
 
       <ol class="steps">
-        <li>
+        <li data-track-source="marketplace">
           <p>Add the marketplace.</p>
           <pre><code>/plugin marketplace add Raavn/vibecodedshit.com</code></pre>
         </li>
-        <li>
+        <li data-track-source="install">
           <p>Install the plugin.</p>
           <pre><code>/plugin install codebase-health@vibecodedshit</code></pre>
         </li>
-        <li>
+        <li data-track-source="run">
           <p>Run it on your repo.</p>
           <pre><code>/codebase-health</code></pre>
         </li>
@@ -834,7 +834,7 @@
       <p class="note">With Docker you get a full score you can compare with other projects. Without Docker the skill runs a preview, marked "not comparable".</p>
     </section>
 
-    <footer>
+    <footer data-track-section="footer">
       <div class="no-frameworks">No frameworks were harmed in the making of this site.</div>
       <div>&copy; 2026 vibecodedshit.com — Plain HTML, CSS, and JS. That's the point.</div>
     </footer>
@@ -1023,6 +1023,7 @@
           }
           setStatus("You're on the list. We'll be in touch.", 'success');
           form.classList.add('is-done');
+          window.dispatchEvent(new CustomEvent('vcs:subscribed'));
         } catch (err) {
           clearTimeout(timer);
           setStatus('Network error. Try again?', 'error');
@@ -1112,6 +1113,131 @@
           }, selectText);
         });
       });
+    })();
+  </script>
+
+  <script>
+    // ---- Visitor tracking ----
+    // Each event becomes a Telegram ping through /api/track. Best-effort: a
+    // dropped ping never breaks the page. Ported from ade.darkbeauty.net.
+    (function () {
+      'use strict';
+
+      const visitorId = (function () {
+        const key = 'vcs_visitor_id';
+        try {
+          let id = localStorage.getItem(key);
+          if (!id) {
+            id = crypto.randomUUID();
+            localStorage.setItem(key, id);
+          }
+          return id;
+        } catch (err) {
+          return undefined;
+        }
+      })();
+
+      function track(event, extra) {
+        try {
+          fetch('/api/track', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(Object.assign({ event: event, visitorId: visitorId }, extra)),
+            keepalive: true
+          }).catch(function () {});
+        } catch (err) {}
+      }
+
+      function scrollDepth() {
+        const total = document.documentElement.scrollHeight;
+        if (total <= 0) return 0;
+        return Math.min(100, Math.max(0, Math.round(((window.scrollY + window.innerHeight) / total) * 100)));
+      }
+
+      const startedAt = Date.now();
+      track('view_page');
+
+      let belowFoldSent = false;
+      let maxScrollDepth = scrollDepth();
+      function onScroll() {
+        maxScrollDepth = Math.max(maxScrollDepth, scrollDepth());
+        if (belowFoldSent || window.scrollY < 1) return;
+        belowFoldSent = true;
+        track('scroll_below_fold');
+      }
+      window.addEventListener('scroll', onScroll, { passive: true });
+      // Covers browsers that restore the scroll position on reload.
+      onScroll();
+
+      const sections = Array.prototype.slice.call(document.querySelectorAll('[data-track-section]'));
+      let furthestIndex = -1; // -1 is the hero
+
+      function furthestSection() {
+        return furthestIndex >= 0 ? sections[furthestIndex].dataset.trackSection : 'hero';
+      }
+
+      [[5000, 'stay_5s'], [15000, 'stay_15s'], [30000, 'stay_30s']].forEach(function (pair) {
+        setTimeout(function () {
+          if (document.visibilityState !== 'visible') return;
+          if (pair[1] === 'stay_15s') {
+            maxScrollDepth = Math.max(maxScrollDepth, scrollDepth());
+            track(pair[1], { scrollDepth: maxScrollDepth, furthestSection: furthestSection() });
+          } else {
+            track(pair[1]);
+          }
+        }, pair[0]);
+      });
+
+      // Each section fires once, when its top crosses the middle of the viewport.
+      if ('IntersectionObserver' in window) {
+        sections.forEach(function (section, index) {
+          const observer = new IntersectionObserver(function (entries) {
+            if (!entries.some(function (entry) { return entry.isIntersecting; })) return;
+            observer.disconnect();
+            furthestIndex = Math.max(furthestIndex, index);
+            track('scroll_' + section.dataset.trackSection);
+          }, { rootMargin: '0px 0px -50% 0px', threshold: 0 });
+          observer.observe(section);
+        });
+      }
+
+      document.querySelectorAll('[data-track-click]').forEach(function (el) {
+        el.addEventListener('click', function () {
+          track(el.dataset.trackClick, { source: el.dataset.trackSource });
+        });
+      });
+
+      // The copy buttons are created by the script above, so delegate.
+      const runSection = document.getElementById('run');
+      if (runSection) {
+        runSection.addEventListener('click', function (e) {
+          const btn = e.target.closest ? e.target.closest('.copy-btn') : null;
+          const step = btn ? btn.closest('li') : null;
+          if (step) track('click_copy', { source: step.dataset.trackSource });
+        });
+      }
+
+      window.addEventListener('vcs:subscribed', function () {
+        track('subscribe_success');
+      });
+
+      // Sent once per hidden period: visibilitychange and pagehide often both fire.
+      let leaveSent = false;
+      function sendLeave() {
+        if (leaveSent) return;
+        leaveSent = true;
+        maxScrollDepth = Math.max(maxScrollDepth, scrollDepth());
+        track('leave_page', {
+          scrollDepth: maxScrollDepth,
+          secondsOnPage: Math.round((Date.now() - startedAt) / 1000),
+          furthestSection: furthestSection()
+        });
+      }
+      document.addEventListener('visibilitychange', function () {
+        if (document.visibilityState === 'hidden') sendLeave();
+        else leaveSent = false;
+      });
+      window.addEventListener('pagehide', sendLeave);
     })();
   </script>
 </body>
