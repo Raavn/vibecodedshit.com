@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Methodology v1.0 - vibecodedshit.com</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💩</text></svg>">
+  <meta name="description" content="How the vibecodedshit.com codebase health score is computed: six dimensions, 30 parameters, fixed rubrics. Methodology version 1.0, CC BY 4.0.">
+  <meta property="og:title" content="Codebase Health Methodology, version 1.0">
+  <meta property="og:description" content="How the codebase health score is computed: six dimensions, 30 parameters, fixed rubrics.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://vibecodedshit.com/methodology/">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #CEA5C7;
+      --fg: #471044;
+      --fg-muted: rgba(71, 16, 68, 0.6);
+      --surface: rgba(255, 255, 255, 0.22);
+      --surface-strong: rgba(255, 255, 255, 0.35);
+      --border: rgba(71, 16, 68, 0.18);
+      --shadow: 0 24px 48px rgba(44, 17, 43, 0.06);
+      --radius-sm: 0.5rem;
+      --radius-md: 1rem;
+      --radius-lg: 2rem;
+      --page-margin: 3rem;
+      --container-max: 1440px;
+    }
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; scroll-padding-top: 5rem; }
+    @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+    body {
+      background: var(--bg);
+      color: var(--fg);
+      font-family: 'Space Grotesk', system-ui, sans-serif;
+      overflow-x: hidden;
+      line-height: 1.6;
+    }
+    main { position: relative; z-index: 1; }
+
+    .topbar {
+      position: sticky; top: 0; z-index: 2;
+      padding: 1rem 1.25rem;
+      background: rgba(206, 165, 199, 0.72);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border);
+    }
+    .topbar-inner {
+      max-width: var(--container-max);
+      margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+      padding: 0 var(--page-margin);
+    }
+    .brand { font-weight: 700; letter-spacing: -0.02em; text-decoration: none; color: var(--fg); white-space: nowrap; }
+    .nav { display: flex; gap: 0.75rem; flex-wrap: wrap; justify-content: flex-end; }
+    .nav a {
+      text-decoration: none; color: var(--fg); opacity: 0.6; font-weight: 700; font-size: 0.95rem;
+      padding: 0.45rem 0.7rem; border-radius: var(--radius-sm); transition: opacity 120ms ease;
+    }
+    .nav a:hover, .nav a[aria-current="page"] { opacity: 1; }
+    .nav-toggle {
+      display: none; align-items: center; justify-content: center;
+      width: 2.5rem; height: 2.5rem; padding: 0; background: none; border: 0;
+      border-radius: var(--radius-sm); color: var(--fg); cursor: pointer;
+    }
+    .nav-toggle span, .nav-toggle span::before, .nav-toggle span::after {
+      display: block; width: 1.5rem; height: 2px; background: var(--fg); border-radius: 2px;
+    }
+    .nav-toggle span { position: relative; }
+    .nav-toggle span::before, .nav-toggle span::after { content: ""; position: absolute; left: 0; }
+    .nav-toggle span::before { top: -7px; }
+    .nav-toggle span::after { top: 7px; }
+
+    .doc {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 4rem var(--page-margin) 6rem;
+    }
+    .doc h1 {
+      font-size: clamp(2rem, 6vw, 3.5rem);
+      font-weight: 700; text-transform: uppercase; letter-spacing: -0.04em; line-height: 1;
+      margin-bottom: 1.5rem;
+    }
+    .doc h2 {
+      font-size: clamp(1.6rem, 4vw, 2.2rem);
+      font-weight: 700; text-transform: uppercase; letter-spacing: -0.03em; line-height: 1.15;
+      margin-top: 4rem; margin-bottom: 1rem;
+    }
+    .doc h3 { font-size: 1.35rem; font-weight: 700; letter-spacing: -0.01em; margin-top: 2.5rem; margin-bottom: 0.75rem; }
+    .doc h4 {
+      font-size: 1.1rem; font-weight: 700; letter-spacing: -0.01em;
+      margin-top: 2.25rem; margin-bottom: 0.6rem;
+      padding-top: 1.25rem; border-top: 1px solid var(--border);
+    }
+    .doc p, .doc ul, .doc ol { margin-bottom: 1rem; max-width: 75ch; overflow-wrap: anywhere; }
+    .doc ul, .doc ol { padding-left: 1.4rem; }
+    .doc li { margin-bottom: 0.4rem; }
+    .doc a { color: var(--fg); font-weight: 700; }
+    .doc code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
+      font-size: 0.88em; background: rgba(255, 255, 255, 0.45);
+      border-radius: 0.35rem; padding: 0.05rem 0.35rem;
+    }
+    .doc pre {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
+      font-size: 0.92rem; background: rgba(255, 255, 255, 0.55);
+      border: 1px solid var(--border); border-radius: var(--radius-md);
+      padding: 0.75rem 0.9rem; margin-bottom: 1rem; overflow-x: auto;
+    }
+    .doc pre code { background: none; padding: 0; font-size: inherit; }
+
+    .table-wrap {
+      overflow-x: auto; margin-bottom: 1.25rem;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius-md); box-shadow: var(--shadow);
+    }
+    .table-wrap table { border-collapse: collapse; width: 100%; font-size: 0.95rem; }
+    .table-wrap th, .table-wrap td {
+      text-align: left; vertical-align: top; padding: 0.6rem 0.9rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .table-wrap th { font-weight: 700; white-space: nowrap; background: var(--surface-strong); }
+    .table-wrap tr:last-child td { border-bottom: 0; }
+    .table-wrap td code { white-space: nowrap; }
+
+    .toc {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); box-shadow: var(--shadow);
+      backdrop-filter: blur(8px); padding: 1.25rem 1.5rem; margin: 2rem 0 0;
+    }
+    .doc .toc-title { font-size: 1.1rem; text-transform: none; letter-spacing: -0.01em; margin: 0 0 0.75rem; }
+    .toc ol { padding-left: 1.4rem; margin-bottom: 0; max-width: none; }
+    .toc ul { padding-left: 1.2rem; margin: 0.3rem 0 0.5rem; max-width: none; }
+    .toc li { margin-bottom: 0.25rem; }
+    .toc a { font-weight: 400; }
+    .doc .license { margin-top: 4rem; padding-top: 1.5rem; border-top: 1px solid var(--border); color: var(--fg-muted); font-size: 0.95rem; }
+
+    footer {
+      text-align: center; padding: 3rem 2rem; font-size: 0.85rem;
+      color: var(--bg); background: var(--fg);
+    }
+    footer .no-frameworks { font-style: italic; margin-bottom: 0.5rem; opacity: 0.75; }
+
+    @media (max-width: 900px) {
+      .topbar-inner { padding: 0 1.5rem; }
+      .doc { padding: 3rem 1.5rem 4rem; }
+    }
+    @media (max-width: 600px) {
+      .topbar { padding: 0.85rem 1rem; }
+      .topbar-inner { padding: 0; }
+      .nav-toggle { display: inline-flex; }
+      .nav {
+        display: none; position: absolute; top: 100%; left: 0; right: 0;
+        flex-direction: column; gap: 0; padding: 0.5rem 1rem 0.75rem;
+        background: rgba(206, 165, 199, 0.72); backdrop-filter: blur(10px);
+        border-bottom: 1px solid var(--border);
+      }
+      .nav.open { display: flex; }
+      .nav a { font-size: 1rem; padding: 0.75rem 0.7rem; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header class="topbar">
+      <div class="topbar-inner">
+        <a class="brand" href="/">vibecodedsh*t</a>
+        <button class="nav-toggle" type="button" aria-label="Menu" aria-expanded="false" aria-controls="primary-nav"><span></span></button>
+        <nav class="nav" id="primary-nav" aria-label="Primary">
+          <a href="/#measures">What it measures</a>
+          <a href="/#run">Run it</a>
+          <a href="/methodology/" aria-current="page">Methodology</a>
+        </nav>
+      </div>
+    </header>
+
+    <article class="doc">
+      <h1>Codebase Health Methodology, version 1.0</h1>
+<nav class="toc" aria-label="Contents"><h2 class="toc-title">Contents</h2><ol><li><a href="#s1">Purpose</a></li><li><a href="#s2">How a score is computed</a></li><li><a href="#s3">Layers and execution</a></li><li><a href="#s4">Scope</a></li><li><a href="#s5">Comparing runs and regression flags</a></li><li><a href="#s6">The six dimensions</a><ul><li><a href="#d1">D1. Safety net</a></li><li><a href="#d2">D2. Type &amp; static rigor</a></li><li><a href="#d3">D3. Architecture &amp; boundaries</a></li><li><a href="#d4">D4. Complexity &amp; maintainability</a></li><li><a href="#d5">D5. Dependency &amp; security hygiene</a></li><li><a href="#d6">D6. Operability &amp; feedback loop</a></li></ul></li><li><a href="#s7">Report-only signals</a></li><li><a href="#s8">What a 100 looks like</a></li><li><a href="#s9">Known limits of v1.0</a></li><li><a href="#s10">Versioning</a></li><li><a href="#s11">Sources</a></li></ol></nav>
+<p>This document explains how a codebase health score is computed and why each rule exists. The YAML files in this folder are the source of truth; section 6 is generated from them. If this document and the YAML disagree, the YAML is correct.</p>
+<div class="table-wrap"><table><thead><tr><th>File</th><th>Contents</th></tr></thead><tbody><tr><td><code>methodology.yaml</code></td><td>Aggregation, bands, execution rules, delta rules, regression flags</td></tr><tr><td><code>scope.yaml</code></td><td>Which files count and how lines are counted</td></tr><tr><td><code>dimensions/*.yaml</code></td><td>The 30 parameters: weights, anchors, measurement, rationale, sources</td></tr><tr><td><code>presets/*.yaml</code></td><td>Default import rules for Next.js, Express, Django, FastAPI and generic projects</td></tr></tbody></table></div>
+<h2 id="s1">1. Purpose</h2>
+<p><strong>Health is how safely and cheaply someone with no memory of this codebase, whether a contractor or an agent, can make a correct change.</strong></p>
+<p>The methodology is built for three uses:</p>
+<ol><li><strong>Audits.</strong> A run gives a baseline score, six dimension scores and the 30 parameter values behind them.</li><li><strong>Before and after.</strong> A second run after the work shows what the fixes changed, parameter by parameter.</li><li><strong>Sprint-loop gate.</strong> Every automated change is scored against its base commit. Regressions are flagged and never block.</li></ol>
+<p>It covers TypeScript, JavaScript and Python. Every parameter is computed from the repository by a tool. There are no surveys, no manual judgements and no AI grading. One parameter (6.3, feedback loop time) depends on wall-clock time and can vary slightly between identical runs; every other parameter gives the same result for the same commit, tool versions and as-of date.</p>
+<h2 id="s2">2. How a score is computed</h2>
+<h3 id="parameter-score">Parameter score</h3>
+<p>Each parameter has a <strong>raw value</strong> measured from the repository, such as "62% line coverage" or "3.1 escape hatches per 1,000 lines". A fixed rubric turns the raw value into a score from 0 to 100.</p>
+<p>Most rubrics are <strong>piecewise-linear</strong>: 3 or 4 anchors, each with a raw value, a score and a written meaning. Between two anchors the score is interpolated linearly. Below the first anchor and above the last, the score is clamped. Yes/no facts and configuration choices use <strong>levels</strong> instead, where each named level has a fixed score.</p>
+<p>Example, 1.2 line coverage at 52%:</p>
+<div class="table-wrap"><table><thead><tr><th>Raw</th><th>Score</th></tr></thead><tbody><tr><td>40%</td><td>50</td></tr><tr><td>60%</td><td>75</td></tr></tbody></table></div>
+<p>52% is 12/20 of the way from 40% to 60%, so the score is 50 + 0.6 × 25 = <strong>65</strong>.</p>
+<p>Anchors are fixed. They do not depend on other repositories, so a score means the same thing in every audit and every year until the methodology version changes.</p>
+<h3 id="dimension-score">Dimension score</h3>
+<p>A dimension score is the weighted mean of its parameter scores. Weights within each dimension add up to 100.</p>
+<p>Example, D1 Safety net:</p>
+<div class="table-wrap"><table><thead><tr><th>Parameter</th><th>Raw</th><th>Score</th><th>Weight</th><th>Contribution</th></tr></thead><tbody><tr><td>1.1 Suite pass rate</td><td>97%</td><td>70</td><td>20%</td><td>14.0</td></tr><tr><td>1.2 Line coverage</td><td>52%</td><td>65</td><td>25%</td><td>16.3</td></tr><tr><td>1.3 Branch coverage</td><td>38%</td><td>60</td><td>15%</td><td>9.0</td></tr><tr><td>1.4 Modules with tests</td><td>55%</td><td>62.5</td><td>25%</td><td>15.6</td></tr><tr><td>1.5 Tests that assert something</td><td>92%</td><td>70</td><td>15%</td><td>10.5</td></tr><tr><td><strong>D1</strong></td><td></td><td></td><td></td><td><strong>65</strong></td></tr></tbody></table></div>
+<h3 id="not-applicable">Not applicable</h3>
+<p>A parameter can be not applicable only when its precondition is a design choice the methodology does not score. In v1.0 there are two such cases:</p>
+<ul><li><strong>3.4 Public-entry discipline</strong>, when the repository has fewer than two modules.</li><li><strong>3.5 Domain purity</strong>, when the repository declares no domain layer.</li></ul>
+<p>The weight of a not-applicable parameter is spread over the other parameters in the same dimension, in proportion to their weights. With 3.5 not applicable, D3's weights become 17.6 / 35.3 / 29.4 / 17.6.</p>
+<p>Missing tests, a failed install or a failed test run are never "not applicable". They score 0.</p>
+<h3 id="health-score">Health score</h3>
+<pre><code>health = min( mean(D1..D6), min(D1..D6) + 30 )</code></pre>
+<p>The six dimensions have equal weight. The cap means one very weak dimension pulls the headline down, because a codebase with no tests is not made safe by clean dependencies.</p>
+<div class="table-wrap"><table><thead><tr><th>Example</th><th>D1</th><th>D2</th><th>D3</th><th>D4</th><th>D5</th><th>D6</th><th>Mean</th><th>Weakest + 30</th><th>Health</th></tr></thead><tbody><tr><td>Balanced</td><td>72</td><td>65</td><td>58</td><td>81</td><td>90</td><td>60</td><td>71.0</td><td>88</td><td><strong>71</strong> Stable</td></tr><tr><td>No tests</td><td>5</td><td>80</td><td>80</td><td>80</td><td>80</td><td>80</td><td>67.5</td><td>35</td><td><strong>35</strong> Vibe-coded</td></tr></tbody></table></div>
+<h3 id="bands">Bands</h3>
+<div class="table-wrap"><table><thead><tr><th>Health</th><th>Band</th><th>Meaning</th></tr></thead><tbody><tr><td>0–39</td><td>Vibe-coded</td><td>Changes break things without anyone noticing. Nobody, human or agent, can work here safely.</td></tr><tr><td>40–59</td><td>Fragile</td><td>It works, but every change is a gamble.</td></tr><tr><td>60–79</td><td>Stable</td><td>Changes are safe with care and review.</td></tr><tr><td>80–100</td><td>Agent-ready</td><td>An agent with no memory of the codebase can make a correct change and verify it alone.</td></tr></tbody></table></div>
+<p>Because of the cap, Agent-ready requires every dimension to score at least 49.5.</p>
+<h3 id="precision">Precision</h3>
+<p>Scores are stored at full precision in <code>run.json</code>. The report shows health and dimension scores as integers (rounded half up) and the health delta with one decimal. The band comes from the displayed health score.</p>
+<h2 id="s3">3. Layers and execution</h2>
+<p>Every run has two layers.</p>
+<div class="table-wrap"><table><thead><tr><th>Layer</th><th>What it does</th><th>Parameters</th></tr></thead><tbody><tr><td>Static</td><td>Reads tracked files, parses ASTs, builds import graphs. Never runs repository code.</td><td>23</td></tr><tr><td>Execution</td><td>Installs dependencies, then runs the build, the typechecker, a pinned lint ruleset and the test suite with coverage.</td><td>7 (1.1, 1.2, 1.3, 2.1, 2.5, 6.1, 6.3)</td></tr></tbody></table></div>
+<p>Both layers run on every scan. The execution layer runs in a pinned Docker image, <code>health:1.0</code>, with 4 CPUs and 8 GB of memory. The same image runs the client's code, so nothing from the repository runs on the host.</p>
+<ul><li><strong>Network</strong> is allowed while installing dependencies and while fetching the advisory and registry snapshots. It is off for the build, typecheck, lint and tests.</li><li><strong>Environment.</strong> Variables listed in the repository's env example file are loaded with their example values. No other variables or secrets are provided. External services such as databases, queues and browsers are not provided.</li><li><strong>Timeouts.</strong> Install 15 minutes, build 15 minutes, typecheck 10 minutes, lint 10 minutes, tests 10 minutes. The test suite runs once.</li></ul>
+<p>There are two kinds of failure:</p>
+<div class="table-wrap"><table><thead><tr><th>Failure</th><th>Cause</th><th>Result</th></tr></thead><tbody><tr><td>Repository failure</td><td>Install, build, typecheck or tests fail or time out because of the repository</td><td>Every parameter that needs that step scores 0. The run is valid.</td></tr><tr><td>Tool error</td><td>The scanner itself fails, for example a crash or coverage data missing after a test run that produced results</td><td>The run is invalid and produces no score.</td></tr></tbody></table></div>
+<h2 id="s4">4. Scope</h2>
+<p>Full rules are in <code>scope.yaml</code>.</p>
+<ul><li><strong>Files.</strong> The scan starts from <code>git ls-files</code> and keeps TypeScript, JavaScript and Python files.</li><li><strong>Fixed exclusions.</strong> Vendored code, build output, generated files, minified files, migrations and <code>.d.ts</code> files are excluded.</li><li><strong>File roles.</strong> Each remaining file is a test file, a config file or a logic file. A logic file defines at least one function, method or class. Barrels, type-only files and constants-only files are not logic files.</li><li><strong>Tests.</strong> Test files are scored in D1, and also in 2.1 (typecheck errors) and 2.5 (lint findings), because broken tests are a real problem. They are excluded from every other static metric.</li><li><strong>Line counts.</strong> <em>Logic lines</em> are non-blank, non-comment lines in logic files; Python docstrings count as comments. <em>Source lines</em> add test files. Per-1,000-line parameters use one or the other, as each parameter states.</li><li><strong><code>.healthignore</code>.</strong> A repository can exclude more paths with gitignore syntax. The report shows the percentage of lines excluded, and <code>health diff</code> refuses to compare runs with different ignore files. <code>.healthignore</code> does not apply to the secret scan (5.4).</li></ul>
+<h3 id="monorepos-and-mixed-languages">Monorepos and mixed languages</h3>
+<p>A repository always gets one headline score.</p>
+<ul><li><strong>Ratio parameters</strong> (percentages, counts per 1,000 lines, pass rates) sum numerators and denominators across packages and languages, then score the pooled ratio once.</li><li><strong>Configuration and level parameters</strong> are scored per language or package and combined by logic-line weight. Example: 2.2 scores 100 for a TypeScript frontend with 8,000 logic lines and 0 for a Python backend with 2,000 logic lines. The pooled 2.2 score is 80.</li></ul>
+<p>The report breaks every dimension down per package and per language.</p>
+<h2 id="s5">5. Comparing runs and regression flags</h2>
+<h3 id="the-as-of-date">The as-of date</h3>
+<p>Two parameters depend on outside data that changes over time: 5.1 (known vulnerabilities) and 5.2 (dependencies a major version behind). Every run has an <strong>as-of date</strong>. Advisories published on or before that date count, and "latest version" means the latest version published on or before that date.</p>
+<p>Without this, a repository's score would drop when a new advisory is published, even if nobody changed the code.</p>
+<h3 id="delta-rule">Delta rule</h3>
+<p><code>health diff before.json after.json</code> compares two runs only when all five conditions match. Otherwise it refuses and names the conditions that differ.</p>
+<ol><li><strong>Layers.</strong> Both runs attempted the same layers.</li><li><strong>Tool versions.</strong> Both runs used the same image digest.</li><li><strong>Methodology version.</strong> Both runs used the same methodology version.</li><li><strong>As-of date.</strong> Both runs were scored at the same as-of date. In a contract, this is the baseline's as-of date. The report also shows the newer run's score as of today.</li><li><strong>Ignore set.</strong> Both runs used the same <code>.healthignore</code> and <code>.gitleaksignore</code> contents.</li></ol>
+<p><code>run.json</code> stores raw values and the resolved dependency list, so the newer run can be rescored at the baseline's as-of date without rescanning.</p>
+<h3 id="sprint-loop-regression-flags">Sprint-loop regression flags</h3>
+<p>Each change is scored against its base commit, at the same as-of date. Base commit runs are cached by tree hash, methodology version and as-of date.</p>
+<p>A change is flagged when <strong>any dimension drops by 3.0 points or more</strong> (unrounded), or when <strong>the band drops</strong>. A flagged pull request gets the <code>health-regression</code> label. Flags never block a merge.</p>
+<p>Telegram summary format:</p>
+<pre><code>Health 62 Stable (+1.4) · Safety net +6 · Complexity −1 · ⚠ none</code></pre>
+<h2 id="s6">6. The six dimensions</h2>
+<div class="table-wrap"><table><thead><tr><th>#</th><th>Dimension</th><th>Question</th></tr></thead><tbody><tr><td>D1</td><td>Safety net</td><td>Will a change break something without anyone noticing?</td></tr><tr><td>D2</td><td>Type &amp; static rigor</td><td>Does the code tell you what it expects before you run it?</td></tr><tr><td>D3</td><td>Architecture &amp; boundaries</td><td>Can you change one part without reading the rest?</td></tr><tr><td>D4</td><td>Complexity &amp; maintainability</td><td>How much does someone have to read to make one change correctly?</td></tr><tr><td>D5</td><td>Dependency &amp; security hygiene</td><td>Is the code built on parts that are known, current and safe?</td></tr><tr><td>D6</td><td>Operability &amp; feedback loop</td><td>Can someone new set it up, check a change and know they are done?</td></tr></tbody></table></div>
+<h3 id="d1">D1. Safety net</h3>
+<p><strong>Question.</strong> Will a change break something without anyone noticing?</p>
+<p><strong>Why it matters for agents.</strong> An agent cannot remember how the system is supposed to behave. The test suite is the only record of that behaviour it can check its change against.</p>
+<div class="table-wrap"><table><thead><tr><th>#</th><th>Parameter</th><th>Layer</th><th>Weight</th></tr></thead><tbody><tr><td>1.1</td><td>Suite pass rate</td><td>Execution</td><td>20%</td></tr><tr><td>1.2</td><td>Line coverage</td><td>Execution</td><td>25%</td></tr><tr><td>1.3</td><td>Branch coverage</td><td>Execution</td><td>15%</td></tr><tr><td>1.4</td><td>Modules with tests</td><td>Static</td><td>25%</td></tr><tr><td>1.5</td><td>Tests that assert something</td><td>Static</td><td>15%</td></tr></tbody></table></div>
+<h4 id="p1-1">1.1 Suite pass rate</h4>
+<p>Weight 20%. Execution layer. Scores 0 if any of these steps fail: install, test run. Pooled as a ratio across languages and packages.</p>
+<p><strong>Raw value</strong> (percent). passed / (passed + failed + errored) test cases. Skipped and expected-failure tests are excluded from both numerator and denominator. A test file that fails to load or collect counts as one failed test case.</p>
+<div class="table-wrap"><table><thead><tr><th>Raw</th><th>Score</th><th>Meaning</th></tr></thead><tbody><tr><td>80</td><td>0</td><td>The suite is red. Nobody can use it to check a change.</td></tr><tr><td>95</td><td>50</td><td>Mostly green, with known failures people have learned to ignore.</td></tr><tr><td>100</td><td>100</td><td>Green. A new failure means the change broke something.</td></tr></tbody></table></div>
+<p>Scores are interpolated between anchors and clamped outside them. If there is nothing to count, the score is 0.</p>
+<p><strong>How it is measured.</strong></p>
+<ul><li>TypeScript / JavaScript: vitest, jest, mocha or node:test, detected from package.json dependencies and the test script. Run once with a JSON reporter. Playwright and Cypress suites are not run.</li><li>Python: pytest (also runs unittest suites), with --continue-on-collection-errors and a JSON or JUnit report.</li></ul>
+<p><strong>Why.</strong> A suite with known failures stops working as a check: a new failure looks the same as the old ones. The curve is steep on purpose. 95% of a 200-test suite is 10 failing tests, which is already enough for people to stop reading the output.</p>
+<h4 id="p1-2">1.2 Line coverage</h4>
+<p>Weight 25%. Execution layer. Scores 0 if any of these steps fail: install, test run. Pooled as a ratio across languages and packages.</p>
+<p><strong>Raw value</strong> (percent). Covered lines / coverable lines across all logic files, including logic files no test loads. A file no test loads counts as 0% covered. For TypeScript and JavaScript the coverable lines are health's code lines (lines with at least one token). A line counts as covered when the innermost statement or function containing it ran.</p>
+<div class="table-wrap"><table><thead><tr><th>Raw</th><th>Score</th><th>Meaning</th></tr></thead><tbody><tr><td>10</td><td>0</td><td>No safety net.</td></tr><tr><td>40</td><td>50</td><td>Happy paths only.</td></tr><tr><td>60</td><td>75</td><td>Acceptable.</td></tr><tr><td>80</td><td>100</td><td>Well covered. No extra credit above this.</td></tr></tbody></table></div>
+<p>Scores are interpolated between anchors and clamped outside them. If there is nothing to count, the score is 0.</p>
+<p><strong>How it is measured.</strong></p>
+<ul><li>TypeScript / JavaScript: v8 or istanbul coverage with the json-summary and json reporters (vitest coverage.include, jest collectCoverageFrom over logic files, c8 for mocha and node:test). Lines are counted by health from the json report's statement and function ranges, not taken from the tool, so the same code gives the same count under every runner. Repository coverage thresholds are disabled so they cannot fail the run.</li><li>Python: coverage.py through pytest-cov, with --cov set to every first-party package so files no test imports are included.</li></ul>
+<p><strong>Why.</strong> Coverage shows which code no test executes. It does not show that the executed code is checked, which is why 1.5 exists. The 60% anchor matches Google's "acceptable" level. The 100 anchor is 80%, which is the coverage SonarQube's default quality gate requires on new code and sits between Google's "commendable" (75%) and "exemplary" (90%). Above 80% the methodology gives no extra credit, because the remaining code is often glue that costs more to test than it returns.</p>
+<p><strong>Sources.</strong></p>
+<ul><li>Arguelles, Ivanković, Bender. Code Coverage Best Practices. Google Testing Blog, 2020. <a href="https://testing.googleblog.com/2020/08/code-coverage-best-practices.html" rel="noreferrer">https://testing.googleblog.com/2020/08/code-coverage-best-practices.html</a></li><li>SonarQube default quality gate (Sonar way): coverage on new code at least 80%.</li></ul>
+<h4 id="p1-3">1.3 Branch coverage</h4>
+<p>Weight 15%. Execution layer. Scores 0 if any of these steps fail: install, test run. Pooled as a ratio across languages and packages.</p>
+<p><strong>Raw value</strong> (percent). Covered branches / total branches across all logic files, including files no test loads.</p>
+<div class="table-wrap"><table><thead><tr><th>Raw</th><th>Score</th><th>Meaning</th></tr></thead><tbody><tr><td>5</td><td>0</td><td>Only one path through each decision is ever run.</td></tr><tr><td>30</td><td>50</td><td>Error and edge paths are mostly untested.</td></tr><tr><td>50</td><td>75</td><td>Main error paths are tested.</td></tr><tr><td>70</td><td>100</td><td>Most decisions are tested both ways.</td></tr></tbody></table></div>
+<p>Scores are interpolated between anchors and clamped outside them. If there is nothing to count, the score is 0.</p>
+<p><strong>How it is measured.</strong></p>
+<ul><li>TypeScript / JavaScript: Same coverage run as 1.2; branch totals from json-summary. They come from the runner's coverage tool and can differ slightly between runners on the same code.</li><li>Python: Same run as 1.2 with --cov-branch.</li></ul>
+<p><strong>Why.</strong> Tests written quickly cover the happy path. Line coverage can be high while every error branch is untested. Branch coverage shows that gap. Branch percentages are lower than line percentages on the same code, so the anchors sit about 10 points lower than 1.2's.</p>
+<h4 id="p1-4">1.4 Modules with tests</h4>
+<p>Weight 25%. Static layer. Pooled as a ratio across languages and packages.</p>
+<p><strong>Raw value</strong> (percent). Logic files directly imported by at least one test file / all logic files. Imports are followed through barrel files and Python __init__.py re-exports to the file that defines the imported name. Transitive imports do not count.</p>
+<div class="table-wrap"><table><thead><tr><th>Raw</th><th>Score</th><th>Meaning</th></tr></thead><tbody><tr><td>10</td><td>0</td><td>Almost nothing has a test.</td></tr><tr><td>40</td><td>50</td><td>Some modules have tests; most do not.</td></tr><tr><td>70</td><td>75</td><td>Most modules have a test.</td></tr><tr><td>90</td><td>100</td><td>Nearly every module has a test.</td></tr></tbody></table></div>
+<p>Scores are interpolated between anchors and clamped outside them. If there is nothing to count, the score is 0.</p>
+<p><strong>How it is measured.</strong></p>
+<ul><li>TypeScript / JavaScript: AST import graph from test files (static imports, require and dynamic import with a literal path).</li><li>Python: AST import graph from test files (import and from-import statements).</li></ul>
+<p><strong>Why.</strong> This is the static counterpart to coverage. It still works when the suite does not run, so a repository with tests that are broken gets partial credit, and "make the existing tests run" shows up as a gain in 1.1 to 1.3. Only direct imports count; otherwise one test that imports the app entry point would mark every file as tested.</p>
+<h4 id="p1-5">1.5 Tests that assert something</h4>
+<p>Weight 15%. Static layer. Pooled as a ratio across languages and packages.</p>
+<p><strong>Raw value</strong> (percent). Test cases containing at least one assertion / all test cases. An assertion inside a helper function defined in the same file and called by the test counts (one level deep).</p>
+<div class="table-wrap"><table><thead><tr><th>Raw</th><th>Score</th><th>Meaning</th></tr></thead><tbody><tr><td>50</td><td>0</td><td>Many tests run code without checking anything.</td></tr><tr><td>80</td><td>50</td><td>A noticeable share of tests check nothing.</td></tr><tr><td>95</td><td>75</td><td>A few tests check nothing.</td></tr><tr><td>100</td><td>100</td><td>Every test checks something.</td></tr></tbody></table></div>
+<p>Scores are interpolated between anchors and clamped outside them. If there is nothing to count, the score is 0.</p>
+<p><strong>How it is measured.</strong></p>
+<ul><li>TypeScript / JavaScript: Test case: a call to it, test or their .each/.only/.concurrent variants. Assertion: expect(...), assert(...), assert.*, expectTypeOf(...), t.assert* / t.is / t.deepEqual (node:test and ava contexts).</li><li>Python: Test case: a test_* function in a test module, or a test_* method of a unittest.TestCase subclass. Assertion: an assert statement, self.assert*, pytest.raises, pytest.warns, or a mock method call starting with assert_.</li></ul>
+<p><strong>Why.</strong> A test without an assertion raises coverage and checks nothing. This is the cheapest way to game 1.2 and 1.3, and it is common in generated tests. The anchors are strict because writing a test without an assertion is almost never intentional.</p>
+<h3 id="d2">D2. Type &amp; static rigor</h3>
+<p><strong>Question.</strong> Does the code tell you what it expects before you run it?</p>
+<p><strong>Why it matters for agents.</strong> Type errors and lint findings are the fastest feedback an agent gets. A strict typechecker catches a wrong change in seconds, before any test runs, and the types document what each function accepts and returns.</p>
+<div class="table-wrap"><table><thead><tr><th>#</th><th>Parameter</th><th>Layer</th><th>Weight</th></tr></thead><tbody><tr><td>2.1</td><td>Typecheck errors</td><td>Execution</td><td>25%</td></tr><tr><td>2.2</td><td>Declared strictness</td><td>Static</td><td>20%</td></tr><tr><td>2.3</td><td>Escape hatches</td><td>Static</td><td>20%</td></tr><tr><td>2.4</td><td>Typed public surface</td><td>Static</td><td>15%</td></tr><tr><td>2.5</td><td>Baseline lint findings</td><td>Execution</td><td>20%</td></tr></tbody></table></div>
+<h4 id="p2-1">2.1 Typecheck errors</h4>
+<p>Weight 25%. Execution layer. Scores 0 if any of these steps fail: install, typecheck run. Pooled as a ratio across languages and packages.</p>
+<p><strong>Raw value</strong> (errors per 1,000 source lines). Typechecker errors located in in-scope files (logic and test), divided by source lines / 1,000. Errors in excluded files and in dependencies are ignored. Warnings are ignored.</p>
+<div class="table-wrap"><table><thead><tr><th>Raw</th><th>Score</th><th>Meaning</th></tr></thead><tbody><tr><td>0</td><td>100</td><td>Clean. A new error means the change introduced it.</td></tr><tr><td>1</td><td>75</td><td>A few known errors.</td></tr><tr><td>5</td><td>50</td><td>Errors are routine and people work around them.</td></tr><tr><td>20</td><td>0</td><td>The typechecker is ignored.</td></tr></tbody></table></div>
+<p>Scores are interpolated between anchors and clamped outside them. If there is nothing to count, the score is 100.</p>
+<p><strong>How it is measured.</strong></p>
+<ul><li>TypeScript / JavaScript: tsc --noEmit with the repository's tsconfig.json (each tsconfig that a workspace package declares). JavaScript-only repositories without a tsconfig or jsconfig are checked with a default config: allowJs, checkJs, strict false.</li><li>Python: pyright with the repository's configuration (pyrightconfig.json or [tool.pyright]). If only mypy is configured, mypy with its configuration. If both are configured, pyright. If neither, pyright in basic mode.</li></ul>
+<p><strong>Why.</strong> The repository's own config is used so the count reflects what its developers see. A config error, or a checker that cannot start, is a repository failure and scores 0. Untyped code is checked with a default config on purpose, so "add types" is visible as a score change.</p>
+<p><strong>Sources.</strong></p>
+<ul><li>TypeScript: Type checking JavaScript files (checkJs). <a href="https://www.typescriptlang.org/docs/handbook/type-checking-javascript-files.html" rel="noreferrer">https://www.typescriptlang.org/docs/handbook/type-checking-javascript-files.html</a></li><li>Pyright configuration: typeCheckingMode. <a href="https://microsoft.github.io/pyright/#/configuration" rel="noreferrer">https://microsoft.github.io/pyright/#/configuration</a></li></ul>
+<h4 id="p2-2">2.2 Declared strictness</h4>
+<p>Weight 20%. Static layer. Scored per language and package, then combined by logic-line weight.</p>
+<p><strong>Raw value</strong> (level). The strictness the repository's typechecker configuration declares, read from the config files without running anything.</p>
+<p>TypeScript / JavaScript:</p>
+<div class="table-wrap"><table><thead><tr><th>Level</th><th>Score</th><th>Meaning</th></tr></thead><tbody><tr><td>none</td><td>0</td><td>No strict-family flag is enabled, or JavaScript without checkJs.</td></tr><tr><td>partial</td><td>40</td><td>Some strict-family flags are enabled, or strict is true with one or more strict-family flags turned back off.</td></tr><tr><td>strict</td><td>75</td><td>strict is true and no strict-family flag is turned off.</td></tr><tr><td>strict_plus</td><td>100</td><td>strict plus noUncheckedIndexedAccess.</td></tr></tbody></table></div>
+<p>Python:</p>
+<div class="table-wrap"><table><thead><tr><th>Level</th><th>Score</th><th>Meaning</th></tr></thead><tbody><tr><td>none</td><td>0</td><td>No pyright or mypy configuration.</td></tr><tr><td>basic</td><td>40</td><td>pyright typeCheckingMode basic, or mypy with default settings.</td></tr><tr><td>standard</td><td>75</td><td>pyright typeCheckingMode standard (pyright's default when a config exists), or mypy with disallow_untyped_defs and check_untyped_defs.</td></tr><tr><td>strict</td><td>100</td><td>pyright typeCheckingMode strict, or mypy strict = true.</td></tr></tbody></table></div>
+<p><strong>How it is measured.</strong></p>
+<ul><li>TypeScript / JavaScript: tsconfig.json with extends resolved. Strict-family flags: noImplicitAny, strictNullChecks, strictFunctionTypes, strictBindCallApply, strictPropertyInitialization, noImplicitThis, useUnknownInCatchVariables, alwaysStrict.</li><li>Python: pyrightconfig.json, [tool.pyright] or [tool.basedpyright] in pyproject.toml; mypy.ini, .mypy.ini, setup.cfg [mypy] or [tool.mypy] in pyproject.toml. When both are configured, pyright's level is used.</li></ul>
+<p><strong>Why.</strong> 2.1 counts errors under whatever config the repository chose. Without 2.2, turning strictness off would raise the score. Strict null checks catch access to null and undefined values, a common runtime error in both languages. noUncheckedIndexedAccess makes array and record lookups return possibly undefined values, which is where strict TypeScript still lets runtime errors through.</p>
+<p><strong>Sources.</strong></p>
+<ul><li>TypeScript TSConfig reference: strict. <a href="https://www.typescriptlang.org/tsconfig#strict" rel="noreferrer">https://www.typescriptlang.org/tsconfig#strict</a></li><li>TypeScript TSConfig reference: noUncheckedIndexedAccess. <a href="https://www.typescriptlang.org/tsconfig#noUncheckedIndexedAccess" rel="noreferrer">https://www.typescriptlang.org/tsconfig#noUncheckedIndexedAccess</a></li><li>Pyright configuration: typeCheckingMode. <a href="https://microsoft.github.io/pyright/#/configuration" rel="noreferrer">https://microsoft.github.io/pyright/#/configuration</a></li><li>mypy command line: --strict. <a href="https://mypy.readthedocs.io/en/stable/command_line.html" rel="noreferrer">https://mypy.readthedocs.io/en/stable/command_line.html</a></li></ul>
+<h4 id="p2-3">2.3 Escape hatches</h4>
+<p>Weight 20%. Static layer. Pooled as a ratio across languages and packages.</p>
+<p><strong>Raw value</strong> (escape hatches per 1,000 logic lines). Points where code opts out of the typechecker, counted in logic files, divided by logic lines / 1,000. A file-level opt-out counts as 10.</p>
+<div class="table-wrap"><table><thead><tr><th>Raw</th><th>Score</th><th>Meaning</th></tr></thead><tbody><tr><td>0</td><td>100</td><td>The types are trusted everywhere.</td></tr><tr><td>2</td><td>75</td><td>A few documented exceptions.</td></tr><tr><td>5</td><td>50</td><td>Casts are a common way to make errors go away.</td></tr><tr><td>15</td><td>0</td><td>The types say little about what the code does.</td></tr></tbody></table></div>
+<p>Scores are interpolated between anchors and clamped outside them. If there is nothing to count, the score is 100.</p>
+<p><strong>How it is measured.</strong></p>
+<ul><li>TypeScript / JavaScript: Each counts 1: an explicit any type; an as assertion (as const is excluded; each as in "as unknown as T" counts separately); an angle-bracket assertion &lt;T&gt;x; a non-null assertion x!; a definite assignment assertion x!: T; @ts-ignore; @ts-expect-error. Counts 10: @ts-nocheck.</li><li>Python: Each counts 1: Any in an annotation; typing.cast(...); # type: ignore on a line; # pyright: ignore on a line. Counts 10: # type: ignore before the first statement of a module; # mypy: ignore-errors.</li></ul>
+<p><strong>Why.</strong> Each escape hatch is a place where the typechecker cannot help the next person. A change that breaks a contract passes the typechecker silently at that point. The typescript-eslint no-unsafe-* rules are not used in 2.5, so the same problem is not counted twice.</p>
+<h4 id="p2-4">2.4 Typed public surface</h4>
+<p>Weight 15%. Static layer. Pooled as a ratio across languages and packages.</p>
+<p><strong>Raw value</strong> (percent). Typed slots / all slots on the public surface of logic files. In TypeScript and JavaScript a slot is a parameter. In Python a slot is a parameter or a return type.</p>
+<div class="table-wrap"><table><thead><tr><th>Raw</th><th>Score</th><th>Meaning</th></tr></thead><tbody><tr><td>20</td><td>0</td><td>The public surface is untyped.</td></tr><tr><td>50</td><td>50</td><td>Half of what callers use is typed.</td></tr><tr><td>80</td><td>75</td><td>Most of what callers use is typed.</td></tr><tr><td>100</td><td>100</td><td>Every public function says what it accepts.</td></tr></tbody></table></div>
+<p>Scores are interpolated between anchors and clamped outside them. If there is nothing to count, the score is 100.</p>
+<p><strong>How it is measured.</strong></p>
+<ul><li>TypeScript / JavaScript: Public surface: exported functions, exported arrow functions and function expressions, default exports, and public methods of exported classes. A parameter is typed if it has a type annotation, a default value, a contextual type (for example a callback passed to a typed function), or a JSDoc @param type in a file checked with checkJs.</li><li>Python: Public surface: module-level functions and classes whose names do not start with _, and their methods whose names do not start with _ (dunder methods are included). If __all__ is defined, it decides what is public. Modules whose names start with _ are excluded. self and cls are not slots. __init__ needs no return annotation.</li></ul>
+<p><strong>Why.</strong> The public surface is what the next person calls without reading the body. In TypeScript, inferred return types are reliable, so only parameters are counted. In Python, an unannotated return is Any, so both are counted. Untyped JavaScript and untyped Python score low on purpose.</p>
+<p><strong>Sources.</strong></p>
+<ul><li>PEP 484: Type Hints. <a href="https://peps.python.org/pep-0484/" rel="noreferrer">https://peps.python.org/pep-0484/</a></li></ul>
+<h4 id="p2-5">2.5 Baseline lint findings</h4>
+<p>Weight 20%. Execution layer. Scores 0 if any of these steps fail: install, lint run. Pooled as a ratio across languages and packages.</p>
+<p><strong>Raw value</strong> (findings per 1,000 source lines). Findings from the methodology's pinned correctness ruleset in in-scope files (logic and test), divided by source lines / 1,000. The repository's own lint config is not used. A file that cannot be parsed counts as one finding.</p>
+<div class="table-wrap"><table><thead><tr><th>Raw</th><th>Score</th><th>Meaning</th></tr></thead><tbody><tr><td>0</td><td>100</td><td>No known bug patterns.</td></tr><tr><td>2</td><td>75</td><td>A few.</td></tr><tr><td>5</td><td>50</td><td>Bug patterns are common.</td></tr><tr><td>20</td><td>0</td><td>The code has never been linted for correctness.</td></tr></tbody></table></div>
+<p>Scores are interpolated between anchors and clamped outside them. If there is nothing to count, the score is 100.</p>
+<p><strong>How it is measured.</strong></p>
+<ul><li>TypeScript / JavaScript: ESLint with the pinned ruleset. Core rules: no-unreachable, no-dupe-keys, no-self-compare, no-unsafe-finally, no-fallthrough, no-cond-assign, use-isnan, valid-typeof, no-unsafe-optional-chaining, no-dupe-else-if, no-duplicate-case, no-self-assign, getter-return, no-async-promise-executor, no-constant-binary-expression, no-unused-vars (or @typescript-eslint/no-unused-vars on TypeScript files). Type-aware rules on TypeScript files only: @typescript-eslint/no-floating-promises, no-misused-promises, await-thenable. TypeScript files outside every tsconfig are linted without the type-aware rules. react-hooks/rules-of-hooks when react is a dependency.</li><li>Python: ruff with the rule sets F (Pyflakes), B (flake8-bugbear) and E9 (syntax and IO errors).</li></ul>
+<p><strong>Why.</strong> Each rule in the set catches a real bug pattern, such as an unawaited promise or an unreachable branch. Style rules are excluded, so formatting choices do not affect the score. The ruleset is pinned so every repository is judged by the same rules, and so turning rules off in the repository's own config does not raise the score.</p>
+<p><strong>Sources.</strong></p>
+<ul><li>typescript-eslint rules. <a href="https://typescript-eslint.io/rules/" rel="noreferrer">https://typescript-eslint.io/rules/</a></li><li>Ruff rules. <a href="https://docs.astral.sh/ruff/rules/" rel="noreferrer">https://docs.astral.sh/ruff/rules/</a></li></ul>
+<h3 id="d3">D3. Architecture &amp; boundaries</h3>
+<p><strong>Question.</strong> Can you change one part without reading the rest?</p>
+<p><strong>Why it matters for agents.</strong> An agent works inside a limited context window. Enforced boundaries limit how much of the codebase one change can affect, so the agent only needs to read the module it is changing and that module's public entry points.</p>
+<div class="table-wrap"><table><thead><tr><th>#</th><th>Parameter</th><th>Layer</th><th>Weight</th></tr></thead><tbody><tr><td>3.1</td><td>Boundaries declared and enforced</td><td>Static</td><td>15%</td></tr><tr><td>3.2</td><td>Boundary violations</td><td>Static</td><td>30%</td></tr><tr><td>3.3</td><td>Import cycles</td><td>Static</td><td>25%</td></tr><tr><td>3.4</td><td>Public-entry discipline</td><td>Static</td><td>15%</td></tr><tr><td>3.5</td><td>Domain purity</td><td>Static</td><td>15%</td></tr></tbody></table></div>
+<p><strong>Presets.</strong> When a repository declares no import rules, the scan uses the preset for the detected framework (presets/*.yaml). When it declares rules (see 3.1), its rules replace the preset. Detection order: nextjs, express, django, fastapi, generic. Each workspace package gets its own preset.</p>
+<h4 id="p3-1">3.1 Boundaries declared and enforced</h4>
+<p>Weight 15%. Static layer. Scored per language and package, then combined by logic-line weight.</p>
+<p><strong>Raw value</strong> (level). Whether the repository declares import rules in a supported rules file, and whether CI runs them.</p>
+<div class="table-wrap"><table><thead><tr><th>Level</th><th>Score</th><th>Meaning</th></tr></thead><tbody><tr><td>none</td><td>0</td><td>No import rules are declared.</td></tr><tr><td>declared</td><td>50</td><td>A rules file declares at least one direction rule, but CI does not run it.</td></tr><tr><td>enforced</td><td>100</td><td>The rules are declared and CI runs them on pull requests.</td></tr></tbody></table></div>
+<p><strong>How it is measured.</strong></p>
+<ul><li>TypeScript / JavaScript: Rules file: .dependency-cruiser.{js,cjs,mjs,json}. Declared means at least one forbidden or allowed rule whose from and to paths name different directories. Enforced means a CI file invokes depcruise, directly or through a package script or make target (up to 3 levels).</li><li>Python: Rules file: .importlinter, [importlinter] in setup.cfg, or [tool.importlinter] in pyproject.toml. Declared means at least one layers, forbidden or independence contract. Enforced means a CI file invokes lint-imports, directly or through a script or make target.</li><li>Ci files: .github/workflows/*, .gitlab-ci.yml, .circleci/config.yml, bitbucket-pipelines.yml, azure-pipelines.yml.</li></ul>
+<p><strong>Why.</strong> An architecture that exists only in people's heads is not visible to an agent and erodes with each change. A rules file states the architecture in a form a tool can check. Running it in CI is what stops new violations.</p>
+<p><strong>Sources.</strong></p>
+<ul><li>dependency-cruiser rules reference. <a href="https://github.com/sverweij/dependency-cruiser/blob/main/doc/rules-reference.md" rel="noreferrer">https://github.com/sverweij/dependency-cruiser/blob/main/doc/rules-reference.md</a></li><li>import-linter contract types. <a href="https://import-linter.readthedocs.io/en/stable/contract_types.html" rel="noreferrer">https://import-linter.readthedocs.io/en/stable/contract_types.html</a></li></ul>
+<h4 id="p3-2">3.2 Boundary violations</h4>
+<p>Weight 30%. Static layer. Pooled as a ratio across languages and packages.</p>
+<p><strong>Raw value</strong> (violations per 1,000 imports). Import edges that break a rule, divided by all internal import edges / 1,000. Rules come from the repository's declared rules file, or from the preset when none is declared. Rules with severity error or warn count; info is ignored. Each violating edge counts once, even when it breaks several rules. Imports from test files are excluded. Type-only imports are included, except where a preset rule says otherwise.</p>
+<div class="table-wrap"><table><thead><tr><th>Raw</th><th>Score</th><th>Meaning</th></tr></thead><tbody><tr><td>0</td><td>100</td><td>Every import respects the architecture.</td></tr><tr><td>2</td><td>75</td><td>A few known shortcuts.</td></tr><tr><td>10</td><td>50</td><td>The layers exist in name only in places.</td></tr><tr><td>30</td><td>0</td><td>Anything imports anything.</td></tr></tbody></table></div>
+<p>Scores are interpolated between anchors and clamped outside them. If there is nothing to count, the score is 100.</p>
+<p><strong>How it is measured.</strong></p>
+<ul><li>TypeScript / JavaScript: dependency-cruiser with the declared rules or the preset converted to dependency-cruiser rules.</li><li>Python: grimp builds the import graph; import-linter checks the declared contracts or the preset converted to contracts.</li></ul>
+<p><strong>Why.</strong> Each violation is a dependency a reader would not expect from the directory structure. The count is normalized per 1,000 imports so repositories of different sizes are comparable.</p>
+<p><strong>Sources.</strong></p>
+<ul><li>Martin, R. C. Clean Architecture. Prentice Hall, 2017 (the Dependency Rule).</li><li>Cockburn, A. Hexagonal Architecture (Ports and Adapters), 2005. <a href="https://alistair.cockburn.us/hexagonal-architecture/" rel="noreferrer">https://alistair.cockburn.us/hexagonal-architecture/</a></li></ul>
+<h4 id="p3-3">3.3 Import cycles</h4>
+<p>Weight 25%. Static layer. Pooled as a ratio across languages and packages.</p>
+<p><strong>Raw value</strong> (percent). Logic files that belong to an import cycle / all logic files. A cycle is a strongly connected component of two or more files in the graph of module-level static imports. Type-only imports, dynamic imports, imports inside functions and imports under "if TYPE_CHECKING:" are excluded.</p>
+<div class="table-wrap"><table><thead><tr><th>Raw</th><th>Score</th><th>Meaning</th></tr></thead><tbody><tr><td>0</td><td>100</td><td>The import graph has no cycles.</td></tr><tr><td>2</td><td>75</td><td>One or two small cycles.</td></tr><tr><td>5</td><td>50</td><td>Cycles connect several areas.</td></tr><tr><td>15</td><td>0</td><td>Large parts of the code depend on each other.</td></tr></tbody></table></div>
+<p>Scores are interpolated between anchors and clamped outside them. If there is nothing to count, the score is 100.</p>
+<p><strong>How it is measured.</strong></p>
+<ul><li>TypeScript / JavaScript: dependency-cruiser cycle detection on the filtered graph.</li><li>Python: grimp import graph, filtered as defined, then strongly connected components.</li></ul>
+<p><strong>Why.</strong> Files in a cycle cannot be understood, tested or changed one at a time. Cycles also cause import-order bugs at runtime, especially in Python. Type-only imports are excluded because they have no runtime effect.</p>
+<p><strong>Sources.</strong></p>
+<ul><li>Martin, R. C. Agile Software Development: Principles, Patterns, and Practices. Prentice Hall, 2002 (the Acyclic Dependencies Principle).</li></ul>
+<h4 id="p3-4">3.4 Public-entry discipline</h4>
+<p>Weight 15%. Static layer. Pooled as a ratio across languages and packages.</p>
+<p><strong>Raw value</strong> (percent). Imports that cross from one module into another and land on that module's public entry / all imports that cross between modules. Modules are defined by the preset (or by the independence or layer contracts in the declared rules). The public entry is index.* in TypeScript and JavaScript, and __init__.py in Python.</p>
+<div class="table-wrap"><table><thead><tr><th>Raw</th><th>Score</th><th>Meaning</th></tr></thead><tbody><tr><td>50</td><td>0</td><td>Other modules reach into internals as often as not.</td></tr><tr><td>75</td><td>50</td><td>Entry points exist and are often bypassed.</td></tr><tr><td>90</td><td>75</td><td>Entry points are mostly used.</td></tr><tr><td>100</td><td>100</td><td>Every cross-module import goes through the entry point.</td></tr></tbody></table></div>
+<p>Scores are interpolated between anchors and clamped outside them. If there is nothing to count, the score is 100.</p>
+<p><strong>How it is measured.</strong></p>
+<ul><li>TypeScript / JavaScript: Import graph from dependency-cruiser; module roots from the preset.</li><li>Python: grimp import graph; module roots from the preset. In Django apps, models, services and selectors are also public entries.</li></ul>
+<p><strong>Not applicable when.</strong> The repository has fewer than two modules as defined by the preset or the declared rules. Splitting code into modules is a design choice the methodology does not score.</p>
+<p><strong>Why.</strong> A public entry point is a small interface the next person can read instead of the whole module. When other modules import internals directly, every internal file becomes part of the interface and cannot be changed safely.</p>
+<p><strong>Sources.</strong></p>
+<ul><li>HackSoft Django Styleguide. <a href="https://github.com/HackSoftware/Django-Styleguide" rel="noreferrer">https://github.com/HackSoftware/Django-Styleguide</a></li></ul>
+<h4 id="p3-5">3.5 Domain purity</h4>
+<p>Weight 15%. Static layer. Pooled as a ratio across languages and packages.</p>
+<p><strong>Raw value</strong> (percent). Files in the domain layer that import a framework, database, network or filesystem package, or an infrastructure directory / all files in the domain layer.</p>
+<div class="table-wrap"><table><thead><tr><th>Raw</th><th>Score</th><th>Meaning</th></tr></thead><tbody><tr><td>0</td><td>100</td><td>Domain logic is plain code that runs and tests without infrastructure.</td></tr><tr><td>5</td><td>75</td><td>A few domain files touch infrastructure.</td></tr><tr><td>15</td><td>50</td><td>Domain logic regularly reaches for the database or the network.</td></tr><tr><td>40</td><td>0</td><td>The domain layer is a directory name.</td></tr></tbody></table></div>
+<p>Scores are interpolated between anchors and clamped outside them. If there is nothing to count, the score is 100.</p>
+<p><strong>How it is measured.</strong></p>
+<ul><li>Domain layer: Files under a directory named domain, or files in a layer named domain in the declared rules.</li><li>TypeScript / JavaScript: Forbidden imports: next, react, react-dom, express, @prisma/client, drizzle-orm, pg, mysql2, mongoose, redis, ioredis, axios, node-fetch, fs, node:fs, http, node:http, https, node:https. A call to the global fetch also counts.</li><li>Python: Forbidden imports: django, fastapi, flask, starlette, sqlalchemy, requests, httpx, aiohttp, boto3, psycopg, psycopg2, redis, pymongo. A call to the builtin open also counts.</li><li>Infrastructure directories: infrastructure, infra, db, adapters.</li></ul>
+<p><strong>Not applicable when.</strong> The repository declares no domain layer. Choosing a layered or domain-driven design is a design choice the methodology does not score.</p>
+<p><strong>Why.</strong> This is the deterministic part of domain-driven design alignment. Pure domain code can be tested without a database or network and changed without reading infrastructure code. The methodology does not judge whether the domain model is good; it checks that the repository keeps the boundary it declared.</p>
+<p><strong>Sources.</strong></p>
+<ul><li>Evans, E. Domain-Driven Design. Addison-Wesley, 2003.</li><li>Cockburn, A. Hexagonal Architecture (Ports and Adapters), 2005. <a href="https://alistair.cockburn.us/hexagonal-architecture/" rel="noreferrer">https://alistair.cockburn.us/hexagonal-architecture/</a></li></ul>
+<h3 id="d4">D4. Complexity &amp; maintainability</h3>
+<p><strong>Question.</strong> How much does someone have to read to make one change correctly?</p>
+<p><strong>Why it matters for agents.</strong> Every line an agent reads uses context. Long files, complex functions, duplicated logic and dead code all increase how much it must read, and duplicated logic is where an agent fixes one copy and misses the other.</p>
+<div class="table-wrap"><table><thead><tr><th>#</th><th>Parameter</th><th>Layer</th><th>Weight</th></tr></thead><tbody><tr><td>4.1</td><td>Complex functions</td><td>Static</td><td>30%</td></tr><tr><td>4.2</td><td>Lines in large files</td><td>Static</td><td>20%</td></tr><tr><td>4.3</td><td>Duplication</td><td>Static</td><td>25%</td></tr><tr><td>4.4</td><td>Unused exports and files</td><td>Static</td><td>25%</td></tr></tbody></table></div>
+<h4 id="p4-1">4.1 Complex functions</h4>
+<p>Weight 30%. Static layer. Pooled as a ratio across languages and packages.</p>
+<p><strong>Raw value</strong> (percent). Functions with cognitive complexity strictly greater than 15 / all functions in logic files, as enumerated by the tool.</p>
+<div class="table-wrap"><table><thead><tr><th>Raw</th><th>Score</th><th>Meaning</th></tr></thead><tbody><tr><td>0</td><td>100</td><td>Every function can be read in one pass.</td></tr><tr><td>3</td><td>75</td><td>A few hard functions.</td></tr><tr><td>8</td><td>50</td><td>Hard functions in most areas.</td></tr><tr><td>20</td><td>0</td><td>Logic is concentrated in functions nobody wants to touch.</td></tr></tbody></table></div>
+<p>Scores are interpolated between anchors and clamped outside them. If there is nothing to count, the score is 100.</p>
+<p><strong>How it is measured.</strong></p>
+<ul><li>TypeScript / JavaScript: eslint-plugin-sonarjs cognitive-complexity rule, threshold 15.</li><li>Python: complexipy, threshold 15.</li></ul>
+<p><strong>Why.</strong> Cognitive complexity counts nesting and breaks in linear flow, which is closer to how hard a function is to read than cyclomatic complexity. 15 is the default threshold in SonarQube, eslint-plugin-sonarjs and complexipy. Counting the share of functions over the threshold, instead of the mean, keeps many small functions from hiding a few large ones.</p>
+<p><strong>Sources.</strong></p>
+<ul><li>Campbell, G. A. Cognitive Complexity: A new way of measuring understandability. SonarSource, 2018. <a href="https://www.sonarsource.com/docs/CognitiveComplexity.pdf" rel="noreferrer">https://www.sonarsource.com/docs/CognitiveComplexity.pdf</a></li><li>SonarQube rule S3776 (Cognitive Complexity of functions should not be too high), default threshold 15.</li><li>McCabe, T. J. A Complexity Measure. IEEE Transactions on Software Engineering, 1976 (cyclomatic complexity, threshold 10).</li></ul>
+<h4 id="p4-2">4.2 Lines in large files</h4>
+<p>Weight 20%. Static layer. Pooled as a ratio across languages and packages.</p>
+<p><strong>Raw value</strong> (percent). Logic lines in logic files with more than 500 logic lines / all logic lines.</p>
+<div class="table-wrap"><table><thead><tr><th>Raw</th><th>Score</th><th>Meaning</th></tr></thead><tbody><tr><td>0</td><td>100</td><td>Every file fits in one read.</td></tr><tr><td>10</td><td>75</td><td>A few large files.</td></tr><tr><td>25</td><td>50</td><td>A quarter of the code lives in large files.</td></tr><tr><td>50</td><td>0</td><td>Most of the code lives in files too large to read whole.</td></tr></tbody></table></div>
+<p>Scores are interpolated between anchors and clamped outside them. If there is nothing to count, the score is 100.</p>
+<p><strong>How it is measured.</strong></p>
+<ul><li>TypeScript / JavaScript: Logic line count per file (scope.yaml).</li><li>Python: Logic line count per file (scope.yaml); docstrings do not count.</li></ul>
+<p><strong>Why.</strong> A large file has to be read in parts, so changes to it are made with partial context. The threshold of 500 logic lines is more lenient than ESLint's max-lines default (300 physical lines) and stricter than Pylint's max-module-lines default (1,000). The raw value is a share of lines, not of files, so one 5,000-line file weighs more than one 501-line file.</p>
+<p><strong>Sources.</strong></p>
+<ul><li>ESLint max-lines rule, default 300. <a href="https://eslint.org/docs/latest/rules/max-lines" rel="noreferrer">https://eslint.org/docs/latest/rules/max-lines</a></li><li>Pylint too-many-lines (C0302), max-module-lines default 1000.</li></ul>
+<h4 id="p4-3">4.3 Duplication</h4>
+<p>Weight 25%. Static layer. Pooled as a ratio across languages and packages.</p>
+<p><strong>Raw value</strong> (percent). Duplicated lines / all lines in logic files, as reported by jscpd.</p>
+<div class="table-wrap"><table><thead><tr><th>Raw</th><th>Score</th><th>Meaning</th></tr></thead><tbody><tr><td>3</td><td>100</td><td>Duplication is incidental.</td></tr><tr><td>5</td><td>75</td><td>Some copied blocks.</td></tr><tr><td>10</td><td>50</td><td>Copy and paste is a common way to add features.</td></tr><tr><td>20</td><td>0</td><td>Large parts of the logic exist in several copies.</td></tr></tbody></table></div>
+<p>Scores are interpolated between anchors and clamped outside them. If there is nothing to count, the score is 100.</p>
+<p><strong>How it is measured.</strong></p>
+<ul><li>TypeScript / JavaScript: jscpd, min-tokens 50, min-lines 5, logic files only.</li><li>Python: jscpd, same settings.</li></ul>
+<p><strong>Why.</strong> A bug fixed in one copy stays in the others. This is a common agent mistake: the agent finds one copy, fixes it, and its tests pass. 3% is the default duplication limit in SonarQube's quality gate.</p>
+<p><strong>Sources.</strong></p>
+<ul><li>SonarQube default quality gate (Sonar way): duplicated lines on new code at most 3%.</li><li>jscpd. <a href="https://github.com/kucherenko/jscpd" rel="noreferrer">https://github.com/kucherenko/jscpd</a></li></ul>
+<h4 id="p4-4">4.4 Unused exports and files</h4>
+<p>Weight 25%. Static layer. Pooled as a ratio across languages and packages.</p>
+<p><strong>Raw value</strong> (percent). (Unused exported symbols + exported symbols in unused files) / all exported symbols in logic files. Exported types count. Library entry points (package.json exports and main, Python __all__ of a distributed package) count as used.</p>
+<div class="table-wrap"><table><thead><tr><th>Raw</th><th>Score</th><th>Meaning</th></tr></thead><tbody><tr><td>0</td><td>100</td><td>Everything exported is used.</td></tr><tr><td>3</td><td>75</td><td>A little dead code.</td></tr><tr><td>8</td><td>50</td><td>Dead code is common.</td></tr><tr><td>20</td><td>0</td><td>A large share of the code is never called.</td></tr></tbody></table></div>
+<p>Scores are interpolated between anchors and clamped outside them. If there is nothing to count, the score is 100.</p>
+<p><strong>How it is measured.</strong></p>
+<ul><li>TypeScript / JavaScript: knip (unused files, exports and types), with framework plugins enabled.</li><li>Python: vulture with min-confidence 60 for unused functions, classes and methods; decorated definitions are treated as used. A method is also treated as used when its class, directly or through base classes defined in the repository, has a base class defined outside the repository (standard library or third party), or when a base class defined in the repository has a method of the same name; object and Generic do not count as bases. Unused modules: modules no other module imports, excluding entry modules (__main__, manage.py, wsgi, asgi, settings, conftest, targets of [project.scripts], Django convention modules such as models, admin, apps, urls, views, and FastAPI main.py).</li></ul>
+<p><strong>Why.</strong> Dead code costs reading time and looks like a place to make a change. An agent that edits an unused function gets no test failure and no effect. Decorated Python definitions are treated as used because frameworks register them by decorator (routes, fixtures, signals). Methods that override a base class are treated as used for the same reason: frameworks and the standard library call hooks such as do_GET, setUp or emit by name, which vulture cannot see.</p>
+<p><strong>Sources.</strong></p>
+<ul><li>knip. <a href="https://knip.dev" rel="noreferrer">https://knip.dev</a></li><li>vulture. <a href="https://github.com/jendrikseipp/vulture" rel="noreferrer">https://github.com/jendrikseipp/vulture</a></li></ul>
+<h3 id="d5">D5. Dependency &amp; security hygiene</h3>
+<p><strong>Question.</strong> Is the code built on parts that are known, current and safe?</p>
+<p><strong>Why it matters for agents.</strong> An agent adds dependencies and copies patterns from what it finds. An undeclared dependency, a stale major version or a committed secret gets copied into new code the same way good patterns do.</p>
+<div class="table-wrap"><table><thead><tr><th>#</th><th>Parameter</th><th>Layer</th><th>Weight</th></tr></thead><tbody><tr><td>5.1</td><td>Known vulnerabilities in production dependencies</td><td>Static</td><td>30%</td></tr><tr><td>5.2</td><td>Dependencies a major version behind</td><td>Static</td><td>20%</td></tr><tr><td>5.3</td><td>Lockfile</td><td>Static</td><td>15%</td></tr><tr><td>5.4</td><td>Secrets in the working tree</td><td>Static</td><td>20%</td></tr><tr><td>5.5</td><td>Dependency declaration errors</td><td>Static</td><td>15%</td></tr></tbody></table></div>
+<p><strong>As of date.</strong> Parameters 5.1 and 5.2 are evaluated at the run's as-of date: advisories published on or before that date count, and the latest version of a package is the latest published on or before that date.</p>
+<h4 id="p5-1">5.1 Known vulnerabilities in production dependencies</h4>
+<p>Weight 30%. Static layer. Pooled as a ratio across languages and packages.</p>
+<p><strong>Raw value</strong> (severity points). Sum of severity points over advisories affecting resolved production dependencies (direct and transitive). Critical 10, high 5, moderate 2, low 0.5. Each advisory counts once per package; aliases are deduplicated. Withdrawn advisories are excluded.</p>
+<div class="table-wrap"><table><thead><tr><th>Raw</th><th>Score</th><th>Meaning</th></tr></thead><tbody><tr><td>0</td><td>100</td><td>No known vulnerabilities.</td></tr><tr><td>2</td><td>75</td><td>One moderate, or a few low.</td></tr><tr><td>10</td><td>50</td><td>A critical, or several highs.</td></tr><tr><td>30</td><td>0</td><td>Several criticals. Nobody is watching.</td></tr></tbody></table></div>
+<p>Scores are interpolated between anchors and clamped outside them. If there is nothing to count, the score is 100.</p>
+<p><strong>How it is measured.</strong></p>
+<ul><li>TypeScript / JavaScript: osv-scanner on the lockfile, against the OSV snapshot for the as-of date. Production dependencies only.</li><li>Python: osv-scanner on the lockfile, against the OSV snapshot for the as-of date. Production dependencies only.</li><li>Severity: The GitHub Security Advisory severity label when present. Otherwise the CVSS v3.1 base score band (critical 9.0-10.0, high 7.0-8.9, moderate 4.0-6.9, low 0.1-3.9). Otherwise moderate.</li></ul>
+<p><strong>Why.</strong> Severity points stop one critical advisory from scoring the same as one low one. The count is not normalized by repository size, because a vulnerability's risk does not shrink as the codebase grows. Development-only dependencies are reported separately and not scored.</p>
+<p><strong>Sources.</strong></p>
+<ul><li>OSV schema (published, withdrawn, aliases). <a href="https://ossf.github.io/osv-schema/" rel="noreferrer">https://ossf.github.io/osv-schema/</a></li><li>FIRST. CVSS v3.1 Specification, qualitative severity rating scale. <a href="https://www.first.org/cvss/v3.1/specification-document" rel="noreferrer">https://www.first.org/cvss/v3.1/specification-document</a></li></ul>
+<h4 id="p5-2">5.2 Dependencies a major version behind</h4>
+<p>Weight 20%. Static layer. Pooled as a ratio across languages and packages.</p>
+<p><strong>Raw value</strong> (percent). Direct dependencies (production and development) whose resolved version is at least one major version behind the highest stable, non-yanked version published on or before the as-of date / all direct dependencies. For 0.x versions, a minor version bump counts as major.</p>
+<div class="table-wrap"><table><thead><tr><th>Raw</th><th>Score</th><th>Meaning</th></tr></thead><tbody><tr><td>0</td><td>100</td><td>Every direct dependency is on its current major.</td></tr><tr><td>10</td><td>75</td><td>A few dependencies are behind.</td></tr><tr><td>25</td><td>50</td><td>A quarter of dependencies are behind.</td></tr><tr><td>50</td><td>0</td><td>Upgrades have stopped.</td></tr></tbody></table></div>
+<p>Scores are interpolated between anchors and clamped outside them. If there is nothing to count, the score is 100.</p>
+<p><strong>How it is measured.</strong></p>
+<ul><li>TypeScript / JavaScript: npm registry publish times from the registry snapshot.</li><li>Python: PyPI release upload times from the registry snapshot.</li></ul>
+<p><strong>Why.</strong> Each major version behind is a migration someone will have to do, and an agent writing code against current documentation will use APIs the installed version does not have. Development dependencies are included because outdated tooling affects every change.</p>
+<p><strong>Sources.</strong></p>
+<ul><li>Semantic Versioning 2.0.0, item 4 (major version zero). <a href="https://semver.org" rel="noreferrer">https://semver.org</a></li></ul>
+<h4 id="p5-3">5.3 Lockfile</h4>
+<p>Weight 15%. Static layer. Scored per language and package, then combined by logic-line weight.</p>
+<p><strong>Raw value</strong> (level). Whether a lockfile exists and matches the manifest.</p>
+<div class="table-wrap"><table><thead><tr><th>Level</th><th>Score</th><th>Meaning</th></tr></thead><tbody><tr><td>none</td><td>0</td><td>No lockfile. Every install can resolve different versions.</td></tr><tr><td>out_of_sync</td><td>40</td><td>A lockfile exists but does not match the manifest.</td></tr><tr><td>in_sync</td><td>100</td><td>The lockfile matches the manifest.</td></tr></tbody></table></div>
+<p><strong>How it is measured.</strong></p>
+<ul><li>TypeScript / JavaScript: package-lock.json, npm-shrinkwrap.json, pnpm-lock.yaml, yarn.lock or bun.lock. In sync means every dependency declared in package.json is present in the lockfile with a version that satisfies its range.</li><li>Python: uv.lock, poetry.lock, pdm.lock, Pipfile.lock, or requirements files with every requirement pinned with == and --hash. In sync means every dependency declared in pyproject.toml (or Pipfile) is in the lockfile with a version that satisfies its specifier, or for uv.lock and poetry.lock, the lockfile's recorded manifest hash matches.</li></ul>
+<p><strong>Why.</strong> Without a lockfile, two installs of the same commit can produce different code. Results stop being reproducible, including this methodology's results.</p>
+<p><strong>Sources.</strong></p>
+<ul><li>npm ci documentation. <a href="https://docs.npmjs.com/cli/commands/npm-ci" rel="noreferrer">https://docs.npmjs.com/cli/commands/npm-ci</a></li></ul>
+<h4 id="p5-4">5.4 Secrets in the working tree</h4>
+<p>Weight 20%. Static layer. Scored per language and package, then combined by logic-line weight.</p>
+<p><strong>Raw value</strong> (count). Secrets found by the pinned gitleaks default ruleset in every tracked file at the scanned commit. .healthignore does not apply. .gitleaksignore applies and is part of the ignore set.</p>
+<div class="table-wrap"><table><thead><tr><th>Raw</th><th>Score</th><th>Meaning</th></tr></thead><tbody><tr><td>0</td><td>100</td><td>No secrets in the code.</td></tr><tr><td>1</td><td>0</td><td>At least one secret is in the code.</td></tr></tbody></table></div>
+<p>Scores are interpolated between anchors and clamped outside them. If there is nothing to count, the score is 100.</p>
+<p><strong>How it is measured.</strong></p>
+<ul><li>All languages: gitleaks dir on the checkout, default ruleset of the pinned version.</li></ul>
+<p><strong>Why.</strong> One committed secret is enough to cause a breach, so the parameter is binary. Secrets in git history are reported but not scored, because the fix is rotating the key, which cannot be seen in the code.</p>
+<p><strong>Sources.</strong></p>
+<ul><li>CWE-798: Use of Hard-coded Credentials. <a href="https://cwe.mitre.org/data/definitions/798.html" rel="noreferrer">https://cwe.mitre.org/data/definitions/798.html</a></li><li>gitleaks. <a href="https://github.com/gitleaks/gitleaks" rel="noreferrer">https://github.com/gitleaks/gitleaks</a></li></ul>
+<h4 id="p5-5">5.5 Dependency declaration errors</h4>
+<p>Weight 15%. Static layer. Pooled as a ratio across languages and packages.</p>
+<p><strong>Raw value</strong> (percent). (Declared dependencies that are never imported + imported packages that are not declared) / declared direct dependencies.</p>
+<div class="table-wrap"><table><thead><tr><th>Raw</th><th>Score</th><th>Meaning</th></tr></thead><tbody><tr><td>0</td><td>100</td><td>The manifest matches the code.</td></tr><tr><td>5</td><td>75</td><td>A few stale or missing entries.</td></tr><tr><td>15</td><td>50</td><td>The manifest and the code have drifted apart.</td></tr><tr><td>30</td><td>0</td><td>Nobody maintains the manifest.</td></tr></tbody></table></div>
+<p>Scores are interpolated between anchors and clamped outside them. If there is nothing to count, the score is 100.</p>
+<p><strong>How it is measured.</strong></p>
+<ul><li>TypeScript / JavaScript: knip unused dependencies plus unlisted dependencies.</li><li>Python: deptry DEP001 (missing), DEP002 (unused) and DEP003 (transitive imported directly). DEP004 (development dependency used in production code) is not counted.</li></ul>
+<p><strong>Why.</strong> An undeclared import works until the transitive dependency that provides it changes. An unused declaration adds install time and attack surface. Both mislead a reader about what the code depends on.</p>
+<p><strong>Sources.</strong></p>
+<ul><li>deptry rules. <a href="https://deptry.com/rules-violations/" rel="noreferrer">https://deptry.com/rules-violations/</a></li></ul>
+<h3 id="d6">D6. Operability &amp; feedback loop</h3>
+<p><strong>Question.</strong> Can someone new set it up, check a change and know they are done?</p>
+<p><strong>Why it matters for agents.</strong> An agent needs a command that tells it whether its change is correct, and it needs to find that command without asking. A slow or missing check means the agent stops early or guesses.</p>
+<div class="table-wrap"><table><thead><tr><th>#</th><th>Parameter</th><th>Layer</th><th>Weight</th></tr></thead><tbody><tr><td>6.1</td><td>Clean install and build</td><td>Execution</td><td>25%</td></tr><tr><td>6.2</td><td>One-command verify</td><td>Static</td><td>15%</td></tr><tr><td>6.3</td><td>Feedback loop time</td><td>Execution</td><td>10%</td></tr><tr><td>6.4</td><td>CI runs the checks on pull requests</td><td>Static</td><td>20%</td></tr><tr><td>6.5</td><td>Reproducible environment</td><td>Static</td><td>15%</td></tr><tr><td>6.6</td><td>Commands documented for agents</td><td>Static</td><td>15%</td></tr></tbody></table></div>
+<p><strong>Script resolution.</strong> Parameters 6.2, 6.4 and 6.6 follow package.json scripts, Makefile targets, justfile recipes, tox and nox sessions, and pyproject.toml script tables up to 3 levels deep. Recognised tools: typecheckers tsc, vue-tsc, pyright, basedpyright, mypy; linters eslint, biome, oxlint, ruff, flake8, pylint; test runners vitest, jest, mocha, node --test, pytest, python -m unittest, tox, nox. The prefixes npx, bunx, pnpm exec, yarn, uv run, poetry run, pdm run and python -m are removed before a command is matched.</p>
+<h4 id="p6-1">6.1 Clean install and build</h4>
+<p>Weight 25%. Execution layer. Scored per language and package, then combined by logic-line weight.</p>
+<p><strong>Raw value</strong> (level). Result of a clean install from the lockfile, followed by the build step, in the pinned runner.</p>
+<div class="table-wrap"><table><thead><tr><th>Level</th><th>Score</th><th>Meaning</th></tr></thead><tbody><tr><td>install_fails</td><td>0</td><td>The project does not install from a clean checkout.</td></tr><tr><td>build_fails</td><td>40</td><td>It installs, but the build fails.</td></tr><tr><td>works</td><td>100</td><td>It installs and builds from a clean checkout. A project with no build step scores 100 when the install succeeds.</td></tr></tbody></table></div>
+<p><strong>How it is measured.</strong></p>
+<ul><li>TypeScript / JavaScript: Install: npm ci, pnpm install --frozen-lockfile, yarn install --immutable or bun install --frozen-lockfile, chosen by lockfile; npm install when there is no lockfile. Build: the build script in package.json, when one exists.</li><li>Python: Install: uv sync --frozen, poetry install --sync, pdm sync, pipenv sync, or pip install -r on the requirements files, chosen by lockfile; pip install . when there is only a pyproject.toml. Build: python manage.py check for Django projects; otherwise importing each first-party top-level package.</li></ul>
+<p><strong>Why.</strong> Everything in the execution layer depends on this step. A project that does not install from a clean checkout depends on someone's machine.</p>
+<h4 id="p6-2">6.2 One-command verify</h4>
+<p>Weight 15%. Static layer. Scored per language and package, then combined by logic-line weight.</p>
+<p><strong>Raw value</strong> (count of checks (0-3)). The largest number of the three checks (typecheck, lint, tests) that a single entry point runs: one package.json script, Makefile target, justfile recipe, tox or nox session, or pyproject script.</p>
+<div class="table-wrap"><table><thead><tr><th>Level</th><th>Score</th><th>Meaning</th></tr></thead><tbody><tr><td>0</td><td>0</td><td>No single command runs any check.</td></tr><tr><td>1</td><td>33</td><td>One command runs one check.</td></tr><tr><td>2</td><td>66</td><td>One command runs two checks.</td></tr><tr><td>3</td><td>100</td><td>One command runs typecheck, lint and tests.</td></tr></tbody></table></div>
+<p><strong>How it is measured.</strong></p>
+<ul><li>All languages: Static resolution of entry points as described in script_resolution.</li></ul>
+<p><strong>Why.</strong> "Run this and it tells you if you are done" is the most useful fact an agent can learn about a repository. Without it, the agent has to find and run each check separately, and often skips one.</p>
+<h4 id="p6-3">6.3 Feedback loop time</h4>
+<p>Weight 10%. Execution layer. Scores 0 if any of these steps fail: install, typecheck run, lint run, test run. Scored per language and package, then combined by logic-line weight.</p>
+<p><strong>Raw value</strong> (seconds). Summed wall-clock time of the methodology's own typecheck (2.1), lint (2.5) and test (1.1) runs on the pinned runner.</p>
+<div class="table-wrap"><table><thead><tr><th>Raw</th><th>Score</th><th>Meaning</th></tr></thead><tbody><tr><td>60</td><td>100</td><td>A full check takes about a minute.</td></tr><tr><td>180</td><td>75</td><td>A full check takes a few minutes.</td></tr><tr><td>600</td><td>50</td><td>The ten-minute build.</td></tr><tr><td>1200</td><td>0</td><td>Nobody runs the full check locally.</td></tr></tbody></table></div>
+<p>Scores are interpolated between anchors and clamped outside them. If there is nothing to count, the score is 0.</p>
+<p><strong>How it is measured.</strong></p>
+<ul><li>All languages: Wall-clock time recorded by the orchestrator for the three steps.</li></ul>
+<p><strong>Why.</strong> A slow check gets run less often, by people and by agents. This is the only parameter whose raw value varies between identical runs, so its weight is low and the runner hardware is fixed.</p>
+<p><strong>Sources.</strong></p>
+<ul><li>Beck, K. Extreme Programming Explained, 2nd ed. Addison-Wesley, 2004 (Ten-Minute Build).</li><li>Fowler, M. Continuous Integration. <a href="https://martinfowler.com/articles/continuousIntegration.html" rel="noreferrer">https://martinfowler.com/articles/continuousIntegration.html</a></li></ul>
+<h4 id="p6-4">6.4 CI runs the checks on pull requests</h4>
+<p>Weight 20%. Static layer. Scored per language and package, then combined by logic-line weight.</p>
+<p><strong>Raw value</strong> (count of checks (0-3)). How many of the three checks (typecheck, lint, tests) CI runs on pull requests or on every push. Checks may be spread across jobs and workflows.</p>
+<div class="table-wrap"><table><thead><tr><th>Level</th><th>Score</th><th>Meaning</th></tr></thead><tbody><tr><td>0</td><td>0</td><td>CI runs no checks, or there is no CI.</td></tr><tr><td>1</td><td>33</td><td>CI runs one check.</td></tr><tr><td>2</td><td>66</td><td>CI runs two checks.</td></tr><tr><td>3</td><td>100</td><td>CI runs typecheck, lint and tests on every pull request.</td></tr></tbody></table></div>
+<p><strong>How it is measured.</strong></p>
+<ul><li>All languages: CI files as listed in 3.1. A workflow counts if it is triggered on pull_request, pull_request_target, merge_request events, or on push without a branch filter that limits it to the default branch. Commands are resolved as described in script_resolution.</li></ul>
+<p><strong>Why.</strong> Local checks are optional; CI checks are not. CI is what keeps the score from dropping after the audit ends.</p>
+<p><strong>Sources.</strong></p>
+<ul><li>Fowler, M. Continuous Integration. <a href="https://martinfowler.com/articles/continuousIntegration.html" rel="noreferrer">https://martinfowler.com/articles/continuousIntegration.html</a></li></ul>
+<h4 id="p6-5">6.5 Reproducible environment</h4>
+<p>Weight 15%. Static layer. Scored per language and package, then combined by logic-line weight.</p>
+<p><strong>Raw value</strong> (score). Mean of two components.</p>
+<p>The score is the mean of two components, each 0-100:</p>
+<ul><li><strong>Runtime version pinned</strong>: 100 if pinned, 0 if not. Counts: Any of .nvmrc, .node-version, .tool-versions, mise.toml, engines.node in package.json, volta in package.json, .python-version, requires-python in pyproject.toml, or runtime.txt.</li><li><strong>Environment variables documented</strong>: Variable names read in logic files that appear in an env example file / all variable names read in logic files, times 100. No variables read scores 100. Example files: .env.example, .env.sample, .env.template, .env.dist, example.env. Reads: process.env.X, process.env["X"], destructuring from process.env, import.meta.env.X, os.environ["X"], os.environ.get("X"), os.getenv("X"). Excluded names: NODE_ENV, CI, HOME, PATH, PWD, TZ, NEXT_RUNTIME, and names starting with VERCEL_, NETLIFY, RENDER_, RAILWAY_ or GITHUB_.</li></ul>
+<p><strong>How it is measured.</strong></p>
+<ul><li>All languages: Static reads of the files and patterns listed in the components.</li></ul>
+<p><strong>Why.</strong> A missing environment variable is a common reason a fresh checkout does not start, and an agent cannot guess the names. Config read from the environment, with the names documented, is the Twelve-Factor approach.</p>
+<p><strong>Sources.</strong></p>
+<ul><li>The Twelve-Factor App, III. Config. <a href="https://12factor.net/config" rel="noreferrer">https://12factor.net/config</a></li></ul>
+<h4 id="p6-6">6.6 Commands documented for agents</h4>
+<p>Weight 15%. Static layer. Scored per language and package, then combined by logic-line weight.</p>
+<p><strong>Raw value</strong> (level). Whether the repository documents how to install, run and check it, and whether the documented commands exist.</p>
+<div class="table-wrap"><table><thead><tr><th>Level</th><th>Score</th><th>Meaning</th></tr></thead><tbody><tr><td>none</td><td>0</td><td>No documented commands.</td></tr><tr><td>readme</td><td>50</td><td>README documents commands, or an agent instructions file exists but at least one command in it does not resolve.</td></tr><tr><td>agent_file</td><td>100</td><td>AGENTS.md or CLAUDE.md at the repository root documents commands, and every command in it resolves.</td></tr></tbody></table></div>
+<p><strong>How it is measured.</strong></p>
+<ul><li>All languages: A command is an inline code span or a line in a fenced code block that starts with a package manager (npm, pnpm, yarn, bun, npx, uv, poetry, pdm, pip, pipenv, python, make, just) or a recognised tool. It resolves when the script, target, recipe, session or tool it names exists in the repository or in its declared dependencies.</li></ul>
+<p><strong>Why.</strong> An agent reads AGENTS.md or CLAUDE.md before anything else. Commands in that file that do not exist send it down the wrong path, which is worse than no file, so they drop the level to README.</p>
+<p><strong>Sources.</strong></p>
+<ul><li>AGENTS.md. <a href="https://agents.md" rel="noreferrer">https://agents.md</a></li></ul>
+<h2 id="s7">7. Report-only signals</h2>
+<p>These appear in the report and never change the score.</p>
+<div class="table-wrap"><table><thead><tr><th>Signal</th><th>What it shows</th><th>Why it is not scored</th></tr></thead><tbody><tr><td>Hotspots</td><td>Files ranked by churn (commits in the last 12 months) × cognitive complexity</td><td>The "fix these first" list. Churn describes how the team works, not the code's state, and would make two runs of the same tree differ.</td></tr><tr><td>Secrets in git history</td><td>Secrets in past commits</td><td>The fix is rotating the key, which the code cannot show.</td></tr><tr><td>Development dependency vulnerabilities</td><td>Advisories in packages reachable only from development dependencies</td><td>They do not ship to production.</td></tr><tr><td>Excluded lines</td><td>Percentage of lines excluded by <code>.healthignore</code></td><td>Makes exclusions visible to the reader.</td></tr><tr><td>Per-package breakdown</td><td>Every dimension per workspace package and per language</td><td>Shows where the pooled score comes from.</td></tr></tbody></table></div>
+<h2 id="s8">8. What a 100 looks like</h2>
+<p>Concrete descriptions of a repository that scores 100 on every parameter.</p>
+<h3 id="typescript">TypeScript</h3>
+<ul><li><strong>Tests.</strong> vitest with <code>coverage.all</code>, at least 80% line and 70% branch coverage. Every module has a test file next to it. Every test asserts something. The suite is green.</li><li><strong>Types.</strong> <code>tsconfig.json</code> with <code>"strict": true</code> and <code>"noUncheckedIndexedAccess": true</code>. <code>tsc --noEmit</code> reports 0 errors. No <code>any</code>, no <code>as</code> casts other than <code>as const</code>, no <code>!</code> non-null assertions, no <code>@ts-ignore</code>. Every exported function has typed parameters.</li><li><strong>Lint.</strong> 0 findings from the pinned correctness rules, including <code>no-floating-promises</code> and <code>no-misused-promises</code>.</li><li><strong>Architecture.</strong> A <code>.dependency-cruiser.cjs</code> file with direction rules, run by <code>depcruise</code> in CI. No import cycles. Each feature folder has an <code>index.ts</code>, and other features import only from it. If there is a <code>domain/</code> folder, it imports no framework, database or network packages.</li><li><strong>Size.</strong> No function above cognitive complexity 15. No file above 500 logic lines. Under 3% duplication. <code>knip</code> reports no unused exports, files or dependencies.</li><li><strong>Dependencies.</strong> A lockfile in sync with <code>package.json</code>. No known vulnerabilities in production dependencies. Every direct dependency on its current major version. No secrets in tracked files.</li><li><strong>Operability.</strong> <code>npm ci &amp;&amp; npm run build</code> works on a clean checkout. One script runs everything:<pre><code>"scripts": {
+  "typecheck": "tsc --noEmit",
+  "lint": "eslint .",
+  "test": "vitest run --coverage",
+  "check": "npm run typecheck &amp;&amp; npm run lint &amp;&amp; npm run test"
+}</code></pre><p><code>npm run check</code> takes under a minute. CI runs it on every pull request. <code>.nvmrc</code> pins Node. Every <code>process.env.X</code> the code reads is listed in <code>.env.example</code>. <code>AGENTS.md</code> lists the commands, and every command in it exists.</p></li></ul>
+<h3 id="python">Python</h3>
+<p>A Python project at 100 uses a small set of modern tools. Most of them are configured in <code>pyproject.toml</code>.</p>
+<ul><li><strong>Project and lockfile.</strong> <code>uv</code> manages the environment. <code>uv.lock</code> is committed. <code>.python-version</code> pins the interpreter, and <code>requires-python</code> is set.</li><li><strong>Tests.</strong> pytest with pytest-cov, run with <code>--cov=&lt;package&gt; --cov-branch</code> so files no test imports are counted. At least 80% line and 70% branch coverage. Every module has a <code>test_&lt;module&gt;.py</code>. Every test has an <code>assert</code> or uses <code>pytest.raises</code>.</li><li><strong>Types.</strong> pyright in strict mode (or mypy with <code>strict = true</code>), with 0 errors. Every public function annotates its parameters and its return type. No <code>Any</code>, no <code>cast()</code>, no <code># type: ignore</code>. Python does not enforce annotations at runtime; only the typechecker reads them.</li><li><strong>Lint.</strong> ruff reports 0 findings for rule sets F (Pyflakes: undefined names, unused imports), B (bugbear: likely bugs such as mutable default arguments) and E9 (syntax errors).</li><li><strong>Architecture.</strong> import-linter contracts declare the layers, and CI runs <code>lint-imports</code>. No import cycles (Python cycles also cause import-order errors at runtime). Code that is only needed for type annotations is imported under <code>if TYPE_CHECKING:</code>. A <code>domain/</code> package imports no framework, ORM or HTTP client.</li><li><strong>Size.</strong> No function above cognitive complexity 15 (complexipy). No module above 500 logic lines. Under 3% duplication. vulture finds no unused code, and deptry finds no unused, missing or transitive-only dependencies.</li><li><strong>Operability.</strong> <code>uv sync --frozen</code> works on a clean checkout, and the package imports. One command runs all checks, CI runs it on pull requests, and <code>AGENTS.md</code> lists it.</li></ul>
+<p>Example <code>pyproject.toml</code>:</p>
+<pre><code>[project]
+name = "billing"
+requires-python = "&gt;=3.12"
+dependencies = ["fastapi&gt;=0.115", "sqlalchemy&gt;=2.0"]
+
+[dependency-groups]
+dev = ["pytest&gt;=8", "pytest-cov&gt;=5", "pyright&gt;=1.1.380", "ruff&gt;=0.6", "import-linter&gt;=2"]
+
+[tool.pyright]
+typeCheckingMode = "strict"
+
+[tool.ruff.lint]
+select = ["E", "F", "B", "I", "UP"]
+
+[tool.pytest.ini_options]
+addopts = "--cov=billing --cov-branch"
+
+[tool.importlinter]
+root_package = "billing"
+
+[[tool.importlinter.contracts]]
+name = "Layers"
+type = "layers"
+layers = ["billing.api", "billing.services", "billing.domain"]</code></pre>
+<p>Example <code>Makefile</code> target:</p>
+<pre><code>check:
+	uv run pyright
+	uv run ruff check
+	uv run pytest</code></pre>
+<h2 id="s9">9. Known limits of v1.0</h2>
+<ol><li><strong>Anchors are not calibrated against a corpus.</strong> They come from the cited sources and from judgement. The next step is to run v1.0 on a set of repositories and check that the bands match how those repositories feel to work in. Any anchor change will be a new version.</li><li><strong>Test quality is measured only by assertions.</strong> A test can assert something trivial. Mutation testing would measure this directly but is too slow for every run, so it is out of v1.0.</li><li><strong>Tests that need external services fail.</strong> No database, queue or browser is provided. Integration tests that need one count as failed in 1.1, and the code they cover counts as uncovered.</li><li><strong>Declared import rules replace the preset.</strong> A repository can declare a permissive rules file and avoid the preset's rules. 3.1 still rewards the declaration with 50 or 100.</li><li><strong>Domain-driven design is checked only at the boundary.</strong> 3.5 checks that domain code does not import infrastructure. It does not judge whether the domain model is good.</li><li><strong>Static analysis misses dynamic behaviour.</strong> Dependency injection, plugin registration and string-based imports can make used code look unused (4.4) or hide imports (D3).</li><li><strong>Security covers known advisories and committed secrets only.</strong> There is no static application security testing (SAST).</li><li><strong>6.3 varies between runs.</strong> It is the only parameter that does, and it has a weight of 10%.</li><li><strong>Other languages are ignored.</strong> Files in other languages do not count toward any parameter.</li></ol>
+<h2 id="s10">10. Versioning</h2>
+<ul><li>The methodology version is in <code>methodology.yaml</code> and in every <code>run.json</code>.</li><li>Any change that can change a score creates a new version: a weight, an anchor, a band, a threshold, a rule, a preset, or the scope. Wording changes that cannot change a score do not.</li><li>Runs from different methodology versions are never compared.</li><li>Tool upgrades produce a new image digest. Runs with different digests are not compared either.</li></ul>
+<h2 id="s11">11. Sources</h2>
+<ul><li>AGENTS.md. <a href="https://agents.md" rel="noreferrer">https://agents.md</a></li><li>Arguelles, Ivanković, Bender. Code Coverage Best Practices. Google Testing Blog, 2020. <a href="https://testing.googleblog.com/2020/08/code-coverage-best-practices.html" rel="noreferrer">https://testing.googleblog.com/2020/08/code-coverage-best-practices.html</a></li><li>Beck, K. Extreme Programming Explained, 2nd ed. Addison-Wesley, 2004 (Ten-Minute Build).</li><li>Campbell, G. A. Cognitive Complexity: A new way of measuring understandability. SonarSource, 2018. <a href="https://www.sonarsource.com/docs/CognitiveComplexity.pdf" rel="noreferrer">https://www.sonarsource.com/docs/CognitiveComplexity.pdf</a></li><li>Cockburn, A. Hexagonal Architecture (Ports and Adapters), 2005. <a href="https://alistair.cockburn.us/hexagonal-architecture/" rel="noreferrer">https://alistair.cockburn.us/hexagonal-architecture/</a></li><li>CWE-798: Use of Hard-coded Credentials. <a href="https://cwe.mitre.org/data/definitions/798.html" rel="noreferrer">https://cwe.mitre.org/data/definitions/798.html</a></li><li>dependency-cruiser rules reference. <a href="https://github.com/sverweij/dependency-cruiser/blob/main/doc/rules-reference.md" rel="noreferrer">https://github.com/sverweij/dependency-cruiser/blob/main/doc/rules-reference.md</a></li><li>deptry rules. <a href="https://deptry.com/rules-violations/" rel="noreferrer">https://deptry.com/rules-violations/</a></li><li>ESLint max-lines rule, default 300. <a href="https://eslint.org/docs/latest/rules/max-lines" rel="noreferrer">https://eslint.org/docs/latest/rules/max-lines</a></li><li>Evans, E. Domain-Driven Design. Addison-Wesley, 2003.</li><li>FastAPI: Bigger Applications - Multiple Files. <a href="https://fastapi.tiangolo.com/tutorial/bigger-applications/" rel="noreferrer">https://fastapi.tiangolo.com/tutorial/bigger-applications/</a></li><li>FIRST. CVSS v3.1 Specification, qualitative severity rating scale. <a href="https://www.first.org/cvss/v3.1/specification-document" rel="noreferrer">https://www.first.org/cvss/v3.1/specification-document</a></li><li>Fowler, M. Continuous Integration. <a href="https://martinfowler.com/articles/continuousIntegration.html" rel="noreferrer">https://martinfowler.com/articles/continuousIntegration.html</a></li><li>gitleaks. <a href="https://github.com/gitleaks/gitleaks" rel="noreferrer">https://github.com/gitleaks/gitleaks</a></li><li>HackSoft Django Styleguide. <a href="https://github.com/HackSoftware/Django-Styleguide" rel="noreferrer">https://github.com/HackSoftware/Django-Styleguide</a></li><li>import-linter contract types. <a href="https://import-linter.readthedocs.io/en/stable/contract_types.html" rel="noreferrer">https://import-linter.readthedocs.io/en/stable/contract_types.html</a></li><li>jscpd. <a href="https://github.com/kucherenko/jscpd" rel="noreferrer">https://github.com/kucherenko/jscpd</a></li><li>knip. <a href="https://knip.dev" rel="noreferrer">https://knip.dev</a></li><li>Martin, R. C. Agile Software Development: Principles, Patterns, and Practices. Prentice Hall, 2002 (the Acyclic Dependencies Principle).</li><li>Martin, R. C. Clean Architecture. Prentice Hall, 2017 (the Dependency Rule).</li><li>McCabe, T. J. A Complexity Measure. IEEE Transactions on Software Engineering, 1976 (cyclomatic complexity, threshold 10).</li><li>mypy command line: --strict. <a href="https://mypy.readthedocs.io/en/stable/command_line.html" rel="noreferrer">https://mypy.readthedocs.io/en/stable/command_line.html</a></li><li>Next.js: Server and Client Components, keeping server-only code out of the client environment. <a href="https://nextjs.org/docs/app/getting-started/server-and-client-components" rel="noreferrer">https://nextjs.org/docs/app/getting-started/server-and-client-components</a></li><li>npm ci documentation. <a href="https://docs.npmjs.com/cli/commands/npm-ci" rel="noreferrer">https://docs.npmjs.com/cli/commands/npm-ci</a></li><li>OSV schema (published, withdrawn, aliases). <a href="https://ossf.github.io/osv-schema/" rel="noreferrer">https://ossf.github.io/osv-schema/</a></li><li>PEP 484: Type Hints. <a href="https://peps.python.org/pep-0484/" rel="noreferrer">https://peps.python.org/pep-0484/</a></li><li>Pylint too-many-lines (C0302), max-module-lines default 1000.</li><li>Pyright configuration: typeCheckingMode. <a href="https://microsoft.github.io/pyright/#/configuration" rel="noreferrer">https://microsoft.github.io/pyright/#/configuration</a></li><li>Ruff rules. <a href="https://docs.astral.sh/ruff/rules/" rel="noreferrer">https://docs.astral.sh/ruff/rules/</a></li><li>Semantic Versioning 2.0.0, item 4 (major version zero). <a href="https://semver.org" rel="noreferrer">https://semver.org</a></li><li>SonarQube default quality gate (Sonar way): coverage on new code at least 80%.</li><li>SonarQube default quality gate (Sonar way): duplicated lines on new code at most 3%.</li><li>SonarQube rule S3776 (Cognitive Complexity of functions should not be too high), default threshold 15.</li><li>The Twelve-Factor App, III. Config. <a href="https://12factor.net/config" rel="noreferrer">https://12factor.net/config</a></li><li>TypeScript TSConfig reference: noUncheckedIndexedAccess. <a href="https://www.typescriptlang.org/tsconfig#noUncheckedIndexedAccess" rel="noreferrer">https://www.typescriptlang.org/tsconfig#noUncheckedIndexedAccess</a></li><li>TypeScript TSConfig reference: strict. <a href="https://www.typescriptlang.org/tsconfig#strict" rel="noreferrer">https://www.typescriptlang.org/tsconfig#strict</a></li><li>typescript-eslint rules. <a href="https://typescript-eslint.io/rules/" rel="noreferrer">https://typescript-eslint.io/rules/</a></li><li>TypeScript: Type checking JavaScript files (checkJs). <a href="https://www.typescriptlang.org/docs/handbook/type-checking-javascript-files.html" rel="noreferrer">https://www.typescriptlang.org/docs/handbook/type-checking-javascript-files.html</a></li><li>vulture. <a href="https://github.com/jendrikseipp/vulture" rel="noreferrer">https://github.com/jendrikseipp/vulture</a></li></ul>
+      <p class="license">This methodology is licensed under <a href="https://creativecommons.org/licenses/by/4.0/" rel="noreferrer">Creative Commons Attribution 4.0 International (CC BY 4.0)</a>. You may share and adapt it, including commercially, if you credit vibecodedshit.com and indicate any changes.</p>
+    </article>
+
+    <footer>
+      <div class="no-frameworks">No frameworks were harmed in the making of this site.</div>
+      <div>&copy; 2026 vibecodedshit.com · Plain HTML, CSS and JS.</div>
+    </footer>
+  </main>
+
+  <script>
+    (function () {
+      'use strict';
+      const toggle = document.querySelector('.nav-toggle');
+      const nav = document.getElementById('primary-nav');
+      if (!toggle || !nav) return;
+      function setOpen(open) {
+        nav.classList.toggle('open', open);
+        toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+      }
+      toggle.addEventListener('click', function () { setOpen(!nav.classList.contains('open')); });
+      nav.addEventListener('click', function (e) { if (e.target.closest('a')) setOpen(false); });
+      document.addEventListener('keydown', function (e) { if (e.key === 'Escape') setOpen(false); });
+    })();
+  </script>
+</body>
+</html>
