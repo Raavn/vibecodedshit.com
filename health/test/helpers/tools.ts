@@ -59,5 +59,6 @@ export function fakeToolKit(
     recordVersion: (name, version) => real.recordVersion(name, version),
     versions: () => real.versions(),
     memo: (key, make) => real.memo(key, make),
+    notFoundReason: (name) => real.notFoundReason(name),
   };
 }

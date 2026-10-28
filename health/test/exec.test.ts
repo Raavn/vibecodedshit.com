@@ -1,3 +1,4 @@
+import { spawnSync } from 'node:child_process';
 import { EventEmitter } from 'node:events';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { mkdtempSync } from 'node:fs';
@@ -28,6 +29,7 @@ const methodology = loadMethodology('1.0');
 // Full mode needs the static tools of the whole registry; these tests are about the execution layer only.
 const executionMeasurers = [p21, p25, p61];
 const { runner: runnerConfig, timeouts_seconds: timeouts } = methodology.execution;
+const healthDir = path.resolve(fixturesDir, '..', '..');
 
 const fullOpts = (repoPath: string, execRunner: ReturnType<typeof fakeRunner>) => ({
   repoPath,
@@ -64,6 +66,7 @@ function healthy(overrides: (spec: StepSpec) => FakeStep | undefined = () => und
     if (custom) return custom;
     if (spec.step === 'typecheck') return { exitCode: 0, files: { 'tsc.txt': '', 'pyright.json': '{"generalDiagnostics":[]}', 'mypy.txt': '' } };
     if (spec.step === 'lint') return { exitCode: 0, files: { 'eslint.json': '[]', 'ruff.json': '[]' } };
+    if (spec.step === 'knip') return { exitCode: 0, files: { 'knip.json': '{"issues":[]}' } };
     return { exitCode: 0 };
   });
 }
@@ -195,6 +198,7 @@ describe('step commands', () => {
     expect(byStep.install?.timeoutSeconds).toBe(timeouts.install);
     expect(byStep.typecheck?.timeoutSeconds).toBe(timeouts.typecheck);
     expect(byStep.lint?.timeoutSeconds).toBe(timeouts.lint);
+    expect(byStep.knip?.timeoutSeconds).toBe(timeouts.lint);
   });
 
   it('turns the network on for install only', async () => {
@@ -206,6 +210,18 @@ describe('step commands', () => {
       ['build', false],
       ['typecheck', false],
       ['lint', false],
+      ['knip', false],
+    ]);
+  });
+
+  it('runs knip in the image with the baked-in empty config, its JSON report captured to /out', async () => {
+    const runner = healthy();
+    await runScan(fullOpts(materializeFixture('exec-lint-finding'), runner));
+    expect(runner.specs.filter((s) => s.step === 'knip').map((s) => [s.cwd, s.argv])).toEqual([
+      [
+        '.',
+        ['health-capture', '/out/knip.json', 'env', 'DOTENV_CONFIG_QUIET=true', 'knip', '--reporter', 'json', '--no-progress', '--no-config-hints', '--config', '/opt/health/knip.json'],
+      ],
     ]);
   });
 
@@ -378,7 +394,7 @@ describe('fixtures through a fake runner', () => {
     expect(result.mode).toBe('full');
     expect(result.layers).toEqual(['static', 'execution']);
     expect(result.comparable).toBe(false);
-    expect(result.comparableReason).toMatch(/not measured: 1\.1, 1\.2, 1\.3.*6\.3/);
+    expect(result.comparableReason).toMatch(/not measured: 1\.1 \(.+\), 1\.2 \(.+\), 1\.3 \(.+6\.3 \(/);
   });
 });
 
@@ -445,15 +461,27 @@ describe('knip on the installed work copy', () => {
     return { kit, cwds };
   }
 
+  /** Stands in for the image's knip step: the real knip with the step's argv, in the step's directory of the work copy. */
+  function knipStep(spec: StepSpec): FakeStep {
+    const argv = spec.argv.slice(spec.argv.indexOf('knip') + 1).map((arg) => (arg === '/opt/health/knip.json' ? path.join(healthDir, 'docker', 'config', 'knip.json') : arg));
+    const result = spawnSync(path.join(healthDir, 'node_modules', '.bin', 'knip'), argv, {
+      cwd: path.join(spec.workDir, spec.cwd),
+      encoding: 'utf8',
+      env: { ...process.env, DOTENV_CONFIG_QUIET: 'true' },
+    });
+    return { exitCode: result.status ?? 2, files: { 'knip.json': result.stdout } };
+  }
+
   const ratioOf = (result: RunFile, id: string): { numerator: number; denominator: number } => {
     const raw = param(result, id).raw;
     if (raw?.kind !== 'ratio') throw new Error(`${id} is not a ratio`);
     return { numerator: raw.numerator, denominator: raw.denominator };
   };
 
-  it('runs knip in the installed copy in a full run, then removes the copy', async () => {
+  it('reads the knip step that ran in the installed copy in a full run, then removes the copy', async () => {
     const dir = materializeFixture('exec-knip-vitest');
     const runner = healthy((spec) => {
+      if (spec.step === 'knip') return knipStep(spec);
       if (spec.step !== 'install') return undefined;
       installPackages(spec.workDir);
       return { exitCode: 0 };
@@ -471,9 +499,9 @@ describe('knip on the installed work copy', () => {
     const written = JSON.parse(readFileSync(outFile, 'utf8')) as RunFile;
     expect(ratioOf(written, '5.5')).toEqual(want.full.p55);
     expect(ratioOf(written, '4.4')).toEqual(want.full.p44);
-    const workDir = runner.specs[0]?.workDir as string;
-    expect(cwds.filter((c) => c.name === 'knip').map((c) => c.cwd)).toEqual([path.join(workDir, '.')]);
-    expect(existsSync(workDir)).toBe(false);
+    expect(runner.specs.filter((s) => s.step === 'knip').map((s) => s.cwd)).toEqual(['.']);
+    expect(cwds.filter((c) => c.name === 'knip')).toEqual([]);
+    expect(existsSync(runner.specs[0]?.workDir as string)).toBe(false);
   });
 
   it('is not measured in preview when knip cannot load a config', async () => {
@@ -484,12 +512,21 @@ describe('knip on the installed work copy', () => {
     }
   });
 
-  it('names the failed install when knip then fails in a full run', async () => {
+  it('scores the rest of a full run when knip then fails, with 4.4 and 5.5 not measured and the run not comparable', async () => {
     const dir = materializeFixture('exec-knip-vitest');
     const runner = healthy((spec) => (spec.step === 'install' ? { exitCode: 1 } : undefined));
     const { kit, cwds } = recordingKit();
-    await expect(runScan({ ...fullOpts(dir, runner), tools: kit, measurers: knipMeasurers })).rejects.toThrow(want.failedInstallReason);
-    expect(cwds.find((c) => c.name === 'knip')?.cwd).toBe(path.join(path.resolve(dir), '.'));
+    const result = await runScan({ ...fullOpts(dir, runner), tools: kit, measurers: [...knipMeasurers, p21, p25] });
+    expect(result.valid).toBe(true);
+    expect(result.health).not.toBeNull();
+    for (const id of ['4.4', '5.5']) {
+      expect(param(result, id).status).toBe('not_measured');
+      expect(param(result, id).reason).toContain(want.failedInstallReason);
+    }
+    expect(param(result, '6.1').status).toBe('measured');
+    expect(result.comparable).toBe(false);
+    expect(result.comparableReason).toMatch(/4\.4 \(knip exited with 2/);
+    expect(cwds.find((c) => c.name === 'knip')?.cwd).toBe(path.join(runner.specs[0]?.workDir as string, '.'));
     expect(existsSync(runner.specs[0]?.workDir as string)).toBe(false);
   });
 });

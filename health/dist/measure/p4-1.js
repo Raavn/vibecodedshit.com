@@ -7,7 +7,7 @@ import { ESLint } from 'eslint';
 import sonarjs from 'eslint-plugin-sonarjs';
 import tseslint from 'typescript-eslint';
 import { ToolError } from '../scope/types.js';
-import { failureReason, notFoundReason, unavailable } from '../tools/outcome.js';
+import { failureReason, unavailable } from '../tools/outcome.js';
 import { createWorkCopy } from '../tools/workcopy.js';
 import { healthPlugin } from './eslint/health-plugin.js';
 import { emptyTallies, logicFiles, tallyUnits, unitId } from './units.js';
@@ -77,7 +77,7 @@ const ANSI = /\x1b\[[0-9;]*m/g;
 async function runComplexipy(ctx, files) {
     const tool = await ctx.tools.resolve('complexipy');
     if (!tool)
-        return unavailable(ctx, notFoundReason('complexipy'));
+        return unavailable(ctx.tools.notFoundReason('complexipy'));
     const copy = await createWorkCopy(ctx.repoPath, files.map((f) => f.path));
     const outDir = await mkdtemp(path.join(tmpdir(), 'health-complexipy-'));
     try {
@@ -85,7 +85,7 @@ async function runComplexipy(ctx, files) {
         const result = await ctx.tools.run(tool, ['.', '--max-complexity-allowed', String(COMPLEXITY_THRESHOLD), '--no-ignore', '--ignore-complexity', '--output-format', 'json', '--output', outFile, '--quiet'], { cwd: copy.dir });
         const failure = failureReason(tool, result, [0, 1]);
         if (failure)
-            return unavailable(ctx, failure);
+            return unavailable(failure);
         let entries;
         try {
             entries = JSON.parse(readFileSync(outFile, 'utf8'));
@@ -93,13 +93,13 @@ async function runComplexipy(ctx, files) {
                 throw new Error('not an array');
         }
         catch {
-            return unavailable(ctx, 'complexipy printed no parseable JSON report');
+            return unavailable('complexipy printed no parseable JSON report');
         }
         const byRel = new Map(files.map((f) => [f.path, f]));
         const perFile = new Map();
         for (const entry of entries) {
             if (typeof entry.path !== 'string' || typeof entry.complexity !== 'number') {
-                return unavailable(ctx, 'complexipy report has an unexpected shape');
+                return unavailable('complexipy report has an unexpected shape');
             }
             const toRel = (p) => path.relative(copy.dir, path.resolve(copy.dir, p)).split(path.sep).join('/');
             // `path` is the file; if a complexipy release makes it the directory, `file_name` completes it.

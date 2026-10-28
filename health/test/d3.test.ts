@@ -3,7 +3,6 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import type { Measurement, UnitRaw } from '../src/measure/types.js';
-import { ToolError } from '../src/scope/types.js';
 import { cyclicFiles, d3Context, expected, fixtureContext, graphOf, measure, rulesOf, violations } from './helpers/d3.js';
 import { materializeFixture } from './helpers/fixture.js';
 import { fakeToolKit } from './helpers/tools.js';
@@ -130,12 +129,12 @@ describe('D3 when the tool is unavailable', () => {
     expect((await measure(ctx, '3.1')).status).toBe('measured');
   });
 
-  it('is a ToolError in full mode', async () => {
+  it('is not_measured in full mode too', async () => {
     const repo = await fixtureContext('d3-na-ts');
     const full = await d3Context(repo.repoPath, fakeToolKit(), 'full');
     const target = full('3.2');
     await target.tools.memo(`d3:graph:${target.repoPath}`, async () => ({ unavailable: 'dependency-cruiser failed: boom' }));
-    await expect(measure(full, '3.2')).rejects.toBeInstanceOf(ToolError);
+    expect(await measure(full, '3.2')).toEqual({ status: 'not_measured', reason: 'dependency-cruiser failed: boom' });
   });
 });
 

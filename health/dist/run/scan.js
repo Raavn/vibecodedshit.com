@@ -10,6 +10,7 @@ import { computeHotspots } from '../report-only/hotspots.js';
 import { loadMethodology, packageRoot } from '../methodology/load.js';
 import { buildScope } from '../scope/build.js';
 import { poolParameter } from '../scoring/pool.js';
+import { createImageToolKit } from '../tools/image.js';
 import { createToolKit } from '../tools/kit.js';
 import { breakdownFor, dimensionScores, healthFrom } from './score-run.js';
 export class NoLogicFilesError extends Error {
@@ -75,8 +76,8 @@ export async function runScan(opts, preloaded) {
             repoPath,
             methodology,
             scope,
-            runner: opts.execRunner ?? createDockerRunner(methodology.execution.runner),
-            image: { tag, digest: opts.imageDigest ?? (await imageDigest(tag)) },
+            runner: opts.execRunner ?? createDockerRunner(methodology.execution.runner, opts.dockerSpawn),
+            image: { tag, digest: opts.imageDigest ?? (await imageDigest(tag, opts.dockerSpawn)) },
         }));
     }
     try {
@@ -88,7 +89,10 @@ export async function runScan(opts, preloaded) {
 }
 /** Every measurer, then scoring. The execution work copy (`exec.workDir`) still exists while this runs. */
 async function measureAll(opts, methodology, repoPath, scope, exec) {
-    const tools = opts.tools ?? createToolKit();
+    const tools = opts.tools
+        ?? (opts.mode === 'full'
+            ? createImageToolKit({ runner: methodology.execution.runner, repoPath, ...(opts.dockerSpawn ? { spawn: opts.dockerSpawn } : {}) })
+            : createToolKit());
     const warnings = [...scope.warnings];
     const reportOnly = {};
     const parameters = [];
@@ -150,7 +154,7 @@ async function measureAll(opts, methodology, repoPath, scope, exec) {
     }
     const dimensions = dimensionScores(methodology, parameters);
     const base = baseRun(opts);
-    const unmeasured = parameters.filter((p) => p.status === 'not_measured').map((p) => p.id);
+    const unmeasured = parameters.filter((p) => p.status === 'not_measured').map((p) => `${p.id} (${p.reason})`);
     return {
         ...base,
         ...(opts.mode === 'full'

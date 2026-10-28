@@ -4,12 +4,30 @@
 // @typescript-eslint/no-unused-vars; their fatal entry is replaced by the untyped result. A real syntax error still
 // reports one fatal message in either pass. Prints the merged JSON report on stdout, exits like eslint (0 clean, 1 findings).
 import { spawnSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
 
 const UNTYPED_CONFIG = '/opt/health/eslint.untyped.config.mjs';
 const MAX_BUFFER = 512 * 1024 * 1024;
 
+/**
+ * Node's default heap (about 2 GB) is too small for typed linting of a large repository, well inside the
+ * container's memory limit: eslint then dies with "heap out of memory" (exit 2). The heap gets 75% of the
+ * container's cgroup limit (the methodology's runner.memory_gb), or 6 GB when the limit cannot be read.
+ */
+function heapMegabytes() {
+  try {
+    const limit = Number(readFileSync('/sys/fs/cgroup/memory.max', 'utf8').trim());
+    if (Number.isFinite(limit) && limit > 0) return Math.floor((limit / 1024 / 1024) * 0.75);
+  } catch {
+    // No cgroup v2 limit to read.
+  }
+  return 6144;
+}
+
+const env = { ...process.env, NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ''} --max-old-space-size=${heapMegabytes()}`.trim() };
+
 function eslint(args) {
-  return spawnSync('eslint', args, { encoding: 'utf8', maxBuffer: MAX_BUFFER, stdio: ['ignore', 'pipe', 'inherit'] });
+  return spawnSync('eslint', args, { encoding: 'utf8', maxBuffer: MAX_BUFFER, stdio: ['ignore', 'pipe', 'inherit'], env });
 }
 
 function parse(text) {

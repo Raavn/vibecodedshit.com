@@ -4,7 +4,7 @@ import path from 'node:path';
 import { stringify } from 'smol-toml';
 import { packageOf } from '../scope/packages.js';
 import { isOutcome, runKnip, type KnipOutcome } from '../tools/knip.js';
-import { failureReason, notFoundReason, unavailable } from '../tools/outcome.js';
+import { failureReason, unavailable } from '../tools/outcome.js';
 import { createWorkCopy } from '../tools/workcopy.js';
 import { readToml } from '../util/toml.js';
 import { requirementFiles } from './deps/declared.js';
@@ -41,7 +41,7 @@ const NO_SPEC = 'no-spec';
 /** deptry on a work copy of the unit with the repository's [tool.deptry] settings removed. */
 async function deptryCount(ctx: MeasureContext, tools: ToolKit, pkg: string): Promise<number | Measurement | typeof NO_SPEC> {
   const tool = await tools.resolve('deptry');
-  if (!tool) return unavailable(ctx, notFoundReason('deptry'));
+  if (!tool) return unavailable(tools.notFoundReason('deptry'));
   const dir = pkg === '.' ? '' : pkg;
   const pythonFiles = [...trackedSet(ctx.repoPath)].filter(
     (f) => f.endsWith('.py') && (dir === '' || f.startsWith(`${dir}/`)) && packageOf(f, ctx.scope.packages) === pkg,
@@ -66,21 +66,21 @@ async function deptryCount(ctx: MeasureContext, tools: ToolKit, pkg: string): Pr
     const report = path.join(outDir, 'deptry.json');
     const result = await tools.run(tool, ['.', '--json-output', report, '--no-ansi'], { cwd: path.join(copy.dir, dir) });
     const failure = failureReason(tool, result, [0, 1]);
-    if (failure) return unavailable(ctx, failure);
+    if (failure) return unavailable(failure);
     let text = '[]';
     try {
       text = await readFile(report, 'utf8');
     } catch {
       if (result.exitCode === 1 && `${result.stdout}${result.stderr}`.includes('DependencySpecificationNotFoundError')) return NO_SPEC;
-      if (result.exitCode === 1) return unavailable(ctx, 'deptry wrote no report');
+      if (result.exitCode === 1) return unavailable('deptry wrote no report');
     }
     let violations: unknown;
     try {
       violations = JSON.parse(text.trim() === '' ? '[]' : text);
     } catch {
-      return unavailable(ctx, 'deptry printed no parseable JSON report');
+      return unavailable('deptry printed no parseable JSON report');
     }
-    if (!Array.isArray(violations)) return unavailable(ctx, 'deptry report has an unexpected shape');
+    if (!Array.isArray(violations)) return unavailable('deptry report has an unexpected shape');
     const pairs = new Set<string>();
     for (const entry of violations as { error?: { code?: unknown }; module?: unknown }[]) {
       const code = entry.error?.code;
@@ -130,7 +130,7 @@ export const p55: Measurer = {
       const numerator = await deptryCount(ctx, ctx.tools, unit.package);
       if (numerator === NO_SPEC) {
         // Nothing declared and nothing deptry can read: the same 0/0 as a unit with no manifest.
-        if (denominator > 0) return unavailable(ctx, `deptry cannot read the dependencies declared in ${deps.manifest.file}`);
+        if (denominator > 0) return unavailable(`deptry cannot read the dependencies declared in ${deps.manifest.file}`);
         warnings.push(`5.5: deptry found no dependency specification in ${unit.package}`);
         counts.set(`${unit.package}\0${unit.group}`, { numerator: 0, denominator: 0 });
         continue;

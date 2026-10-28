@@ -6,7 +6,6 @@ import { loadMethodology } from '../src/methodology/load.js';
 import { recompute } from '../src/run/recompute.js';
 import type { RunFile, RunParameter } from '../src/run/schema.js';
 import { runScan } from '../src/run/scan.js';
-import { ToolError } from '../src/scope/types.js';
 import { createToolKit } from '../src/tools/kit.js';
 import { fixturesDir, materializeFixture } from './helpers/fixture.js';
 import { fakeToolKit, ok, type FakeKit, type FakeTool } from './helpers/tools.js';
@@ -160,10 +159,12 @@ describe('4.1 complex functions', () => {
     expect(summarize(run, methodology)).toMatch(/^4\.1 Complex functions: not measured \(complexipy not found, install: /m);
   });
 
-  it('is an invalid run (ToolError) in full mode when a tool is missing', async () => {
-    await expect(
-      scan(materializeFixture('d4-complexity'), fakeToolKit({ complexipy: null, vulture: () => ok() }), 'full'),
-    ).rejects.toThrow(ToolError);
+  it('is a valid, not comparable full run when a tool is missing', async () => {
+    const run = await scan(materializeFixture('d4-complexity'), fakeToolKit({ complexipy: null, vulture: () => ok() }), 'full');
+    expect(run.valid).toBe(true);
+    expect(run.parameters.find((p) => p.id === '4.1')).toMatchObject({ status: 'not_measured', reason: expect.stringMatching(/^complexipy not found/) });
+    expect(run.comparable).toBe(false);
+    expect(run.comparableReason).toMatch(/4\.1 \(complexipy not found/);
   });
 
   it('does not resolve Python tools for a TypeScript-only repository', async () => {

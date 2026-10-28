@@ -1,4 +1,5 @@
 import { spawn as nodeSpawn } from 'node:child_process';
+import { catalog } from './catalog.js';
 import { resolveTool } from './resolve.js';
 
 export type ToolName = 'jscpd' | 'knip' | 'complexipy' | 'vulture' | 'deptry' | 'osv-scanner' | 'gitleaks' | 'import-linter';
@@ -8,6 +9,8 @@ export interface ResolvedTool {
   command: string;
   prefixArgs: string[];
   version: string;
+  /** import-linter in the image: the Python interpreter of its environment, which also holds grimp. */
+  interpreter?: string;
 }
 
 export interface ToolResult {
@@ -31,6 +34,8 @@ export interface ToolKit {
   recordVersion(name: string, version: string): void;
   versions(): Record<string, string>;
   memo<T>(key: string, make: () => Promise<T>): Promise<T>;
+  /** Why `resolve` found nothing, with how to get the tool where this kit looks for it. */
+  notFoundReason(name: ToolName): string;
 }
 
 /** Same as the typecheck and lint timeouts in methodology.yaml. */
@@ -100,6 +105,9 @@ export function createToolKit(deps: KitDeps = {}): ToolKit {
       const made = make();
       memos.set(key, made);
       return made;
+    },
+    notFoundReason(name) {
+      return `${name} not found, install: ${catalog[name].install}`;
     },
   };
   return kit;

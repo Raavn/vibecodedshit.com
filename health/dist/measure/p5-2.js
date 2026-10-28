@@ -49,7 +49,7 @@ export const p52 = {
         }
         catch (err) {
             if (err instanceof RegistryError)
-                return unavailable(ctx, err.message);
+                return unavailable(err.message);
             throw err;
         }
         for (const [key, data] of [...registryData].sort(([a], [b]) => a.localeCompare(b))) {

@@ -10,7 +10,7 @@ export const p34 = {
             return { status: 'not_measured', reason: gap };
         const graph = await getD3Graph(ctx);
         if ('unavailable' in graph)
-            return unavailable(ctx, graph.unavailable);
+            return unavailable(graph.unavailable);
         const units = graph.units
             .filter((unit) => unit.moduleCount >= 2)
             .map((unit) => ({

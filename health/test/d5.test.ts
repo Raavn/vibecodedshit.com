@@ -12,7 +12,6 @@ import { recompute } from '../src/run/recompute.js';
 import type { RunFile, RunParameter } from '../src/run/schema.js';
 import { runScan } from '../src/run/scan.js';
 import { poolParameter } from '../src/scoring/pool.js';
-import { ToolError } from '../src/scope/types.js';
 import { compareVersions, parseVersion, poetryToPep440, satisfies } from '../src/util/pep440.js';
 import { fixturesDir, materializeFixture } from './helpers/fixture.js';
 import { fakeToolKit, ok, type FakeKit, type FakeTool } from './helpers/tools.js';
@@ -220,11 +219,13 @@ describe('5.1 known vulnerabilities', () => {
     expect(again.parameters).toEqual(run.parameters);
   });
 
-  it('is not_measured in preview and a ToolError in full mode when osv-scanner is missing, old or fails', async () => {
+  it('is not_measured in both modes when osv-scanner is missing, old or fails', async () => {
     const repo = materializeFixture('d5-vuln');
     const missing = await scan(repo, osvKit(null));
     expect(param(missing, '5.1')).toMatchObject({ status: 'not_measured', reason: expect.stringMatching(/^osv-scanner not found/) });
-    await expect(scan(repo, osvKit(null), 'full')).rejects.toBeInstanceOf(ToolError);
+    const full = await scan(repo, osvKit(null), 'full');
+    expect(param(full, '5.1')).toMatchObject({ status: 'not_measured', reason: expect.stringMatching(/^osv-scanner not found/) });
+    expect(full.comparable).toBe(false);
     const old = await scan(repo, osvKit(fakeOsv(), '1.9.2'));
     expect(param(old, '5.1')).toMatchObject({ status: 'not_measured', reason: 'osv-scanner 2.x required, found 1.9.2' });
     const crash = await scan(repo, osvKit(() => ok('', 127)));
@@ -302,11 +303,12 @@ describe('5.2 major versions behind', () => {
     expect(direct?.find((d) => d.name === 'major')).toEqual({ package: '.', group: 'typescript_javascript', name: 'major', version: '1.5.0', dev: false });
   });
 
-  it('is not_measured in preview and a ToolError in full mode on a registry failure', async () => {
+  it('is not_measured in both modes on a registry failure', async () => {
     const repo = materializeFixture('d5-outdated');
     const preview = await scan(repo, fakeToolKit({}, { fetch: fakeFetch([], 503) }));
     expect(param(preview, '5.2')).toMatchObject({ status: 'not_measured', reason: expect.stringMatching(/^registry request .* failed: HTTP 503/) });
-    await expect(scan(repo, fakeToolKit({}, { fetch: fakeFetch([], 503) }), 'full')).rejects.toBeInstanceOf(ToolError);
+    const full = await scan(repo, fakeToolKit({}, { fetch: fakeFetch([], 503) }), 'full');
+    expect(param(full, '5.2')).toMatchObject({ status: 'not_measured', reason: expect.stringMatching(/HTTP 503/) });
     const throwing = (async () => {
       throw new Error('offline');
     }) as unknown as typeof fetch;
@@ -394,10 +396,11 @@ describe('5.4 secrets in the working tree', () => {
     expect((run.reportOnly as Record<string, unknown> | undefined)?.secretsInHistory).toBeUndefined();
   });
 
-  it('is not_measured in preview and a ToolError in full mode without gitleaks or when it crashes', async () => {
+  it('is not_measured in both modes without gitleaks or when it crashes', async () => {
     const missing = await scan(repo(), kit(null));
     expect(param(missing, '5.4')).toMatchObject({ status: 'not_measured', reason: expect.stringMatching(/^gitleaks not found/) });
-    await expect(scan(repo(), kit(null), 'full')).rejects.toBeInstanceOf(ToolError);
+    const full = await scan(repo(), kit(null), 'full');
+    expect(param(full, '5.4')).toMatchObject({ status: 'not_measured', reason: expect.stringMatching(/^gitleaks not found/) });
     const crash = await scan(repo(), kit(() => ok('', 2)));
     expect(param(crash, '5.4')).toMatchObject({ status: 'not_measured', reason: expect.stringMatching(/^gitleaks exited with 2/) });
   });
@@ -436,11 +439,12 @@ describe('5.5 dependency declaration errors', () => {
     expect(run.tools.static?.knip).toMatch(/^\d/);
   });
 
-  it('is not_measured in preview and a ToolError in full mode when deptry is missing', async () => {
+  it('is not_measured in both modes when deptry is missing', async () => {
     const repo = materializeFixture('d5-declarations');
     const run = await scan(repo, fakeToolKit({ deptry: null }));
     expect(param(run, '5.5')).toMatchObject({ status: 'not_measured', reason: expect.stringMatching(/^deptry not found/) });
-    await expect(scan(repo, fakeToolKit({ deptry: null }), 'full')).rejects.toBeInstanceOf(ToolError);
+    const full = await scan(repo, fakeToolKit({ deptry: null }), 'full');
+    expect(param(full, '5.5')).toMatchObject({ status: 'not_measured', reason: expect.stringMatching(/^deptry not found/) });
   });
 
   it('does not run deptry for a Python unit with no dependency manifest (deptry would exit 1 with no report)', async () => {

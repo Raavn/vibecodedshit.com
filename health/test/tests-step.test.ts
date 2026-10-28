@@ -70,6 +70,7 @@ function healthy(test?: (spec: StepSpec, runner: TestRunnerName) => FakeStep | u
   return fakeRunner((spec) => {
     if (spec.step === 'typecheck') return { exitCode: 0, files: { 'tsc.txt': '', 'pyright.json': '{"generalDiagnostics":[]}', 'mypy.txt': '' } };
     if (spec.step === 'lint') return { exitCode: 0, files: { 'eslint.json': '[]', 'ruff.json': '[]' } };
+    if (spec.step === 'knip') return { exitCode: 0, files: { 'knip.json': '{"issues":[]}' } };
     if (spec.step === 'test') {
       const runner = runnerOf(spec);
       return test?.(spec, runner) ?? { exitCode: 1, files: reportFiles(runner) };

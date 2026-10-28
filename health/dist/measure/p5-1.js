@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import semver from 'semver';
 import { packageOf } from '../scope/packages.js';
-import { failureReason, notFoundReason, unavailable } from '../tools/outcome.js';
+import { failureReason, unavailable } from '../tools/outcome.js';
 import { joinRel } from './deps/files.js';
 import { kindGroup } from './deps/lockfiles.js';
 import { parseOsvReport, severityPoints } from './deps/osv.js';
@@ -14,10 +14,10 @@ const OK_CODES = [0, 1, 128];
 async function scanLockfile(ctx, ref) {
     const tool = await ctx.tools.resolve('osv-scanner');
     if (!tool)
-        return unavailable(ctx, notFoundReason('osv-scanner'));
+        return unavailable(ctx.tools.notFoundReason('osv-scanner'));
     const major = semver.coerce(tool.version)?.major;
     if (major === undefined || major < 2)
-        return unavailable(ctx, `osv-scanner 2.x required, found ${tool.version}`);
+        return unavailable(`osv-scanner 2.x required, found ${tool.version}`);
     const abs = path.join(ctx.repoPath, ref.path);
     const lockArg = ref.kind === 'requirements' && path.posix.basename(ref.path) !== 'requirements.txt' ? `requirements.txt:${abs}` : abs;
     const outDir = await mkdtemp(path.join(tmpdir(), 'health-osv-'));
@@ -26,7 +26,7 @@ async function scanLockfile(ctx, ref) {
         const result = await ctx.tools.run(tool, ['scan', '-L', lockArg, '--format', 'json', '--output-file', report, '--all-packages'], { cwd: path.join(ctx.repoPath, ref.dir) });
         const failure = failureReason(tool, result, OK_CODES);
         if (failure)
-            return unavailable(ctx, failure);
+            return unavailable(failure);
         let text;
         try {
             text = await readFile(report, 'utf8');
@@ -34,11 +34,11 @@ async function scanLockfile(ctx, ref) {
         catch {
             if (result.exitCode === 128)
                 return { ref, packages: [] };
-            return unavailable(ctx, 'osv-scanner wrote no report');
+            return unavailable('osv-scanner wrote no report');
         }
         const packages = parseOsvReport(text);
         if (!packages)
-            return unavailable(ctx, 'osv-scanner report has an unexpected shape');
+            return unavailable('osv-scanner report has an unexpected shape');
         return { ref, packages };
     }
     finally {

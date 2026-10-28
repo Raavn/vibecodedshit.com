@@ -11,7 +11,7 @@ export const p32 = {
             return { status: 'not_measured', reason: gap };
         const graph = await getD3Graph(ctx);
         if ('unavailable' in graph)
-            return unavailable(ctx, graph.unavailable);
+            return unavailable(graph.unavailable);
         return {
             status: 'measured',
             units: graph.units.map((unit) => ({

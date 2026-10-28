@@ -3,8 +3,11 @@ import { closeSync, openSync, readSync } from 'node:fs';
  * The Python interpreter that holds import-linter and grimp: the `#!<absolute path>` first line of the
  * resolved `lint-imports` script (a pipx or uv tool environment keeps them out of the system python3).
  * Any other first line, or an unreadable file, is unavailable; nothing falls back to the system python3.
+ * A tool resolved in the image names its interpreter itself.
  */
 export function pyInterpreter(tool) {
+    if (tool.interpreter !== undefined)
+        return { interpreter: tool.interpreter };
     const fail = () => ({ unavailable: `import-linter: cannot read its Python interpreter from ${tool.command}` });
     let line;
     try {

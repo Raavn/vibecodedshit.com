@@ -148,10 +148,21 @@ export function createDockerRunner(
   };
 }
 
-/** `docker image inspect <tag> --format '{{.Id}}'`. A locally built image has no RepoDigest. */
+/**
+ * The image label a full scan checks. Bump it with `LABEL dev.vibecodedshit.health.revision` in docker/Dockerfile
+ * whenever the tools a full run needs from the image change, so an image built before the change is rebuilt.
+ */
+export const IMAGE_REVISION_LABEL = 'dev.vibecodedshit.health.revision';
+export const IMAGE_REVISION = '2';
+
+/**
+ * `docker image inspect <tag>`: the image id (a locally built image has no RepoDigest). An image whose revision label
+ * is not IMAGE_REVISION lacks tools this version runs in it, so it is a ToolError like a missing image.
+ */
 export function imageDigest(tag: string, spawn: Spawn = nodeSpawn): Promise<string> {
   return new Promise((resolve, reject) => {
-    const child = spawn('docker', ['image', 'inspect', tag, '--format', '{{.Id}}'], { stdio: ['ignore', 'pipe', 'pipe'] });
+    const format = `{{.Id}} {{index .Config.Labels "${IMAGE_REVISION_LABEL}"}}`;
+    const child = spawn('docker', ['image', 'inspect', tag, '--format', format], { stdio: ['ignore', 'pipe', 'pipe'] });
     let stdout = '';
     let stderr = '';
     child.stdout?.on('data', (chunk: Buffer) => {
@@ -162,10 +173,12 @@ export function imageDigest(tag: string, spawn: Spawn = nodeSpawn): Promise<stri
     });
     child.on('error', (err) => reject(new ToolError(`docker could not start: ${err.message}`)));
     child.on('close', (code) => {
-      const digest = stdout.trim();
+      const [digest = '', revision = ''] = stdout.trim().split(/\s+/);
       if (code !== 0 || digest === '') {
         const detail = stderr.trim().split('\n').slice(-1)[0];
         reject(new ToolError(`image ${tag} is not available${detail ? `: ${detail}` : ''}. Build it with npm run image:build`));
+      } else if (revision !== IMAGE_REVISION) {
+        reject(new ToolError(`image ${tag} is out of date (revision ${revision || 'none'}, this version needs ${IMAGE_REVISION}). Rebuild it with npm run image:build`));
       } else resolve(digest);
     });
   });

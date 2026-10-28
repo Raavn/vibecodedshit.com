@@ -3,7 +3,7 @@ import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import type { Measurement, MeasureContext } from '../measure/types.js';
-import { failureReason, notFoundReason, unavailable } from './outcome.js';
+import { failureReason, unavailable } from './outcome.js';
 
 export interface KnipFileIssues {
   /** Unused exports plus unused exported types. */
@@ -88,58 +88,84 @@ function failedInstall(ctx: MeasureContext): string | undefined {
   return ctx.exec.roots.find((root) => root.install !== null && root.install.status !== 'ok')?.dir ?? '.';
 }
 
+/** Adds one knip root's report to `outcome`. Returns why the report cannot be used, or null. */
+function addReport(outcome: KnipOutcome, root: string, stdout: string): string | null {
+  let issues: RawIssue[];
+  try {
+    const parsed = parseKnipReport(stdout) as { issues?: unknown };
+    if (!Array.isArray(parsed.issues)) throw new Error('no issues array');
+    issues = parsed.issues as RawIssue[];
+  } catch {
+    return 'knip printed no parseable JSON report';
+  }
+  for (const issue of issues) {
+    if (typeof issue.file !== 'string') return 'knip report has an unexpected shape';
+    const rel = path.posix.normalize(path.posix.join(root === '.' ? '' : root, issue.file.split(path.sep).join('/')));
+    const entry = outcome.files.get(rel) ?? {
+      exports: 0,
+      unusedFile: false,
+      dependencies: [],
+      devDependencies: [],
+      unlisted: [],
+    };
+    entry.exports += entries(issue.exports).length + entries(issue.types).length;
+    entry.unusedFile = entry.unusedFile || entries(issue.files).length > 0;
+    entry.dependencies.push(...names(issue.dependencies));
+    entry.devDependencies.push(...names(issue.devDependencies));
+    entry.unlisted.push(...names(issue.unlisted));
+    outcome.files.set(rel, entry);
+  }
+  return null;
+}
+
+/** Knip's exit codes for a finished run: 0 no issues, 1 issues found. */
+const KNIP_OK = [0, 1];
+
+/** The knip steps of a full run, which ran in the image on the installed work copy. */
+function fromExecution(exec: NonNullable<MeasureContext['exec']>): KnipOutcome | Measurement {
+  const outcome: KnipOutcome = { files: new Map(), warnings: [] };
+  for (const result of exec.knip) {
+    if (result.outcome.status === 'timeout') return unavailable(`knip timed out in ${result.dir}`);
+    const code = result.outcome.exitCode;
+    if (code === null || !KNIP_OK.includes(code)) return unavailable(`knip exited with ${String(code)} in ${result.dir}`);
+    if (result.report === null) return unavailable(`knip wrote no report in ${result.dir}`);
+    const failure = addReport(outcome, result.dir, result.report);
+    if (failure) return unavailable(`${failure} in ${result.dir}`);
+  }
+  return outcome;
+}
+
 /**
  * One knip run per scan, shared by 4.4 and 5.5. The repository's own knip config is not used
- * (an empty --config), framework plugins stay enabled. A full run whose installs all worked runs
- * knip in the execution work copy, so plugins can load configs such as vitest.config.ts and
- * script binaries map to their packages; otherwise knip runs in the repository.
+ * (an empty --config), framework plugins stay enabled. A full run whose installs all worked reads
+ * the knip steps the execution layer ran in the image, on the installed work copy, so plugins can
+ * load configs such as vitest.config.ts and native dependencies match the platform they were
+ * installed for. Otherwise knip runs through the tool kit: on the host in the repository for a preview, in the image
+ * on the execution work copy for a full run whose install failed.
  */
 export function runKnip(ctx: MeasureContext): Promise<KnipOutcome | Measurement> {
   return ctx.tools.memo('knip', async () => {
+    if (ctx.mode === 'full' && ctx.exec?.checksRan === true) return fromExecution(ctx.exec);
     const tool = await ctx.tools.resolve('knip');
-    if (!tool) return unavailable(ctx, notFoundReason('knip'));
-    const installed = ctx.mode === 'full' && ctx.exec?.checksRan === true ? ctx.exec.workDir : undefined;
+    if (!tool) return unavailable(ctx.tools.notFoundReason('knip'));
     const failed = failedInstall(ctx);
     const hint = failed === undefined ? '' : ` (dependency install failed in ${failed}, likely cause)`;
+    // A full run's tools run in the image, so they read the execution work copy, whose dependencies (if any) were
+    // installed there; the repository's own node_modules belong to the host platform.
+    const base = ctx.mode === 'full' && ctx.exec ? ctx.exec.workDir : ctx.repoPath;
     const outcome: KnipOutcome = { files: new Map(), warnings: [] };
     const configDir = await mkdtemp(path.join(tmpdir(), 'health-knip-'));
     try {
       const configFile = path.join(configDir, 'knip.json');
       await writeFile(configFile, '{}');
       for (const root of knipRoots(ctx.repoPath)) {
-        const cwd = path.join(installed ?? ctx.repoPath, root);
         const result = await ctx.tools.run(
           tool,
           ['--reporter', 'json', '--no-progress', '--no-config-hints', '--config', configFile],
-          { cwd, env: { DOTENV_CONFIG_QUIET: 'true' } },
+          { cwd: path.join(base, root), env: { DOTENV_CONFIG_QUIET: 'true' } },
         );
-        const failure = failureReason(tool, result, [0, 1]);
-        if (failure) return unavailable(ctx, `${failure}${hint}`);
-        let issues: RawIssue[];
-        try {
-          const parsed = parseKnipReport(result.stdout) as { issues?: unknown };
-          if (!Array.isArray(parsed.issues)) throw new Error('no issues array');
-          issues = parsed.issues as RawIssue[];
-        } catch {
-          return unavailable(ctx, `knip printed no parseable JSON report${hint}`);
-        }
-        for (const issue of issues) {
-          if (typeof issue.file !== 'string') return unavailable(ctx, 'knip report has an unexpected shape');
-          const rel = path.posix.normalize(path.posix.join(root === '.' ? '' : root, issue.file.split(path.sep).join('/')));
-          const entry = outcome.files.get(rel) ?? {
-            exports: 0,
-            unusedFile: false,
-            dependencies: [],
-            devDependencies: [],
-            unlisted: [],
-          };
-          entry.exports += entries(issue.exports).length + entries(issue.types).length;
-          entry.unusedFile = entry.unusedFile || entries(issue.files).length > 0;
-          entry.dependencies.push(...names(issue.dependencies));
-          entry.devDependencies.push(...names(issue.devDependencies));
-          entry.unlisted.push(...names(issue.unlisted));
-          outcome.files.set(rel, entry);
-        }
+        const failure = failureReason(tool, result, KNIP_OK) ?? addReport(outcome, root, result.stdout);
+        if (failure) return unavailable(`${failure}${hint}`);
       }
     } finally {
       await rm(configDir, { recursive: true, force: true });

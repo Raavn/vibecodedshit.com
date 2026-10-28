@@ -43,11 +43,11 @@ Write everything for this run there. Never write `run.json` or the report into t
 
 Open with one line naming the repository: "I'm going to take you through the health scan of <basename of the target path>."
 
-Run `docker info` and `docker image inspect health:1.0`.
+Run `docker info` and `docker image inspect health:1.0 --format '{{ index .Config.Labels "dev.vibecodedshit.health.revision" }}'`. The image is current when the printed revision equals the value on the `LABEL dev.vibecodedshit.health.revision` line of `${CLAUDE_PLUGIN_ROOT}/docker/Dockerfile`.
 
-- Both succeed: tell the user in one line that a full scan runs their install, tests and build inside Docker, with network access only during dependency install. Then scan:
+- Both succeed and the image is current: tell the user in one line that a full scan runs their install, tests, build and every check inside Docker, with network access only during dependency install and the vulnerability lookup. Then scan:
   `node "${CLAUDE_PLUGIN_ROOT}/dist/bin.js" scan <target> --out "<RUN_DIR>/run.json"`
-- Docker is running but the image is missing: say in one or two lines that Docker is running but the `health:1.0` image is not there, and what the image is for: it is the pinned environment that runs install, build, typecheck, lint and tests, which makes a full scan reproducible and comparable. Without it only the static checks run. Say you will run the parts that do not need the image while you build it. Then start both with the Bash tool in the background, without asking first:
+- Docker is running but the image is missing or out of date (a different revision, or none): say in one or two lines that Docker is running but the `health:1.0` image is not there or is from an older plugin version, and what the image is for: it is the pinned environment that runs install, build, typecheck, lint, tests and the static analysis tools, which makes a full scan reproducible and comparable. Without it only the static checks run. Say you will run the parts that do not need the image while you build it. Then start both with the Bash tool in the background, without asking first:
   - the build: `npm --prefix "${CLAUDE_PLUGIN_ROOT}" run image:build`
   - the preview scan below, writing to `<RUN_DIR>/preview/run.json`
 
@@ -63,9 +63,9 @@ A full scan can take many minutes. Run it with the Bash tool in the background a
 
 Exit codes:
 
-- 0: continue.
+- 0: continue. A tool that failed leaves its parameters not measured and the run not comparable; `comparableReason` names each one.
 - 1, 2 or 3: show stderr and stop. There is no run.json.
-- 4: run.json has `valid: false`. Show `invalidReason`, produce no report and no explanation, and stop.
+- 4: Docker or the image failed, and run.json has `valid: false`. Show `invalidReason`, produce no report and no explanation, and stop.
 
 ### 3. Report
 

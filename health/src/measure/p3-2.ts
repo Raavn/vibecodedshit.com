@@ -11,7 +11,7 @@ export const p32: Measurer = {
     const gap = d3Gap(ctx);
     if (gap !== undefined) return { status: 'not_measured', reason: gap };
     const graph = await getD3Graph(ctx);
-    if ('unavailable' in graph) return unavailable(ctx, graph.unavailable);
+    if ('unavailable' in graph) return unavailable(graph.unavailable);
     return {
       status: 'measured',
       units: graph.units.map((unit) => ({
