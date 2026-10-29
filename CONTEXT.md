@@ -1,7 +1,7 @@
 # vibecodedshit.com
 
 ## Vision
-An open benchmark for codebase health. Health = how safely and cheaply someone with no memory of a codebase, whether a contractor or an AI agent, can make a correct change. Anyone can score their repository with a free Claude Code skill. Low scorers are offered Peter's help to fix their codebase.
+Let's make the vibecoded internet a better place. An open benchmark for codebase health. Health = how safely and cheaply someone with no memory of a codebase, whether a contractor or an AI agent, can make a correct change. Anyone can score their repository with a free Claude Code skill. Vibe-coded and Fragile results get an offer of a free, non-binding quote from Peter to fix the codebase.
 
 Replaced the earlier vision (an awareness campaign about vibe-coding apps that already exist) on 2026-10-02.
 
@@ -12,8 +12,8 @@ Snappy, sarcastic, slightly controversial — but always educative. Not preachy.
 1. **The methodology**: Six dimensions, 30 parameters, fixed rubrics, one health score and a band (Vibe-coded, Fragile, Stable, Agent-ready). Published under CC BY 4.0. Source: `health/methodology/v1.0/` in this repository.
 2. **The skill**: A Claude Code plugin with `/codebase-health`. The engine (`health/`) is licensed under the Elastic License 2.0. It runs the pinned scoring tool, then Claude explains the result. Without Docker it runs a static-only preview that is marked "not comparable" and cannot be submitted.
 3. **Submissions**: With the user's consent, the skill sends the scores to app.vibecodedshit.com. The repo name is off by default; a hash of the git remote URL is sent instead. The user sees the exact payload before anything is sent.
-4. **The average**: The site shows the average score of submitted projects, counting each repo once (its latest full run, per methodology version). There is no public leaderboard.
-5. **Lead generation**: Vibe-coded and Fragile results end with one line offering Peter's help.
+4. **The average and your rank**: The site shows the average score of submitted projects, counting each repo once (its latest full run, per methodology version). Each submitter sees their own rank and the score needed to reach the top 10, per methodology version. There is no public leaderboard; Peter has a private full leaderboard.
+5. **Lead generation**: Vibe-coded and Fragile results end with an offer of a free, non-binding quote from Peter to fix the codebase.
 
 ## Brand Identity
 - The letter "i" is always replaced with the poop emoji in brand text
