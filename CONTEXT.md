@@ -34,3 +34,9 @@ This rule applies to vibecodedshit.com only. The benchmark code in `health/` is 
 ## Glossary
 - **Gain**: the whole health points the displayed health would rise by if that one parameter alone reached 100. Zero shows as `+0 · no gain`. Gains are independent and do not add up, because the dimension means and the cap interact.
 - **Roadmap**: the parameters ranked by Gain. The report shows the top 10; `health report` prints the top 3 after the report path.
+- **Submission**: one repo's latest full, comparable run for one methodology version, sent with the user's consent. A repo has at most one Submission per methodology version; a newer run replaces it. _Avoid_: score, entry, result.
+- **Submitter**: the email address that first submitted a repo for a methodology version. Only the Submitter can replace that Submission or look up its rank. Each methodology version starts unclaimed. _Avoid_: owner, user, account.
+- **Rank**: a Submission's position among all Submissions for the same methodology version, by health, highest first. Equal health shares a rank and the next rank skips (1, 2, 2, 4). Shown only to its Submitter. _Avoid_: position, place, leaderboard spot.
+- **Top-10 threshold**: the health of the 10th-ranked Submission for a methodology version, the score a Submitter needs to reach the top 10. None while fewer than 10 Submissions exist.
+- **Version notice**: an email saying a new methodology version has shipped, which starts a fresh ranking. Every Submitter and everyone who signs up for benchmark updates on the site gets them. Plugin releases get no email; the skill's update check tells users. _Avoid_: release email, newsletter.
+- **VCS newsletter**: Peter's regular notes on codebase health and fixing it. Separate opt-in: submitting a score never subscribes anyone to it. _Avoid_: VCS notes, updates.
