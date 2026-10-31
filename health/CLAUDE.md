@@ -18,6 +18,7 @@ Run commands from this directory (`npm --prefix health <cmd>` from the repositor
 - `npm run health -- scan <path> --preview` runs a preview scan and writes `./run.json`. Without `--preview` it is a full run: the execution steps and every static tool run in the `health:1.0` image (Docker needed, nothing else on the host).
 - `npm run health -- report <run.json> [--out <file>]` writes one self-contained HTML file (default `./health-report.html`, git-ignored) and prints its absolute path
 - `npm run health -- diff <before.json> <after.json> [--json]` compares two runs (after minus before); `--json` prints one object, schema in `src/diff/compare.ts`
+- `npm run health -- card <run.json> --history <dir> [--out <file>]` writes a 1200x630 PNG (default `./health-card.png`) with the previous and new health and their bands, and prints its absolute path. The previous run is the newest `<dir>/*/run.json` written before this one for the same repository path, methodology version and mode; without one it writes nothing and exits 0
 
 ## Layout
 
@@ -35,6 +36,7 @@ Run commands from this directory (`npm --prefix health <cmd>` from the repositor
 - `src/scoring/`: pure scoring, pooling and aggregation.
 - `src/run/`: `scan.ts` builds run.json, `recompute.ts` re-derives scores from stored raw values, `read.ts` reads and validates a run.json (zod) for `report` and `diff`.
 - `src/commands/`: `report.ts` and `diff.ts` (`scan` is still in `cli.ts`). `report` and `diff` read run.json only and never recompute: the report renders in `src/report/` (template literals, `escapeHtml` for every dynamic string, no script, no external request, no clock); the diff is `src/diff/` (`conditions.ts` the five refusal conditions, `compare.ts` deltas and the regression flag, `format.ts` human output).
+- `src/card/`: `previous.ts` finds the previous run, `render.ts` builds the card as SVG (template literals, `escapeHtml`) and rasterizes it with `@resvg/resvg-wasm` using only the fonts in `assets/fonts/` (Space Grotesk Bold, and a Noto Emoji subset holding the one 💩 glyph), so the PNG is the same on every machine.
 - `src/report-only/hotspots.ts`: churn (12 months, `git log`) times the per-file cognitive complexity 4.1 stores in `reportOnly.complexityByFile`. `scan.ts` stores the top 20 as `reportOnly.hotspots`; report-only values never enter scoring, `recompute` or the diff.
 
 Adding a parameter: add `src/measure/p<d>-<n>.ts` and a test beside it, add one import and one entry to `registry.ts`, extend a fixture's `expected.json`. Do not change scoring, pooling, aggregation or the run.json shape (full runs add `tools.image`, the image tag and digest, and `execution.feedbackLoop`).

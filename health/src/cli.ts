@@ -1,5 +1,6 @@
 import path from 'node:path';
 import { parseArgs } from 'node:util';
+import { runCard } from './commands/card.js';
 import { EXIT, type CliIo } from './commands/common.js';
 import { runDiff } from './commands/diff.js';
 import { runReport } from './commands/report.js';
@@ -16,6 +17,7 @@ export { summarize } from './commands/summary.js';
 const USAGE = `Usage: health scan <path> [--preview] [--as-of YYYY-MM-DD] [--out <file>] [--methodology <version>]
        health report <run.json> [--out <file>]
        health diff <before.json> <after.json> [--json]
+       health card <run.json> --history <dir> [--out <file>]
 
 Exit codes: 0 ok, 1 usage or unreadable input, 2 methodology error, 3 no logic file, 4 tool error, 5 diff refused.
 `;
@@ -26,6 +28,7 @@ export type CliDeps = Pick<ScanOptions, 'execRunner' | 'imageDigest' | 'tools' |
 export async function run(argv: string[], io: CliIo, deps: CliDeps = {}): Promise<number> {
   if (argv[0] === 'report') return runReport(argv.slice(1), io);
   if (argv[0] === 'diff') return runDiff(argv.slice(1), io);
+  if (argv[0] === 'card') return runCard(argv.slice(1), io);
   let parsed;
   try {
     parsed = parseArgs({
