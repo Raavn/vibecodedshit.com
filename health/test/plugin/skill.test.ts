@@ -61,6 +61,10 @@ describe('SKILL.md', () => {
     expect(skill).toContain('the image is missing or out of date');
   });
 
+  it('writes the card against the plugin run history', () => {
+    expect(skill).toContain('card "<RUN_DIR>/run.json" --history "${CLAUDE_PLUGIN_DATA}/runs" --out "<RUN_DIR>/health-card.png"');
+  });
+
   it('uses the update endpoint and the image build script', () => {
     expect(skill).toContain('https://app.vibecodedshit.com/api/version');
     const pkg = JSON.parse(readFileSync(path.join(pluginRoot, 'package.json'), 'utf8')) as { scripts: Record<string, string> };

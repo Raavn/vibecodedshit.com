@@ -75,6 +75,12 @@ Run, with `<RUN_DIR>` as the working directory:
 
 The first line it prints is the absolute report path; give the user that path. When the run has a health score, up to 3 more lines follow: the top of the report's Roadmap.
 
+Then run, with `<RUN_DIR>` as the working directory:
+
+`node "${CLAUDE_PLUGIN_ROOT}/dist/bin.js" card "<RUN_DIR>/run.json" --history "${CLAUDE_PLUGIN_DATA}/runs" --out "<RUN_DIR>/health-card.png"`
+
+When this repository was scanned before in the same mode, it writes a PNG card with the previous score, the new score and the band under each, and prints the card's absolute path; give the user that path. When it prints nothing on stdout, this is the first such run: say nothing about a card.
+
 ### 4. Explain
 
 Read `<RUN_DIR>/run.json` and `${CLAUDE_PLUGIN_ROOT}/methodology/v<version>/` (the version is `methodology.version` in run.json). Say, in this order:
@@ -82,7 +88,7 @@ Read `<RUN_DIR>/run.json` and `${CLAUDE_PLUGIN_ROOT}/methodology/v<version>/` (t
 1. Health `health.displayed` and the band name (match `health.band`, a key such as `vibe_coded`, to `bands[].name` in `methodology.yaml`), plus the mode. When `comparable` is false, say it is not comparable and give `comparableReason`. List `warnings` in one line when there are any.
 2. The weakest dimension: the lowest non-null `dimensions[].score`. The name comes from `dimension.name` in `dimensions/<id>-*.yaml`.
 3. The top 3 Roadmap lines `health report` printed in step 3, in the same order, restated in plain words. Each line reads `<rank>. <id> <parameter name> (<dimension name>) +<gain> — <target descriptor>`. Gain is the whole health points the health would rise by if that parameter alone reached 100; `+0 · no gain` means none. Do not change any number or descriptor, and never write a descriptor of your own. State Gains as facts, with no imperative wording. When the CLI printed no Roadmap lines, say nothing about a roadmap. In a preview, say that execution-layer parameters were not measured, so they are not ranked.
-4. The absolute report path, and one sentence saying the report has a visual summary and a Roadmap ranked by Gain.
+4. The absolute report path, and one sentence saying the report has a visual summary and a Roadmap ranked by Gain. When step 3 wrote a card, its absolute path too.
 
 Stop the explanation there. Do not add next steps, recommendations or an offer to fix anything.
 
