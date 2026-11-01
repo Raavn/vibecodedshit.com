@@ -181,6 +181,8 @@ async function measureAll(opts: ScanOptions, methodology: Methodology, repoPath:
     warnings.push(...hotspots.warnings);
   }
 
+  reportOnly.pythonInScope = scope.files.some((f) => f.language === 'python');
+
   const dimensions = dimensionScores(methodology, parameters);
   const base = baseRun(opts);
   const unmeasured = parameters.filter((p) => p.status === 'not_measured').map((p) => `${p.id} (${p.reason})`);

@@ -1,6 +1,6 @@
 {
   "name": "health",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "Codebase Health benchmark CLI",
   "private": true,
   "license": "Elastic-2.0",
