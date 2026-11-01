@@ -89,6 +89,11 @@ describe('hotspots', () => {
     expect(run.warnings).not.toContain(SHALLOW_WARNING);
   });
 
+  it('records that no Python file is in scope for a TypeScript-only repo', async () => {
+    const run = await runScan({ repoPath: history(), methodologyVersion: '1.0', mode: 'preview', asOf: AS_OF, tools: fakeToolKit() });
+    expect(run.reportOnly?.pythonInScope).toBe(false);
+  });
+
   it('leaves out zero-churn and zero-complexity files and breaks ties by path', () => {
     const repo = history();
     const result = computeHotspots(repo, AS_OF, [

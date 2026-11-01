@@ -30,23 +30,34 @@ describe('SKILL.md', () => {
     expect(skill).toContain('The plugin stores nothing.');
   });
 
-  it('puts Submit after Explain and before the update check, with the help line last', () => {
+  it('puts Submit after Explain and before the update check, with the quote offer last', () => {
     expect(skill.indexOf('### 5. Submit')).toBeGreaterThan(skill.indexOf('### 4. Explain'));
     expect(skill.indexOf('### 6. Update check')).toBeGreaterThan(skill.indexOf('### 5. Submit'));
-    expect(skill.indexOf('### 7. Help line')).toBeGreaterThan(skill.indexOf('### 6. Update check'));
+    expect(skill.indexOf('### 7. Quote offer')).toBeGreaterThan(skill.indexOf('### 6. Update check'));
   });
 
   it('labels preview results not comparable', () => {
     expect(skill).toContain('A preview result is not comparable; say so.');
   });
 
-  it('limits the help line to the vibe_coded and fragile bands', () => {
-    expect(skill).toContain('Show the help line only when health.band is vibe_coded or fragile.');
+  it('limits the quote offer to vibe_coded and fragile TypeScript-only repos', () => {
+    expect(skill).toContain('Make the quote offer only when health.band is vibe_coded or fragile and `reportOnly.pythonInScope` in run.json is `false`.');
+    expect(skill).toContain('a missing value counts as Python');
+    expect(skill).toContain("Peter's team at VCS will be happy to help you with that. Would you like a free, non-binding quote?");
+    expect(skill).not.toContain('Peter Kisel');
     expect(skill).toContain('https://vibecodedshit.com');
   });
 
-  it('only scans and never suggests fixing the codebase', () => {
-    expect(skill).toContain('Never suggest, offer or start fixing the codebase.');
+  it('posts a quote request only after the user confirmed the payload, defaulting to No', () => {
+    expect(skill).toContain('https://app.vibecodedshit.com/api/quote-requests');
+    expect(skill).toContain('Send this quote request? Default: No.');
+    expect(skill).toContain('Any other answer: say nothing more and stop.');
+    expect(skill).toContain('Never include the repository name.');
+  });
+
+  it('never fixes the codebase itself and offers only the free quote', () => {
+    expect(skill).toContain('Never start fixing the codebase yourself. The only offer you make is the free quote in the last step.');
+    expect(skill).toContain('Do not add next steps or recommendations.');
     expect(skill).not.toContain('to fix.');
   });
 
