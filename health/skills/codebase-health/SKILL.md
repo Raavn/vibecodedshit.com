@@ -12,7 +12,7 @@ Scan a repository with the Codebase Health benchmark and explain the result. The
 ## Rules
 
 - You never measure, compute, estimate, round or adjust a score. Every number you state is copied from run.json, the methodology YAML or the health CLI's output.
-- Never submit results anywhere. This version has no submission.
+- Send nothing anywhere except a payload the user has seen and confirmed in this run. Submitting a result is opt-in (the Submit step). Never pass --confirm before the user has answered yes in this conversation. Never submit from an unattended run.
 - A preview result is not comparable; say so.
 - Show the help line only when health.band is vibe_coded or fragile.
 - Never change, delete or update anything on your own. That includes old runs and the plugin itself.
@@ -51,7 +51,7 @@ Run `docker info` and `docker image inspect health:1.0 --format '{{ index .Confi
   - the build: `npm --prefix "${CLAUDE_PLUGIN_ROOT}" run image:build`
   - the preview scan below, writing to `<RUN_DIR>/preview/run.json`
 
-  When the preview finishes first, give one interim line with its health and band, say it is not comparable and that the full scan follows. Do not explain the preview further. When the build succeeds, run the full scan above and continue with steps 3 to 6 on the full run. When the build fails, show the last lines of its output, say the full scan could not run so the preview result is not comparable, copy the preview run to `<RUN_DIR>/run.json`, and continue with steps 3 to 6 on the preview run.
+  When the preview finishes first, give one interim line with its health and band, say it is not comparable and that the full scan follows. Do not explain the preview further. When the build succeeds, run the full scan above and continue with steps 3 to 7 on the full run. When the build fails, show the last lines of its output, say the full scan could not run so the preview result is not comparable, copy the preview run to `<RUN_DIR>/run.json`, and continue with steps 3 to 7 on the preview run.
 - `docker` is not found: say Docker is not installed. `docker info` fails: say Docker is installed but not running. Then ask the user with AskUserQuestion. Options: "Run a quick preview scan now" (static checks only, result not comparable) and "I'll install Docker or start it" (when the user says it is ready, run the checks above again). On the preview option, say in one line that the result is not comparable, and run the preview scan below.
 
 Preview scan:
@@ -92,7 +92,22 @@ Read `<RUN_DIR>/run.json` and `${CLAUDE_PLUGIN_ROOT}/methodology/v<version>/` (t
 
 Stop the explanation there. Do not add next steps, recommendations or an offer to fix anything.
 
-### 5. Update check
+### 5. Submit (opt-in)
+
+Skip this step, and do not mention submission, when the run is a preview, when `comparable` is false (the CLI would refuse), or when no user can answer (`claude -p`, a scheduled task, a subagent).
+
+1. Write a summary of 3 to 6 sentences to `<RUN_DIR>/summary.txt`. It condenses the explanation from step 4 and contains no file names, paths, repository name, code or email.
+2. Find the default email: the output of `git config user.email` in the target. Offer it only when it is not empty and does not end in `@users.noreply.github.com`.
+3. Ask once with AskUserQuestion: "Submit this result to vibecodedshit.com? Default: No." with No as the first option. Default answer: No. Any answer other than an explicit yes means do nothing; say "Not submitted." and skip the rest of this step.
+4. After a yes, ask for the email with AskUserQuestion. The default option is the address from item 2 when there is one; the user can pick Other to type a different one. The plugin stores nothing.
+5. Ask "Include the repository name?" (default No) and "Also get the VCS newsletter?" (default No). State the exact `repoName` value that would be sent. Include the repository name and the newsletter only if the user opts in to each separately.
+6. Run `node "${CLAUDE_PLUGIN_ROOT}/dist/bin.js" submit "<RUN_DIR>/run.json" --summary-file "<RUN_DIR>/summary.txt" --email <addr>`, adding `--include-repo-name` and `--newsletter` for the opt-ins the user accepted, without `--confirm`. Show the full payload before asking again. Show the privacy page link too: https://app.vibecodedshit.com/privacy
+7. Ask "Send exactly this payload? Default: No." with AskUserQuestion. Only on an explicit yes run the same command with `--confirm`. Any other answer: say "Not submitted."
+8. After `--confirm`, report success or the error. On success, copy the line the CLI printed, for example "Rank 7 of 42. Top 10 starts at 61.5.", and do not compute or reword it. When the CLI exits with an error, show it; a 409 means the repository was already submitted with a different email.
+
+The email is used for the rank, for methodology version notices, and for the newsletter only when the user said yes.
+
+### 6. Update check
 
 Run `curl -fs --max-time 5 https://app.vibecodedshit.com/api/version`. It returns JSON like `{"plugin": "x.y.z", "methodology": "x.y"}`. On a non-zero exit, empty output, invalid JSON or any other shape, skip this step silently and never mention it.
 
@@ -103,7 +118,7 @@ Installed versions: plugin = `version` in `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/
 
 Do not run the update.
 
-### 6. Help line
+### 7. Help line
 
 Only when `health.band` is `vibe_coded` or `fragile`, in preview and full mode, print this as the last line of the output:
 

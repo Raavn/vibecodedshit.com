@@ -9,9 +9,31 @@ const skill = readFileSync(path.join(pluginRoot, 'skills/codebase-health/SKILL.m
 const methodology = parse(readFileSync(path.join(pluginRoot, 'methodology/v1.0/methodology.yaml'), 'utf8')) as { version: string };
 
 describe('SKILL.md', () => {
-  it('forbids Claude from computing scores and from submitting results', () => {
+  it('forbids Claude from computing scores', () => {
     expect(skill).toContain('You never measure, compute, estimate, round or adjust a score. Every number you state is copied from run.json, the methodology YAML or the health CLI\'s output.');
-    expect(skill).toContain('Never submit results anywhere. This version has no submission.');
+  });
+
+  it('sends only a payload the user has seen and confirmed, defaulting to No', () => {
+    expect(skill).not.toContain('Never submit results anywhere. This version has no submission.');
+    expect(skill).toContain('Send nothing anywhere except a payload the user has seen and confirmed in this run.');
+    expect(skill).toContain('Show the full payload before asking again.');
+    expect(skill).toContain('Default answer: No.');
+    expect(skill).toContain('Never pass --confirm before the user has answered yes in this conversation.');
+    expect(skill).toContain('Never submit from an unattended run.');
+    expect(skill).toContain('Include the repository name and the newsletter only if the user opts in to each separately.');
+    expect(skill).toContain('https://app.vibecodedshit.com/privacy');
+  });
+
+  it('offers a non-noreply git email as the default and never stores it', () => {
+    expect(skill).toContain('git config user.email');
+    expect(skill).toContain('@users.noreply.github.com');
+    expect(skill).toContain('The plugin stores nothing.');
+  });
+
+  it('puts Submit after Explain and before the update check, with the help line last', () => {
+    expect(skill.indexOf('### 5. Submit')).toBeGreaterThan(skill.indexOf('### 4. Explain'));
+    expect(skill.indexOf('### 6. Update check')).toBeGreaterThan(skill.indexOf('### 5. Submit'));
+    expect(skill.indexOf('### 7. Help line')).toBeGreaterThan(skill.indexOf('### 6. Update check'));
   });
 
   it('labels preview results not comparable', () => {

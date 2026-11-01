@@ -21,7 +21,18 @@ The CLI ships as a Claude Code plugin with a `/codebase-health` skill. The plugi
 /codebase-health [path]
 ```
 
-The namespaced form `/codebase-health:codebase-health` also works. The skill runs a full scan when Docker and the `health:1.0` image are available. When Docker is running but the image is missing, it builds the image in the background while it runs a preview scan, then runs the full scan. When Docker is missing or not running, it asks whether to run a preview scan, which is not comparable, or wait while you install or start Docker. It then renders the HTML report, and from the second scan of a repository on (same mode) a PNG card with the previous and new score and their bands, and explains `run.json`: the health score and band, the weakest dimension and the three parameters most worth fixing. Claude only reads the scores. It never computes, adjusts or submits them.
+The namespaced form `/codebase-health:codebase-health` also works. The skill runs a full scan when Docker and the `health:1.0` image are available. When Docker is running but the image is missing, it builds the image in the background while it runs a preview scan, then runs the full scan. When Docker is missing or not running, it asks whether to run a preview scan, which is not comparable, or wait while you install or start Docker. It then renders the HTML report, and from the second scan of a repository on (same mode) a PNG card with the previous and new score and their bands, and explains `run.json`: the health score and band, the weakest dimension and the three parameters most worth fixing. Claude only reads the scores. It never computes or adjusts them, and it sends something only after you have seen the exact payload and said yes.
+
+## Submitting a result
+
+Submission is opt-in. `health submit <run.json> --email <addr> [--confirm] [--newsletter] [--include-repo-name] [--summary-file <path>]` prints the full payload and sends it to app.vibecodedshit.com only with `--confirm`. The skill shows the payload and asks, with No as the default. Privacy page: https://app.vibecodedshit.com/privacy
+
+- The repository is identified by the SHA-256 of its normalised git remote URL (the root commit when there is no remote). The name is sent only with `--include-repo-name`.
+- The email is required. It is used for your rank, for methodology version notices, and for the newsletter only with `--newsletter`.
+- The CLI prints your rank and the score needed for the top 10 on that methodology version. Nobody else's scores are published.
+- Only a comparable full run can be submitted. Source code and file paths are never sent.
+- The first email to submit a repository on a methodology version owns its entry; a different email gets a 409. The owner can re-submit to replace it, if the new run's as-of date is not earlier.
+- Exit codes: 0 printed or sent, 1 usage error or refusal, 6 sending failed.
 
 Installing by the GitHub slug works only for users whose git credentials can read the repository.
 
