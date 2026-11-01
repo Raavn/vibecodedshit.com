@@ -579,11 +579,11 @@
 
     .modal-close:hover { background: var(--surface); border-color: var(--border); }
 
-    #subscribe-form { display: flex; flex-direction: column; gap: 0.75rem; }
+    #subscribe-form, #rank-form { display: flex; flex-direction: column; gap: 0.75rem; }
 
-    #subscribe-form label { font-size: 0.85rem; font-weight: 700; }
+    #subscribe-form label, #rank-form label { font-size: 0.85rem; font-weight: 700; }
 
-    #subscribe-form input[type="email"] {
+    #subscribe-form input[type="email"], #rank-form input[type="email"] {
       font: inherit;
       color: var(--fg);
       padding: 0.75rem 0.9rem;
@@ -593,7 +593,7 @@
       outline: none;
     }
 
-    #subscribe-form input[type="email"]:focus {
+    #subscribe-form input[type="email"]:focus, #rank-form input[type="email"]:focus {
       border-color: var(--fg);
       background: rgba(255, 255, 255, 0.8);
     }
@@ -608,13 +608,13 @@
       overflow: hidden !important;
     }
 
-    #subscribe-form button[type="submit"] {
+    #subscribe-form button[type="submit"], #rank-form button[type="submit"] {
       margin-top: 0.25rem;
       font: inherit;
       cursor: pointer;
     }
 
-    #subscribe-form button[type="submit"]:disabled {
+    #subscribe-form button[type="submit"]:disabled, #rank-form button[type="submit"]:disabled {
       opacity: 0.6;
       cursor: wait;
     }
@@ -835,6 +835,19 @@
       <p class="note">With Docker you get a full score you can compare with other projects. Without Docker the skill runs a preview, marked "not comparable".</p>
     </section>
 
+    <section class="section" id="rank" data-track-section="rank">
+      <div class="section-header">
+        <h2>Where do you rank</h2>
+      </div>
+
+      <form id="rank-form" novalidate>
+        <label for="rank-email">Email you scanned with</label>
+        <input id="rank-email" name="email" type="email" required maxlength="254" autocomplete="email" inputmode="email" placeholder="you@example.com">
+        <button class="btn primary" type="submit" id="rank-submit">Show my rank</button>
+        <div class="form-status" id="rank-status" role="status" aria-live="polite"></div>
+      </form>
+    </section>
+
     <footer data-track-section="footer">
       <div class="no-frameworks">No frameworks were harmed in the making of this site.</div>
       <div>&copy; 2026 vibecodedshit.com · Plain HTML, CSS and JS.</div>
@@ -893,6 +906,60 @@
       });
       document.addEventListener('keydown', function (e) {
         if (e.key === 'Escape') setOpen(false);
+      });
+    })();
+  </script>
+
+  <script>
+    // ---- Rank lookup ----
+    (function () {
+      'use strict';
+
+      const RANK_URL = 'https://app.vibecodedshit.com/api/rank?version=1.0';
+
+      const form = document.getElementById('rank-form');
+      const emailInput = document.getElementById('rank-email');
+      const submit = document.getElementById('rank-submit');
+      const status = document.getElementById('rank-status');
+
+      if (!form || !emailInput || !submit || !status || typeof fetch !== 'function') return;
+
+      function show(text, kind) {
+        status.textContent = text;
+        status.className = 'form-status' + (kind ? ' ' + kind : '');
+      }
+
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        const email = emailInput.value.trim();
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+          show('Enter a valid email address.', 'error');
+          return;
+        }
+
+        submit.disabled = true;
+        show('Looking up…', '');
+        const controller = new AbortController();
+        const timer = setTimeout(function () { controller.abort(); }, 5000);
+
+        fetch(RANK_URL, { headers: { 'x-vcs-email': email }, signal: controller.signal })
+          .then(function (res) {
+            if (res.status === 404) { show('No scan found for that email.', 'error'); return null; }
+            if (!res.ok) throw new Error('status ' + res.status);
+            return res.json();
+          })
+          .then(function (data) {
+            if (!data) return;
+            if (!Number.isInteger(data.rank) || !Number.isInteger(data.total) || typeof data.health !== 'number') {
+              throw new Error('bad response');
+            }
+            const top = typeof data.top10Threshold === 'number'
+              ? 'Top 10 starts at ' + data.top10Threshold + '.'
+              : 'Top 10 opens at 10 projects.';
+            show('#' + data.rank + ' of ' + data.total + ' · health ' + data.health + ' (' + data.band + '). ' + top, 'success');
+          })
+          .catch(function () { show('Could not look that up. Try again later.', 'error'); })
+          .finally(function () { clearTimeout(timer); submit.disabled = false; });
       });
     })();
   </script>
