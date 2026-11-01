@@ -1,6 +1,6 @@
 const SEGMENT = /&&|\|\||;|\|/;
 /** Where each runner appears in a `test` script. */
-export const RUNNER_PATTERN = {
+const RUNNER_PATTERN = {
     vitest: /\bvitest\b/,
     jest: /\bjest\b/,
     mocha: /\bmocha\b/,

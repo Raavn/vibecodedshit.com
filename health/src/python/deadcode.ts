@@ -12,7 +12,7 @@ export interface PythonSymbol {
   decorated: boolean;
 }
 
-export interface PythonImport {
+interface PythonImport {
   module: string;
   level: number;
   names: string[];

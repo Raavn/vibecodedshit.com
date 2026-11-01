@@ -5,7 +5,7 @@ import { initWasm, Resvg, type ResvgRenderOptions } from '@resvg/resvg-wasm';
 import { packageRoot } from '../methodology/load.js';
 import { escapeHtml as e } from '../report/escape.js';
 
-export interface CardSide {
+interface CardSide {
   score: number;
   /** The band name from methodology.yaml, such as "Fragile". */
   tier: string;

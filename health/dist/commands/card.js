@@ -6,7 +6,7 @@ import { renderCard } from '../card/render.js';
 import { loadMethodology, MethodologyError } from '../methodology/load.js';
 import { readRun, RunReadError } from '../run/read.js';
 import { EXIT } from './common.js';
-export const CARD_USAGE = 'Usage: health card <run.json> --history <dir> [--out <file>]\n';
+const CARD_USAGE = 'Usage: health card <run.json> --history <dir> [--out <file>]\n';
 function side(health, methodology) {
     return { score: health.displayed, tier: methodology.bands.find((b) => b.key === health.band)?.name ?? health.band };
 }

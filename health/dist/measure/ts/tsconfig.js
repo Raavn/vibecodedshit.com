@@ -2,7 +2,7 @@ import { existsSync } from 'node:fs';
 import path from 'node:path';
 import ts from 'typescript';
 import { trackedPaths } from '../../scope/tracked.js';
-export const STRICT_FAMILY = [
+const STRICT_FAMILY = [
     'noImplicitAny',
     'strictNullChecks',
     'strictFunctionTypes',
@@ -19,7 +19,7 @@ const host = {
     onUnRecoverableConfigFileDiagnostic: () => undefined,
 };
 /** Parse one tsconfig or jsconfig with `extends` resolved by the TypeScript API. JSON only, nothing is executed. */
-export function loadTsConfig(file, cache) {
+function loadTsConfig(file, cache) {
     const key = posix(file);
     if (cache.has(key))
         return cache.get(key);

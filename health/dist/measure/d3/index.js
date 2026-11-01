@@ -1,7 +1,7 @@
 import { pyAdapter } from './py/adapter.js';
 import { tsAdapter } from './ts/adapter.js';
 /** Explicit list. */
-export const D3_ADAPTERS = [tsAdapter, pyAdapter];
+const D3_ADAPTERS = [tsAdapter, pyAdapter];
 function adaptersFor(ctx) {
     const groups = new Set(ctx.scope.files.filter((f) => f.role === 'logic').map((f) => f.group));
     return D3_ADAPTERS.filter((adapter) => groups.has(adapter.group));

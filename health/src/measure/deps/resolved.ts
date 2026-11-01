@@ -55,7 +55,7 @@ function installedLockfile(repoPath: string, refs: LockfileRef[]): { refs: Lockf
 }
 
 /** The unit's package directory relative to a lockfile's directory ('' when they are the same). */
-export function relToLock(pkg: string, lockDir: string): string {
+function relToLock(pkg: string, lockDir: string): string {
   const dir = pkg === '.' ? '' : pkg;
   if (lockDir === '') return dir;
   return dir === lockDir ? '' : path.posix.relative(lockDir, dir);

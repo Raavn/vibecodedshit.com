@@ -9,7 +9,7 @@ export interface Hotspot {
   score: number;
 }
 
-export const HOTSPOT_LIMIT = 20;
+const HOTSPOT_LIMIT = 20;
 export const SHALLOW_WARNING = 'history is shallow; churn is a lower bound';
 
 /** What 4.1 stores per file in `reportOnly.complexityByFile`. */
@@ -31,7 +31,7 @@ function git(repoPath: string, args: string[]): { status: number | null; stdout:
 }
 
 /** Commits per path in the window, merges and renames ignored. */
-export function churnByPath(repoPath: string, asOf: string): Map<string, number> | null {
+function churnByPath(repoPath: string, asOf: string): Map<string, number> | null {
   const { since, until } = churnWindow(asOf);
   const log = git(repoPath, ['log', `--since=${since}`, `--until=${until}`, '--no-merges', '--no-renames', '--name-only', '-z', '--format=']);
   if (log.status !== 0) return null;

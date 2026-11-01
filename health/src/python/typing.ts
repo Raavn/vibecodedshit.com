@@ -3,7 +3,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ToolError } from '../scope/types.js';
 
-export interface PythonParam {
+interface PythonParam {
   name: string;
   typed: boolean;
   kind: 'positional' | 'vararg' | 'keyword' | 'kwarg';
@@ -20,7 +20,7 @@ export type PythonDef =
   | { kind: 'function'; name: string; info: PythonFunction }
   | { kind: 'class'; name: string; methods: PythonFunction[] };
 
-export interface PythonTypingPoints {
+interface PythonTypingPoints {
   anyCount: number;
   castCount: number;
   typeIgnoreLine: number;

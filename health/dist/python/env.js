@@ -1,9 +1,6 @@
 import path from 'node:path';
 import { runPythonHelper } from './helper.js';
 const cache = new Map();
-export function resetPyEnvCache() {
-    cache.clear();
-}
 /** Environment variable names read by each given Python file: one helper spawn per scan, memoized per repository. */
 export function pythonEnvReads(repoPath, files) {
     const key = path.resolve(repoPath);

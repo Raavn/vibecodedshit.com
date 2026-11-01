@@ -7,7 +7,7 @@ function isConstType(type) {
     return ts.isTypeReferenceNode(type) && ts.isIdentifier(type.typeName) && type.typeName.text === 'const';
 }
 /** Escape-hatch points of one TypeScript or JavaScript file (methodology 2.3). */
-export function countTsEscapeHatches(sourceFile) {
+function countTsEscapeHatches(sourceFile) {
     let points = 0;
     const visit = (node) => {
         switch (node.kind) {

@@ -7,7 +7,7 @@ import { loadMethodology, MethodologyError } from '../methodology/load.js';
 import { readRun, RunReadError } from '../run/read.js';
 import { EXIT, type CliIo } from './common.js';
 
-export const DIFF_USAGE = 'Usage: health diff <before.json> <after.json> [--json]\n';
+const DIFF_USAGE = 'Usage: health diff <before.json> <after.json> [--json]\n';
 
 export function runDiff(argv: string[], io: CliIo): number {
   let parsed;

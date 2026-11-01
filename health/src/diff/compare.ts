@@ -4,7 +4,7 @@ import { roundHalfUp } from '../scoring/aggregate.js';
 import { conditionRefusals, notComparableRefusals, type Refusal } from './conditions.js';
 
 /** methodology.yaml `regression.flag_when`: a dimension drops by this much or more, unrounded. */
-export const REGRESSION_DROP = 3.0;
+const REGRESSION_DROP = 3.0;
 const TOLERANCE = 1e-9;
 
 export class DiffInputError extends Error {
@@ -14,14 +14,14 @@ export class DiffInputError extends Error {
   }
 }
 
-export interface RunSide {
+interface RunSide {
   path: string;
   headCommit: string | null;
   treeHash: string | null;
   health: { score: number; displayed: number; band: string; bandName: string };
 }
 
-export interface DimensionDelta {
+interface DimensionDelta {
   id: number;
   key: string;
   name: string;

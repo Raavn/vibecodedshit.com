@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process';
-export const HOTSPOT_LIMIT = 20;
+const HOTSPOT_LIMIT = 20;
 export const SHALLOW_WARNING = 'history is shallow; churn is a lower bound';
 /** `[asOf minus 12 months, end of asOf day]`, UTC, as ISO strings git accepts. */
 export function churnWindow(asOf) {
@@ -12,7 +12,7 @@ function git(repoPath, args) {
     return { status: result.error ? null : result.status, stdout: result.stdout };
 }
 /** Commits per path in the window, merges and renames ignored. */
-export function churnByPath(repoPath, asOf) {
+function churnByPath(repoPath, asOf) {
     const { since, until } = churnWindow(asOf);
     const log = git(repoPath, ['log', `--since=${since}`, `--until=${until}`, '--no-merges', '--no-renames', '--name-only', '-z', '--format=']);
     if (log.status !== 0)

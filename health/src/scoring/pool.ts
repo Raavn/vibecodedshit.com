@@ -2,7 +2,7 @@ import type { Raw, UnitRaw } from '../measure/types.js';
 import type { ParameterDef } from '../methodology/schema.js';
 import { scoreRaw } from './score.js';
 
-export interface ScoredUnit extends UnitRaw {
+interface ScoredUnit extends UnitRaw {
   score: number;
 }
 

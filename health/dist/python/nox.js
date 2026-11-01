@@ -2,9 +2,6 @@ import path from 'node:path';
 import { trackedPaths } from '../scope/tracked.js';
 import { runPythonHelper } from './helper.js';
 const cache = new Map();
-export function resetNoxCache() {
-    cache.clear();
-}
 /** The sessions of the tracked `noxfile.py` in `file`'s directory (one helper spawn per scan, memoized per repository). Undefined when it does not parse. */
 export function noxSessions(repoPath, file) {
     const key = path.resolve(repoPath);

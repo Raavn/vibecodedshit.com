@@ -5,7 +5,7 @@ import type { DeclaredContract } from './config.js';
 import { moduleName, type PyRoot } from './roots.js';
 
 /** Logic files with a directory named exactly `domain` anywhere in their path. */
-export function isDomainDir(file: string): boolean {
+function isDomainDir(file: string): boolean {
   return path.posix.dirname(file).split('/').includes('domain');
 }
 

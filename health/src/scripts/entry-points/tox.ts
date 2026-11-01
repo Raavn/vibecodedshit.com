@@ -21,7 +21,7 @@ interface ToxConfig {
 }
 
 /** `py{311,312}-lint` becomes `py311-lint` and `py312-lint`. */
-export function expandBraces(text: string): string[] {
+function expandBraces(text: string): string[] {
   const match = /^(.*?)\{([^{}]*)\}(.*)$/.exec(text);
   if (!match) return [text];
   const [, head = '', set = '', tail = ''] = match;
@@ -81,7 +81,7 @@ function fromToml(file: string, doc: Obj): ToxConfig | undefined {
   return { file, envlist, base, envs };
 }
 
-export function readToxConfig(repoPath: string, dir: string): ToxConfig | undefined {
+function readToxConfig(repoPath: string, dir: string): ToxConfig | undefined {
   const ini = findFile(repoPath, dir, ['tox.ini'], false);
   if (ini) return fromIni(ini.file, ini.text);
   for (const name of ['tox.toml', 'pyproject.toml']) {

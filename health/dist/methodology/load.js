@@ -33,7 +33,7 @@ function commaList(text) {
         .map((entry) => entry.trim().replace(/^node:/, ''))
         .filter((entry) => entry !== '');
 }
-export function parseD3Lists(def, file = 'dimension 3') {
+function parseD3Lists(def, file = 'dimension 3') {
     const lists = { forbiddenImports: { typescript_javascript: [], python: [] }, infrastructureDirectories: [] };
     if (!def)
         return lists;
@@ -59,7 +59,7 @@ function words(text) {
         .map((entry) => entry.trim())
         .filter((entry) => entry !== '');
 }
-export function parseD6Lists(scriptResolution, defs, defs6x, file = 'dimension 6') {
+function parseD6Lists(scriptResolution, defs, defs6x, file = 'dimension 6') {
     const text = (scriptResolution ?? '').replace(/\s+/g, ' ');
     const pick = (re, what) => {
         const match = re.exec(text);

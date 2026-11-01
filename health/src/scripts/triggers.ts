@@ -9,7 +9,7 @@ const list = (value: unknown): string[] => (typeof value === 'string' ? [value] 
 const defaultCache = new Map<string, string[]>();
 
 /** The target of `origin/HEAD` with `origin/` removed (when present), plus `main` and `master`. */
-export function defaultBranchNames(repoPath: string): string[] {
+function defaultBranchNames(repoPath: string): string[] {
   const key = path.resolve(repoPath);
   const cached = defaultCache.get(key);
   if (cached) return cached;

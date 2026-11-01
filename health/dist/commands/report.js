@@ -6,7 +6,7 @@ import { renderReport } from '../report/render.js';
 import { roadmapLines } from '../report/roadmap.js';
 import { readRun, RunReadError } from '../run/read.js';
 import { EXIT } from './common.js';
-export const REPORT_USAGE = 'Usage: health report <run.json> [--out <file>]\n';
+const REPORT_USAGE = 'Usage: health report <run.json> [--out <file>]\n';
 export function runReport(argv, io) {
     let parsed;
     try {

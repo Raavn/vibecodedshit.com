@@ -38,7 +38,7 @@ function npmManifest(repoPath, pkg) {
 }
 // ---- Python -----------------------------------------------------------------------------
 /** One PEP 508 requirement string, or undefined when it is not a requirement. */
-export function parseRequirement(line, dev) {
+function parseRequirement(line, dev) {
     const withoutMarker = (line.split(';')[0] ?? '').trim();
     const m = /^([A-Za-z0-9][A-Za-z0-9._-]*)\s*(?:\[[^\]]*\])?\s*(.*)$/.exec(withoutMarker);
     if (!m?.[1])

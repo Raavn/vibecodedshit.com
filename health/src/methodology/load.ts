@@ -23,7 +23,7 @@ export class MethodologyError extends Error {
   }
 }
 
-export interface DimensionDef {
+interface DimensionDef {
   id: number;
   key: string;
   name: string;
@@ -96,7 +96,7 @@ function commaList(text: string): string[] {
     .filter((entry) => entry !== '');
 }
 
-export function parseD3Lists(def: ParameterDef | undefined, file = 'dimension 3'): D3Lists {
+function parseD3Lists(def: ParameterDef | undefined, file = 'dimension 3'): D3Lists {
   const lists: D3Lists = { forbiddenImports: { typescript_javascript: [], python: [] }, infrastructureDirectories: [] };
   if (!def) return lists;
   const measure = def.measure ?? {};
@@ -122,7 +122,7 @@ function words(text: string): string[] {
     .filter((entry) => entry !== '');
 }
 
-export function parseD6Lists(scriptResolution: string | undefined, defs: ParameterDef | undefined, defs6x: ParameterDef | undefined, file = 'dimension 6'): D6Lists {
+function parseD6Lists(scriptResolution: string | undefined, defs: ParameterDef | undefined, defs6x: ParameterDef | undefined, file = 'dimension 6'): D6Lists {
   const text = (scriptResolution ?? '').replace(/\s+/g, ' ');
   const pick = (re: RegExp, what: string): string[] => {
     const match = re.exec(text);

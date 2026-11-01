@@ -2,21 +2,21 @@ import path from 'node:path';
 import { trackedPaths } from '../scope/tracked.js';
 import { runPythonHelper } from './helper.js';
 
-export interface PyImport {
+interface PyImport {
   module: string | null;
   level: number;
   names: { name: string; asname: string | null }[];
   star: boolean;
 }
 
-export interface PyReexport {
+interface PyReexport {
   name: string;
   module: string | null;
   level: number;
   orig: string;
 }
 
-export interface PyTestCase {
+interface PyTestCase {
   name: string;
   line: number;
   asserts: boolean;
@@ -27,10 +27,6 @@ export type PyTestFacts =
   | { ok: true; imports: PyImport[]; defined: string[]; reexports: PyReexport[]; cases: PyTestCase[] };
 
 const cache = new Map<string, Record<string, PyTestFacts>>();
-
-export function resetPyTestsCache(): void {
-  cache.clear();
-}
 
 const NOT_FIRST_PARTY = /(?:^|\/)(?:node_modules|\.venv|venv|site-packages|__pycache__)\//;
 

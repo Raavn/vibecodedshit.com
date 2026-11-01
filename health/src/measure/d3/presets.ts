@@ -5,7 +5,7 @@ import type { Preset, PresetKey } from '../../methodology/schema.js';
 import type { Group } from '../../scope/types.js';
 
 /** Detection order of the D3 dimension file. */
-export const DETECTION_ORDER: PresetKey[] = ['nextjs', 'express', 'django', 'fastapi', 'generic'];
+const DETECTION_ORDER: PresetKey[] = ['nextjs', 'express', 'django', 'fastapi', 'generic'];
 
 const LANGUAGES: Record<Group, string[]> = { typescript_javascript: ['typescript', 'javascript'], python: ['python'] };
 
@@ -25,7 +25,7 @@ export function choosePreset(methodology: Methodology, group: Group, matches: Pa
 const MATCH_OPTIONS = { dot: true } as const;
 
 /** TypeScript and JavaScript match a glob with or without `src/`. Python passes its root package directories. */
-export const TS_PREFIXES = ['', 'src/'];
+const TS_PREFIXES = ['', 'src/'];
 
 /** A glob `g` matches path `p` when `p` matches `prefix + g` for any of the prefixes (each empty or ending in `/`). */
 export function globMatcher(globs: string[], prefixes: string[] = TS_PREFIXES): (rel: string) => boolean {

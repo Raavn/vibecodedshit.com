@@ -1,7 +1,7 @@
 import path from 'node:path';
 import { moduleName } from './roots.js';
 /** Logic files with a directory named exactly `domain` anywhere in their path. */
-export function isDomainDir(file) {
+function isDomainDir(file) {
     return path.posix.dirname(file).split('/').includes('domain');
 }
 /**

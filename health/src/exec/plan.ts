@@ -17,7 +17,7 @@ export interface PlannedRoot {
   sourceFiles: string[];
 }
 
-export interface PlannedTypecheck {
+interface PlannedTypecheck {
   /** Workspace package directory, the step's working directory. */
   dir: string;
   group: Group;

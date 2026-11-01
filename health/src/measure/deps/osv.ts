@@ -1,6 +1,6 @@
 import { band, cvss3BaseScore } from './cvss.js';
 
-export interface OsvVuln {
+interface OsvVuln {
   id: string;
   aliases?: string[];
   published?: string;
@@ -18,9 +18,9 @@ export interface PackageVulns {
   vulnerabilities: OsvVuln[];
 }
 
-export type Severity = 'critical' | 'high' | 'moderate' | 'low' | 'none';
+type Severity = 'critical' | 'high' | 'moderate' | 'low' | 'none';
 
-export const POINTS: Record<Severity, number> = { critical: 10, high: 5, moderate: 2, low: 0.5, none: 0 };
+const POINTS: Record<Severity, number> = { critical: 10, high: 5, moderate: 2, low: 0.5, none: 0 };
 
 const LABELS: Record<string, Severity> = {
   CRITICAL: 'critical',
@@ -35,7 +35,7 @@ export function endOfDay(asOf: string): number {
 }
 
 /** Published at or before the end of the as-of day (no `published` is kept) and not withdrawn. */
-export function counts(record: OsvVuln, asOf: string): boolean {
+function counts(record: OsvVuln, asOf: string): boolean {
   if (record.withdrawn !== undefined && record.withdrawn !== '') return false;
   if (record.published === undefined) return true;
   const published = Date.parse(record.published);
@@ -49,7 +49,7 @@ function highest(values: Severity[]): Severity | undefined {
 }
 
 /** Methodology 5.1 order: GHSA label, then CVSS v3.x base score band, then moderate. */
-export function groupSeverity(records: OsvVuln[]): Severity {
+function groupSeverity(records: OsvVuln[]): Severity {
   const labelled = records
     .map((r) => LABELS[(r.database_specific?.severity ?? '').toUpperCase()])
     .filter((s): s is Severity => s !== undefined);
