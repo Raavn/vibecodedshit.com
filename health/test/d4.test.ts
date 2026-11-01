@@ -7,13 +7,14 @@ import { recompute } from '../src/run/recompute.js';
 import type { RunFile, RunParameter } from '../src/run/schema.js';
 import { runScan } from '../src/run/scan.js';
 import { createToolKit } from '../src/tools/kit.js';
+import { FAKE_DIGEST, fakeRunner } from './helpers/exec.js';
 import { fixturesDir, materializeFixture } from './helpers/fixture.js';
 import { fakeToolKit, ok, type FakeKit, type FakeTool } from './helpers/tools.js';
 
 const methodology = loadMethodology('1.0');
 
 const scan = (repoPath: string, tools: FakeKit, mode: 'preview' | 'full' = 'preview'): Promise<RunFile> =>
-  runScan({ repoPath, methodologyVersion: '1.0', mode, asOf: '2026-10-04', tools });
+  runScan({ repoPath, methodologyVersion: '1.0', mode, asOf: '2026-10-04', tools, ...(mode === 'full' ? { execRunner: fakeRunner((spec) => (spec.step === 'knip' ? { exitCode: 0, files: { 'knip.json': '{"issues":[]}' } } : { exitCode: 0 })), imageDigest: FAKE_DIGEST } : {}) });
 
 const expected = (name: string): Record<string, never> =>
   JSON.parse(readFileSync(path.join(fixturesDir, name, 'expected.json'), 'utf8')) as Record<string, never>;
