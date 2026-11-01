@@ -9,6 +9,7 @@ Run commands from this directory (`npm --prefix health <cmd>` from the repositor
 - `npm run typecheck` runs `tsc --noEmit`
 - `npm run lint` runs `eslint .`
 - `npm run test` runs `vitest run`
+- `npm run coverage` runs the tests with v8 line coverage over `src/` and prints a summary (`coverage/coverage-summary.json`). Not part of `verify`.
 - `npm run test:tools` runs the real Python tools on the host (`pipx install complexipy vulture deptry import-linter && brew install osv-scanner gitleaks` first), as a preview scan does. Not part of `verify`. `HEALTH_UPDATE_FIXTURES=1 npm run test:tools` rewrites the `helper-out.json` files of the D3 Python fixtures from the real helper.
 - `npm run test:docker` runs the Docker integration tests in `test/docker/` against the real image (`HEALTH_DOCKER=1`). Skipped otherwise, not part of `verify`. Build the image first with `npm run image:build`.
 - `npm run image:build` builds `health:1.0` from `docker/Dockerfile`.
