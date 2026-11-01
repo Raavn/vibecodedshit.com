@@ -4,8 +4,9 @@ import { runCard } from './commands/card.js';
 import { EXIT, type CliIo } from './commands/common.js';
 import { runDiff } from './commands/diff.js';
 import { runReport } from './commands/report.js';
+import { runSubmit, type SubmitDeps } from './commands/submit.js';
 import { summarize } from './commands/summary.js';
-import { loadMethodology, MethodologyError, type Methodology } from './methodology/load.js';
+import { CURRENT_METHODOLOGY_VERSION, loadMethodology, MethodologyError, type Methodology } from './methodology/load.js';
 import { invalidRun, NoLogicFilesError, runScan, type ScanOptions } from './run/scan.js';
 import { writeRun } from './run/write.js';
 import { NotAGitRepositoryError } from './scope/build.js';
@@ -18,17 +19,19 @@ const USAGE = `Usage: health scan <path> [--preview] [--as-of YYYY-MM-DD] [--out
        health report <run.json> [--out <file>]
        health diff <before.json> <after.json> [--json]
        health card <run.json> --history <dir> [--out <file>]
+       health submit <run.json> --email <addr> [--confirm] [--newsletter] [--include-repo-name] [--summary-file <path>]
 
-Exit codes: 0 ok, 1 usage or unreadable input, 2 methodology error, 3 no logic file, 4 tool error, 5 diff refused.
+Exit codes: 0 ok, 1 usage or unreadable input, 2 methodology error, 3 no logic file, 4 tool error, 5 diff refused, 6 submit failed.
 `;
 
 /** Test seams: the execution runner, image digest, static tool kit and parameters a scan uses. */
-export type CliDeps = Pick<ScanOptions, 'execRunner' | 'imageDigest' | 'tools' | 'measurers'>;
+export type CliDeps = Pick<ScanOptions, 'execRunner' | 'imageDigest' | 'tools' | 'measurers'> & SubmitDeps;
 
 export async function run(argv: string[], io: CliIo, deps: CliDeps = {}): Promise<number> {
   if (argv[0] === 'report') return runReport(argv.slice(1), io);
   if (argv[0] === 'diff') return runDiff(argv.slice(1), io);
   if (argv[0] === 'card') return runCard(argv.slice(1), io);
+  if (argv[0] === 'submit') return runSubmit(argv.slice(1), io, { git: deps.git, fetch: deps.fetch });
   let parsed;
   try {
     parsed = parseArgs({
@@ -59,7 +62,7 @@ export async function run(argv: string[], io: CliIo, deps: CliDeps = {}): Promis
 
   const opts: ScanOptions = {
     repoPath: path.resolve(io.cwd, target),
-    methodologyVersion: parsed.values.methodology ?? '1.0',
+    methodologyVersion: parsed.values.methodology ?? CURRENT_METHODOLOGY_VERSION,
     mode: parsed.values.preview ? 'preview' : 'full',
     asOf,
     ...deps,

@@ -71,6 +71,9 @@ export interface Methodology {
 }
 
 /** Package root: the directory holding `methodology/`, both from `src/` and from `dist/`. */
+/** The methodology version a scan uses when `--methodology` is not given. */
+export const CURRENT_METHODOLOGY_VERSION = '1.0';
+
 export const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 
 function readYaml<T extends z.ZodType>(file: string, schema: T): z.infer<T> {
