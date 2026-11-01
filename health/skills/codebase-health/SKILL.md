@@ -27,7 +27,7 @@ Scan a repository with the Codebase Health benchmark and explain the result. The
 
 If `${CLAUDE_PLUGIN_ROOT}/node_modules` does not exist, run `npm ci --omit=dev --ignore-scripts` with `${CLAUDE_PLUGIN_ROOT}` as the working directory, say so in one line, and continue. If it fails, show the error and stop.
 
-### 1. Target and output directory
+### 1. Target, branch and output directory
 
 Target: `$ARGUMENTS` if given, else the output of `git rev-parse --show-toplevel` in the working directory, else the working directory.
 
@@ -38,6 +38,16 @@ mkdir -p "${CLAUDE_PLUGIN_DATA}/runs/<UTC timestamp, YYYYMMDDTHHMMSSZ>"
 ```
 
 Write everything for this run there. Never write `run.json` or the report into the scanned repository.
+
+Branch: the branch the user names, else `main`. Scan the latest commit of that branch, never whatever the target happens to have checked out. Never switch, pull into or otherwise change the target's own checkout. When the target is a git repository:
+
+1. Run `git -C <target> fetch origin <branch>`. When it succeeds, the commit is `origin/<branch>`. When it fails (no `origin` remote, or no such branch there), use the local `<branch>`; when that does not exist either, say so and stop.
+2. CHECKOUT is `${CLAUDE_PLUGIN_DATA}/checkouts/<basename of the target>`. When it already exists, run `git -C <target> worktree remove --force "<CHECKOUT>"` and `git -C <target> worktree prune` first.
+3. Run `git -C <target> worktree add --detach "<CHECKOUT>" <commit>`.
+4. Tell the user in one line which branch and short commit SHA is scanned. From here on, `<target>` in every command means CHECKOUT.
+5. As the last thing you do in the run, whichever step it ends at, run `git -C <original target> worktree remove --force "<CHECKOUT>"`.
+
+When the target is not a git repository, scan it as it is; when the user named a branch, say it could not be used.
 
 ### 2. Full scan or preview
 

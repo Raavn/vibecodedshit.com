@@ -98,6 +98,14 @@ describe('SKILL.md', () => {
     expect(skill).toContain('card "<RUN_DIR>/run.json" --history "${CLAUDE_PLUGIN_DATA}/runs" --out "<RUN_DIR>/health-card.png"');
   });
 
+  it('scans the latest main in a separate worktree unless the user names a branch', () => {
+    expect(skill).toContain('Branch: the branch the user names, else `main`.');
+    expect(skill).toContain('Never switch, pull into or otherwise change the target\'s own checkout.');
+    expect(skill).toContain('git -C <target> fetch origin <branch>');
+    expect(skill).toContain('git -C <target> worktree add --detach "<CHECKOUT>" <commit>');
+    expect(skill).toContain('git -C <original target> worktree remove --force "<CHECKOUT>"');
+  });
+
   it('uses the update endpoint and the image build script', () => {
     expect(skill).toContain('https://app.vibecodedshit.com/api/version');
     const pkg = JSON.parse(readFileSync(path.join(pluginRoot, 'package.json'), 'utf8')) as { scripts: Record<string, string> };
