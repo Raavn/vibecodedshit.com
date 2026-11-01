@@ -1,7 +1,7 @@
 import type { Raw } from '../measure/types.js';
 import type { Group } from '../scope/types.js';
 
-export type ParameterStatus = 'measured' | 'not_applicable' | 'not_measured' | 'failed';
+type ParameterStatus = 'measured' | 'not_applicable' | 'not_measured' | 'failed';
 
 export interface RunUnit {
   package: string;

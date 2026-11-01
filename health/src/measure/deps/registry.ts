@@ -4,7 +4,7 @@ import type { Group } from '../../scope/types.js';
 import type { MeasureContext } from '../types.js';
 import { endOfDay } from './osv.js';
 
-export interface PublishedVersion {
+interface PublishedVersion {
   version: string;
   /** Epoch milliseconds of the publish time. */
   time: number;

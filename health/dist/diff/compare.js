@@ -1,7 +1,7 @@
 import { roundHalfUp } from '../scoring/aggregate.js';
 import { conditionRefusals, notComparableRefusals } from './conditions.js';
 /** methodology.yaml `regression.flag_when`: a dimension drops by this much or more, unrounded. */
-export const REGRESSION_DROP = 3.0;
+const REGRESSION_DROP = 3.0;
 const TOLERANCE = 1e-9;
 export class DiffInputError extends Error {
     constructor(message) {

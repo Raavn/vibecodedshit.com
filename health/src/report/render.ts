@@ -7,7 +7,7 @@ import { nearestDescriptor, rawText, scoreText, statusText } from './format.js';
 import { buildRoadmap, gainText, ROADMAP_LIMIT } from './roadmap.js';
 import { STYLE } from './style.js';
 
-export const HELP_URL = 'https://vibecodedshit.com';
+const HELP_URL = 'https://vibecodedshit.com';
 const NOT_COLLECTED = '<p class="muted">not collected</p>';
 
 function table(head: { text: string; num?: boolean }[], rows: string[][]): string {

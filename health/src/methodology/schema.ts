@@ -20,7 +20,7 @@ const scoring = z.discriminatedUnion('method', [
   z.object({ method: z.literal('mean_of_components'), components: z.array(component).min(1) }),
 ]);
 
-export const parameterSchema = z.object({
+const parameterSchema = z.object({
   id: z.string(),
   key: z.string(),
   name: z.string(),
@@ -114,14 +114,12 @@ export const scopeFileSchema = z.object({
 });
 
 export type ParameterDef = z.infer<typeof parameterSchema>;
-export type ScoringDef = ParameterDef['scoring'];
 export type LevelEntry = z.infer<typeof levelEntry>;
-export type ComponentDef = z.infer<typeof component>;
 export type ScopeConfig = z.infer<typeof scopeFileSchema>;
 export type ExecutionConfig = z.infer<typeof methodologyFileSchema>['execution'];
 export type BandDef = z.infer<typeof methodologyFileSchema>['bands'][number];
 
-export type PresetRule = z.infer<typeof presetRule>;
+type PresetRule = z.infer<typeof presetRule>;
 export type PresetKey = z.infer<typeof presetFileSchema>['preset']['key'];
 export interface Preset {
   preset: PresetKey;

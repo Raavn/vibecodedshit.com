@@ -3,7 +3,7 @@ import type { TestRunnerName } from '../types.js';
 const SEGMENT = /&&|\|\||;|\|/;
 
 /** Where each runner appears in a `test` script. */
-export const RUNNER_PATTERN: Record<Exclude<TestRunnerName, 'pytest'>, RegExp> = {
+const RUNNER_PATTERN: Record<Exclude<TestRunnerName, 'pytest'>, RegExp> = {
   vitest: /\bvitest\b/,
   jest: /\bjest\b/,
   mocha: /\bmocha\b/,

@@ -1,10 +1,5 @@
 import type { Group, Scope, ScopedFile } from '../scope/types.js';
 
-export interface UnitKey {
-  package: string;
-  group: Group;
-}
-
 export function logicFiles(scope: Scope, group: Group): ScopedFile[] {
   return scope.files.filter((f) => f.role === 'logic' && f.group === group);
 }

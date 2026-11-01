@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import type { MeasureContext } from '../measure/types.js';
 import { ToolError } from '../scope/types.js';
 
-export interface PythonImport {
+interface PythonImport {
   line: number;
   level: number;
   modules: string[];

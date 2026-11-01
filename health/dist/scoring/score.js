@@ -2,7 +2,7 @@ function clamp(value, lo, hi) {
     return Math.min(hi, Math.max(lo, value));
 }
 /** The numeric value of a ratio or number raw. A ratio with no denominator has no value. */
-export function rawValue(raw) {
+function rawValue(raw) {
     if (raw.kind === 'number')
         return raw.value;
     if (raw.kind === 'ratio') {
@@ -10,7 +10,7 @@ export function rawValue(raw) {
     }
     throw new Error(`Raw of kind ${raw.kind} has no numeric value`);
 }
-export function piecewiseLinear(anchors, value) {
+function piecewiseLinear(anchors, value) {
     const sorted = [...anchors].sort((a, b) => a.raw - b.raw);
     const first = sorted[0];
     const last = sorted[sorted.length - 1];

@@ -1,5 +1,5 @@
 /** install_fails when the install did not work; build_fails when it did and the build did not; works otherwise (no build step counts as works). */
-export function installLevel(root) {
+function installLevel(root) {
     if (root.install && root.install.status !== 'ok')
         return 'install_fails';
     if (root.build && root.build.status !== 'ok')

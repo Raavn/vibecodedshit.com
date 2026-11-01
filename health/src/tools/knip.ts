@@ -5,7 +5,7 @@ import path from 'node:path';
 import type { Measurement, MeasureContext } from '../measure/types.js';
 import { failureReason, unavailable } from './outcome.js';
 
-export interface KnipFileIssues {
+interface KnipFileIssues {
   /** Unused exports plus unused exported types. */
   exports: number;
   /** Knip lists the whole file as unused. */

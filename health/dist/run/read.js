@@ -8,7 +8,7 @@ export class RunReadError extends Error {
 }
 const nullableScore = z.number().nullable();
 /** The fields `report` and `diff` read. Unknown fields pass through untouched. */
-export const runFileSchema = z.looseObject({
+const runFileSchema = z.looseObject({
     schemaVersion: z.literal(1),
     valid: z.boolean(),
     invalidReason: z.string().optional(),

@@ -44,7 +44,7 @@ export interface CommandContext {
   invocation?: TestInvocation;
 }
 
-export type CheckTool = 'tsc' | 'pyright' | 'mypy' | 'eslint' | 'ruff';
+type CheckTool = 'tsc' | 'pyright' | 'mypy' | 'eslint' | 'ruff';
 
 export interface StepCommand {
   argv: string[];

@@ -2,7 +2,7 @@ import { splitSimple, tokenize } from '../../scripts/expand.js';
 const ALIASES = { bunx: ['npx'], uvx: ['uv', 'run'], pip3: ['pip'], python3: ['python'] };
 const SKIPPED = new Set(['sudo']);
 /** First word of a simple command after `VAR=value` words and `sudo`; aliases (`bunx`, `uvx`, `pip3`, `python3`) map to their base word. */
-export function leadWord(tokens) {
+function leadWord(tokens) {
     let rest = tokens;
     while (rest[0] !== undefined && (/^[A-Za-z_][A-Za-z0-9_]*=/.test(rest[0]) || SKIPPED.has(rest[0])))
         rest = rest.slice(1);
@@ -15,7 +15,7 @@ export function leadWord(tokens) {
     return { word: rest[0], rest };
 }
 /** Candidates from fenced blocks (every line) and inline code spans (one per span), before splitting into simple commands. */
-export function candidates(text) {
+function candidates(text) {
     const out = [];
     const lines = text.replace(/\r\n?/g, '\n').split('\n');
     let fence;

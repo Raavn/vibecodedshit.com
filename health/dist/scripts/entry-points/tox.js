@@ -3,7 +3,7 @@ import { parseTomlText } from '../../util/toml.js';
 import { findFile } from './find.js';
 const isObj = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
 /** `py{311,312}-lint` becomes `py311-lint` and `py312-lint`. */
-export function expandBraces(text) {
+function expandBraces(text) {
     const match = /^(.*?)\{([^{}]*)\}(.*)$/.exec(text);
     if (!match)
         return [text];
@@ -70,7 +70,7 @@ function fromToml(file, doc) {
     const envlist = Array.isArray(table.env_list) ? table.env_list.filter((e) => typeof e === 'string').flatMap(expandBraces) : [];
     return { file, envlist, base, envs };
 }
-export function readToxConfig(repoPath, dir) {
+function readToxConfig(repoPath, dir) {
     const ini = findFile(repoPath, dir, ['tox.ini'], false);
     if (ini)
         return fromIni(ini.file, ini.text);

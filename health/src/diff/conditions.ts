@@ -1,6 +1,6 @@
 import type { RunFile } from '../run/schema.js';
 
-export type ConditionKey = 'layers' | 'tool_versions' | 'methodology_version' | 'as_of_date' | 'ignore_set' | 'run_not_comparable';
+type ConditionKey = 'layers' | 'tool_versions' | 'methodology_version' | 'as_of_date' | 'ignore_set' | 'run_not_comparable';
 
 export interface Refusal {
   condition: ConditionKey;

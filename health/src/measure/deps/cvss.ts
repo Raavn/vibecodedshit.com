@@ -15,7 +15,7 @@ function pr(value: string, changed: boolean): number | undefined {
 }
 
 /** Smallest number, to one decimal, that is >= the input (CVSS v3.1 Roundup). */
-export function roundUp(input: number): number {
+function roundUp(input: number): number {
   const int = Math.round(input * 100000);
   if (int % 10000 === 0) return int / 100000;
   return (Math.floor(int / 10000) + 1) / 10;

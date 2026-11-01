@@ -2,9 +2,6 @@ import path from 'node:path';
 import { trackedPaths } from '../scope/tracked.js';
 import { runPythonHelper } from './helper.js';
 const cache = new Map();
-export function resetPyTestsCache() {
-    cache.clear();
-}
 const NOT_FIRST_PARTY = /(?:^|\/)(?:node_modules|\.venv|venv|site-packages|__pycache__)\//;
 /**
  * Import and test-case facts of every tracked Python file, packages that only re-export included (they are not scoped files but

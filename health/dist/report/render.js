@@ -3,7 +3,7 @@ import { escapeHtml as e } from './escape.js';
 import { nearestDescriptor, rawText, scoreText, statusText } from './format.js';
 import { buildRoadmap, gainText, ROADMAP_LIMIT } from './roadmap.js';
 import { STYLE } from './style.js';
-export const HELP_URL = 'https://vibecodedshit.com';
+const HELP_URL = 'https://vibecodedshit.com';
 const NOT_COLLECTED = '<p class="muted">not collected</p>';
 function table(head, rows) {
     const th = head.map((h) => `<th${h.num ? ' class="num"' : ''}>${e(h.text)}</th>`).join('');

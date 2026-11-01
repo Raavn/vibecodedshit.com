@@ -197,7 +197,7 @@ function pipfileLockReader(json) {
     };
 }
 /** `name==version` for every requirement of a hashed, fully pinned requirements file, else undefined. */
-export function pinnedRequirements(text) {
+function pinnedRequirements(text) {
     const lines = requirementLines(text);
     if (lines.length === 0)
         return undefined;
@@ -244,9 +244,6 @@ export function findLockfiles(repoPath, pkg, group) {
             return [];
         dir = dir.includes('/') ? dir.slice(0, dir.lastIndexOf('/')) : '';
     }
-}
-export function lockfileKind(file) {
-    return NAMED[path.posix.basename(file)];
 }
 function parseJson(text) {
     try {

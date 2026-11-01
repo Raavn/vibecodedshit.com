@@ -12,10 +12,6 @@ type NoxResult = { ok: false } | { ok: true; sessions: NoxSession[] };
 
 const cache = new Map<string, Record<string, NoxResult>>();
 
-export function resetNoxCache(): void {
-  cache.clear();
-}
-
 /** The sessions of the tracked `noxfile.py` in `file`'s directory (one helper spawn per scan, memoized per repository). Undefined when it does not parse. */
 export function noxSessions(repoPath: string, file: string): NoxSession[] | undefined {
   const key = path.resolve(repoPath);

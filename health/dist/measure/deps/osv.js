@@ -1,5 +1,5 @@
 import { band, cvss3BaseScore } from './cvss.js';
-export const POINTS = { critical: 10, high: 5, moderate: 2, low: 0.5, none: 0 };
+const POINTS = { critical: 10, high: 5, moderate: 2, low: 0.5, none: 0 };
 const LABELS = {
     CRITICAL: 'critical',
     HIGH: 'high',
@@ -11,7 +11,7 @@ export function endOfDay(asOf) {
     return Date.parse(`${asOf}T23:59:59.999Z`);
 }
 /** Published at or before the end of the as-of day (no `published` is kept) and not withdrawn. */
-export function counts(record, asOf) {
+function counts(record, asOf) {
     if (record.withdrawn !== undefined && record.withdrawn !== '')
         return false;
     if (record.published === undefined)
@@ -24,7 +24,7 @@ function highest(values) {
     return values.reduce((top, v) => (top === undefined || ORDER.indexOf(v) > ORDER.indexOf(top) ? v : top), undefined);
 }
 /** Methodology 5.1 order: GHSA label, then CVSS v3.x base score band, then moderate. */
-export function groupSeverity(records) {
+function groupSeverity(records) {
     const labelled = records
         .map((r) => LABELS[(r.database_specific?.severity ?? '').toUpperCase()])
         .filter((s) => s !== undefined);

@@ -4,7 +4,7 @@ const isObj = (value) => value !== null && typeof value === 'object' && !Array.i
 const list = (value) => (typeof value === 'string' ? [value] : Array.isArray(value) ? value.filter((v) => typeof v === 'string') : []);
 const defaultCache = new Map();
 /** The target of `origin/HEAD` with `origin/` removed (when present), plus `main` and `master`. */
-export function defaultBranchNames(repoPath) {
+function defaultBranchNames(repoPath) {
     const key = path.resolve(repoPath);
     const cached = defaultCache.get(key);
     if (cached)

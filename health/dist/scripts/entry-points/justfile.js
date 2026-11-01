@@ -1,7 +1,7 @@
 import { findFile, joinContinuations } from './find.js';
 const JUSTFILES = ['justfile', 'Justfile', '.justfile'];
 /** Line based: `name [params...]: [dependencies]`, indented lines are the body. `alias`, `set`, `import`, `mod`, assignments and attributes are ignored. */
-export function parseJustfile(text) {
+function parseJustfile(text) {
     const recipes = new Map();
     const lines = text.replace(/\r\n/g, '\n').split('\n');
     let current;

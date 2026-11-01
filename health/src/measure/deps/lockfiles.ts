@@ -240,7 +240,7 @@ function pipfileLockReader(json: Record<string, unknown>): LockReader {
 }
 
 /** `name==version` for every requirement of a hashed, fully pinned requirements file, else undefined. */
-export function pinnedRequirements(text: string): Map<string, string> | undefined {
+function pinnedRequirements(text: string): Map<string, string> | undefined {
   const lines = requirementLines(text);
   if (lines.length === 0) return undefined;
   const pinned = new Map<string, string>();
@@ -284,10 +284,6 @@ export function findLockfiles(repoPath: string, pkg: string, group: Group): Lock
     if (dir === '') return [];
     dir = dir.includes('/') ? dir.slice(0, dir.lastIndexOf('/')) : '';
   }
-}
-
-export function lockfileKind(file: string): LockKind | undefined {
-  return NAMED[path.posix.basename(file)];
 }
 
 function parseJson(text: string): Record<string, unknown> | undefined {

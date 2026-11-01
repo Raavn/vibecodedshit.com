@@ -16,7 +16,7 @@ const scoring = z.discriminatedUnion('method', [
     }),
     z.object({ method: z.literal('mean_of_components'), components: z.array(component).min(1) }),
 ]);
-export const parameterSchema = z.object({
+const parameterSchema = z.object({
     id: z.string(),
     key: z.string(),
     name: z.string(),

@@ -1,7 +1,7 @@
 import path from 'node:path';
 import picomatch from 'picomatch';
 /** Detection order of the D3 dimension file. */
-export const DETECTION_ORDER = ['nextjs', 'express', 'django', 'fastapi', 'generic'];
+const DETECTION_ORDER = ['nextjs', 'express', 'django', 'fastapi', 'generic'];
 const LANGUAGES = { typescript_javascript: ['typescript', 'javascript'], python: ['python'] };
 /**
  * The first preset in detection order whose `languages` include the group and whose detection predicate
@@ -19,7 +19,7 @@ export function choosePreset(methodology, group, matches) {
 }
 const MATCH_OPTIONS = { dot: true };
 /** TypeScript and JavaScript match a glob with or without `src/`. Python passes its root package directories. */
-export const TS_PREFIXES = ['', 'src/'];
+const TS_PREFIXES = ['', 'src/'];
 /** A glob `g` matches path `p` when `p` matches `prefix + g` for any of the prefixes (each empty or ending in `/`). */
 export function globMatcher(globs, prefixes = TS_PREFIXES) {
     const matchers = prefixes.map((prefix) => picomatch(globs.map((g) => `${prefix}${g}`), MATCH_OPTIONS));

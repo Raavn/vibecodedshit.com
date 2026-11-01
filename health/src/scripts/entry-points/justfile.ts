@@ -9,7 +9,7 @@ interface Recipe {
 }
 
 /** Line based: `name [params...]: [dependencies]`, indented lines are the body. `alias`, `set`, `import`, `mod`, assignments and attributes are ignored. */
-export function parseJustfile(text: string): Map<string, Recipe> {
+function parseJustfile(text: string): Map<string, Recipe> {
   const recipes = new Map<string, Recipe>();
   const lines = text.replace(/\r\n/g, '\n').split('\n');
   let current: Recipe | undefined;

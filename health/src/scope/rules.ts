@@ -1,9 +1,9 @@
 // The only hard-coded rule constants: the prose exclusions in scope.yaml and the
 // "defines a function, method or class" test.
 
-export const GENERATED_MARKERS = ['@generated', 'Code generated'];
-export const GENERATED_HEAD_LINES = 5;
-export const MINIFIED_AVG_LINE_LENGTH = 300;
+const GENERATED_MARKERS = ['@generated', 'Code generated'];
+const GENERATED_HEAD_LINES = 5;
+const MINIFIED_AVG_LINE_LENGTH = 300;
 
 export function hasGeneratedMarker(text: string): boolean {
   const head = text.split('\n', GENERATED_HEAD_LINES).join('\n');

@@ -1,7 +1,7 @@
 import { dimensionScore, healthScore, roundHalfUp } from '../scoring/aggregate.js';
 import { rawText } from './format.js';
 export const ROADMAP_LIMIT = 10;
-export const STDOUT_LIMIT = 3;
+const STDOUT_LIMIT = 3;
 function weighted(def, param, override) {
     if (override?.id === def.id)
         return { weight: def.weight, score: override.score };

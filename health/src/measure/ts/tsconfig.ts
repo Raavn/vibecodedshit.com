@@ -3,7 +3,7 @@ import path from 'node:path';
 import ts from 'typescript';
 import { trackedPaths } from '../../scope/tracked.js';
 
-export const STRICT_FAMILY = [
+const STRICT_FAMILY = [
   'noImplicitAny',
   'strictNullChecks',
   'strictFunctionTypes',
@@ -17,7 +17,7 @@ export const STRICT_FAMILY = [
 export type TsLevel = 'none' | 'partial' | 'strict' | 'strict_plus';
 const LEVEL_ORDER: TsLevel[] = ['none', 'partial', 'strict', 'strict_plus'];
 
-export interface TsConfigInfo {
+interface TsConfigInfo {
   /** Absolute path, posix separators. */
   file: string;
   options: ts.CompilerOptions;
@@ -41,7 +41,7 @@ const host: ts.ParseConfigFileHost = {
 };
 
 /** Parse one tsconfig or jsconfig with `extends` resolved by the TypeScript API. JSON only, nothing is executed. */
-export function loadTsConfig(file: string, cache: ConfigCache): TsConfigInfo | undefined {
+function loadTsConfig(file: string, cache: ConfigCache): TsConfigInfo | undefined {
   const key = posix(file);
   if (cache.has(key)) return cache.get(key);
   let info: TsConfigInfo | undefined;

@@ -14,11 +14,11 @@ import { emptyTallies, logicFiles, tallyUnits, unitId } from './units.js';
 import type { Measurement, Measurer } from './types.js';
 
 /** Functions with cognitive complexity strictly greater than this count (methodology 4.1: "strictly greater than 15"). */
-export const COMPLEXITY_THRESHOLD = 15;
+const COMPLEXITY_THRESHOLD = 15;
 
 const MESSAGE = /from (\d+) to the 0 allowed/;
 
-export interface FileComplexity {
+interface FileComplexity {
   file: string;
   group: Group;
   /** Every function in the file, as enumerated by the tool. */

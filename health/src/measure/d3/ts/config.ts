@@ -9,7 +9,7 @@ export interface DcPathSpec {
   pathNot?: string | string[];
 }
 
-export interface DeclaredRule {
+interface DeclaredRule {
   name: string;
   severity: 'error' | 'warn' | 'info' | 'ignore';
   from: DcPathSpec;

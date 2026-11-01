@@ -5,7 +5,7 @@ import { dimensionScore, healthScore, roundHalfUp, type WeightedScore } from '..
 import { rawText } from './format.js';
 
 export const ROADMAP_LIMIT = 10;
-export const STDOUT_LIMIT = 3;
+const STDOUT_LIMIT = 3;
 
 export interface RoadmapItem {
   id: string;

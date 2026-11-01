@@ -34,7 +34,7 @@ function installedLockfile(repoPath, refs) {
     return { refs: picked, warnings: [`5.3: ${where} has several JS lockfiles (${names.join(', ')}); install and 5.3 use ${chosen}`] };
 }
 /** The unit's package directory relative to a lockfile's directory ('' when they are the same). */
-export function relToLock(pkg, lockDir) {
+function relToLock(pkg, lockDir) {
     const dir = pkg === '.' ? '' : pkg;
     if (lockDir === '')
         return dir;

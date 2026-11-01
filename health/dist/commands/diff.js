@@ -6,7 +6,7 @@ import { formatDiff, formatRefusal } from '../diff/format.js';
 import { loadMethodology, MethodologyError } from '../methodology/load.js';
 import { readRun, RunReadError } from '../run/read.js';
 import { EXIT } from './common.js';
-export const DIFF_USAGE = 'Usage: health diff <before.json> <after.json> [--json]\n';
+const DIFF_USAGE = 'Usage: health diff <before.json> <after.json> [--json]\n';
 export function runDiff(argv, io) {
     let parsed;
     try {
