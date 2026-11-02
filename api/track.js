@@ -16,22 +16,15 @@ const MESSAGES = {
   stay_5s: `⏱️ Stayed 5s+ on ${PAGE}`,
   stay_15s: `⏱️ Stayed 15s+ on ${PAGE}`,
   stay_30s: `⏱️ Stayed 30s+ on ${PAGE}`,
-  scroll_average: `📊 Scrolled to the live average on ${PAGE}`,
-  scroll_measures: `📏 Scrolled to "What it measures" on ${PAGE}`,
-  scroll_bands: `🎚️ Scrolled to "Four bands" on ${PAGE}`,
-  scroll_run: `▶️ Scrolled to "Run it" on ${PAGE}`,
   scroll_footer: `🔚 Reached the footer on ${PAGE}`,
-  click_run: `▶️ Clicked "Run it" on ${PAGE}`,
-  click_copy: `📋 Copied an install command on ${PAGE}`,
-  click_subscribe: `📬 Opened "Get benchmark updates" on ${PAGE}`,
-  subscribe_success: `✅ Joined the list on ${PAGE}`,
-  click_methodology: `📄 Opened the methodology on ${PAGE}`,
+  click_get_pack: `📦 Opened "Get the Pack for free" on ${PAGE}`,
+  get_pack_success: `✅ Requested the Pack on ${PAGE}`,
   leave_page: `🚪 Left ${PAGE}`,
 };
 
-const SOURCES = ["hero", "nav", "measures", "marketplace", "install", "run"];
+const SOURCES = ["hero"];
 // Matches the data-track-section names in index.html, in page order.
-const SECTIONS = ["hero", "average", "measures", "bands", "run", "footer"];
+const SECTIONS = ["hero", "footer"];
 
 const isInt = (value, min, max) => Number.isInteger(value) && value >= min && value <= max;
 
