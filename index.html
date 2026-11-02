@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>vibecodedshit.com - How healthy is your codebase? A free benchmark.</title>
+  <title>vibecodedshit no more</title>
 
   <!-- Favicon: poop emoji via SVG data URI -->
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💩</text></svg>">
@@ -21,10 +21,10 @@
 
   <meta name="description" content="A free, open codebase-health benchmark: 6 dimensions, 4 bands, one command to run it.">
 
-  <!-- Google Font: Space Grotesk -->
+  <!-- Google Fonts: Space Grotesk (body), Montserrat Black (H1), Newsreader Italic ("no more") -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@900&family=Newsreader:ital,opsz,wght@1,6..72,400&family=Space+Grotesk:wght@400;700&display=swap" rel="stylesheet">
 
   <style>
     :root {
@@ -91,13 +91,30 @@
       gap: 2rem;
     }
 
+    /* Shapes H1 Display: Montserrat 900, uppercase, black */
     .hero h1 {
+      font-family: 'Montserrat', 'Space Grotesk', system-ui, sans-serif;
       font-size: clamp(3rem, 11vw, 8rem);
-      font-weight: 700;
-      letter-spacing: -0.05em;
+      font-weight: 900;
+      letter-spacing: -0.025em;
       line-height: 0.9;
       text-transform: uppercase;
+      color: #000;
       max-width: 14ch;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .hero h1 .no-more {
+      display: block;
+      font-family: 'Newsreader', Georgia, serif;
+      font-style: italic;
+      font-weight: 400;
+      font-variation-settings: "opsz" 72;
+      font-size: 0.82em;
+      letter-spacing: -0.02em;
+      line-height: 1;
+      text-transform: none;
+      margin-top: -0.04em;
     }
 
     /* Kept for the stashed spoon-icon component (see <template id="spoon-icon-template">) */
@@ -139,258 +156,6 @@
       font-weight: 400;
     }
 
-    /* ---- Sections ---- */
-    .section {
-      padding: var(--section-gap) var(--page-margin);
-      max-width: var(--container-max);
-      margin: 0 auto;
-    }
-
-    .section-header h2 {
-      font-size: clamp(1.8rem, 4vw, 2.8rem);
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: -0.03em;
-      line-height: 1.15;
-      margin-bottom: 0.5rem;
-    }
-
-    .section-header .lede {
-      font-size: 1.05rem;
-      color: var(--fg-muted);
-      max-width: 75ch;
-    }
-
-    .subhead {
-      font-size: 1.1rem;
-      font-weight: 700;
-      letter-spacing: -0.01em;
-      margin-top: 3rem;
-    }
-
-    /* ---- Live average ---- */
-    .average {
-      padding: 0 var(--page-margin);
-      max-width: var(--container-max);
-      margin: 0 auto;
-    }
-
-    .average[hidden] { display: none; }
-
-    .average-inner {
-      display: flex;
-      align-items: baseline;
-      gap: 1.25rem;
-      flex-wrap: wrap;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
-      padding: 1.5rem 2rem;
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(8px);
-    }
-
-    .average-number {
-      font-size: clamp(3rem, 9vw, 6rem);
-      font-weight: 700;
-      letter-spacing: -0.05em;
-      line-height: 1;
-    }
-
-    .average-label {
-      font-size: clamp(1rem, 2.5vw, 1.35rem);
-      color: var(--fg-muted);
-    }
-
-    /* ---- Cards ---- */
-    .cards {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 1rem;
-      margin-top: 2rem;
-    }
-
-    .cards.bands {
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      margin-top: 1rem;
-    }
-
-    .card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
-      padding: 1.25rem 1.25rem 1.35rem;
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(8px);
-    }
-
-    .card h3 {
-      font-size: 1.1rem;
-      font-weight: 700;
-      letter-spacing: -0.01em;
-      margin-bottom: 0.35rem;
-    }
-
-    .card p {
-      font-size: 0.98rem;
-      color: var(--fg-muted);
-    }
-
-    .card .pill {
-      margin-bottom: 0.75rem;
-    }
-
-    .pill {
-      display: inline-flex;
-      align-items: center;
-      border-radius: var(--radius-full);
-      padding: 0.25rem 0.6rem;
-      font-size: 0.72rem;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
-      color: var(--fg);
-      background: var(--surface-strong);
-      border: 1px solid var(--border);
-    }
-
-    .more {
-      margin-top: 1.5rem;
-    }
-
-    .more a {
-      font-weight: 700;
-      color: var(--fg);
-    }
-
-    /* ---- Run steps ---- */
-    .steps {
-      list-style: none;
-      display: grid;
-      grid-template-columns: minmax(0, 1fr);
-      gap: 1rem;
-      margin-top: 2rem;
-      counter-reset: step;
-    }
-
-    .steps li {
-      counter-increment: step;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
-      padding: 1.25rem 1.25rem 1.35rem;
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(8px);
-    }
-
-    .steps li::before {
-      content: "Step " counter(step);
-      display: block;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
-      font-size: 0.72rem;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      color: var(--fg-muted);
-      margin-bottom: 0.5rem;
-    }
-
-    .steps p {
-      font-size: 0.98rem;
-      color: var(--fg-muted);
-      margin-bottom: 0.6rem;
-    }
-
-    .steps pre {
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
-      font-size: 0.95rem;
-      background: rgba(255, 255, 255, 0.55);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-md);
-      padding: 0.75rem 0.9rem;
-      white-space: pre-wrap;
-      overflow-wrap: anywhere;
-      user-select: all;
-      padding-right: 5.5rem;
-    }
-
-    .copy-wrap {
-      position: relative;
-    }
-
-    .copy-btn {
-      position: absolute;
-      top: 50%;
-      right: 0.6rem;
-      transform: translateY(-50%);
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
-      font-size: 0.72rem;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      color: var(--fg);
-      background: var(--surface-strong);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-full);
-      padding: 0.35rem 0.7rem;
-      cursor: pointer;
-      transition: transform 120ms ease, background 120ms ease;
-    }
-
-    .copy-btn:hover {
-      transform: translateY(-50%) scale(0.95);
-      background: rgba(255, 255, 255, 0.75);
-    }
-
-    .copy-btn:focus-visible {
-      outline: 2px solid var(--fg);
-      outline-offset: 2px;
-    }
-
-    .visually-hidden {
-      position: absolute;
-      width: 1px;
-      height: 1px;
-      margin: -1px;
-      padding: 0;
-      overflow: hidden;
-      clip: rect(0, 0, 0, 0);
-      white-space: nowrap;
-      border: 0;
-    }
-
-    /* ---- What it measures (inverted) ---- */
-    #measures {
-      --section-pad: var(--page-margin);
-      max-width: none;
-      background: var(--fg);
-      color: var(--bg);
-      padding-left: max(var(--section-pad), calc((100% - var(--container-max)) / 2 + var(--section-pad)));
-      padding-right: max(var(--section-pad), calc((100% - var(--container-max)) / 2 + var(--section-pad)));
-    }
-
-    #measures .section-header .lede {
-      color: rgba(206, 165, 199, 0.75);
-    }
-
-    #measures .more a {
-      color: var(--bg);
-    }
-
-    #measures .card {
-      background: linear-gradient(var(--surface), var(--surface)), var(--bg);
-      color: var(--fg);
-    }
-
-    #measures .card p {
-      color: var(--fg-muted);
-    }
-
-    .note {
-      margin-top: 1.5rem;
-      font-size: 0.98rem;
-      color: var(--fg-muted);
-      max-width: 75ch;
-    }
-
     /* ---- Top nav ---- */
     .topbar {
       position: sticky;
@@ -419,66 +184,6 @@
       color: var(--fg);
       white-space: nowrap;
     }
-
-    .nav {
-      display: flex;
-      gap: 0.75rem;
-      flex-wrap: wrap;
-      justify-content: flex-end;
-    }
-
-    .nav a {
-      text-decoration: none;
-      color: var(--fg);
-      opacity: 0.6;
-      font-weight: 700;
-      font-size: 0.95rem;
-      padding: 0.45rem 0.7rem;
-      border-radius: var(--radius-sm);
-      transition: opacity 120ms ease;
-    }
-
-    .nav a:hover {
-      opacity: 1;
-    }
-
-    .nav-toggle {
-      display: none;
-      align-items: center;
-      justify-content: center;
-      width: 2.5rem;
-      height: 2.5rem;
-      padding: 0;
-      background: none;
-      border: 0;
-      border-radius: var(--radius-sm);
-      color: var(--fg);
-      cursor: pointer;
-    }
-
-    .nav-toggle span,
-    .nav-toggle span::before,
-    .nav-toggle span::after {
-      display: block;
-      width: 1.5rem;
-      height: 2px;
-      background: var(--fg);
-      border-radius: 2px;
-    }
-
-    .nav-toggle span {
-      position: relative;
-    }
-
-    .nav-toggle span::before,
-    .nav-toggle span::after {
-      content: "";
-      position: absolute;
-      left: 0;
-    }
-
-    .nav-toggle span::before { top: -7px; }
-    .nav-toggle span::after { top: 7px; }
 
     /* ---- Buttons ---- */
     .actions {
@@ -523,7 +228,7 @@
     }
 
     /* ---- Subscribe modal ---- */
-    #subscribe-modal {
+    #pack-modal {
       border: none;
       padding: 0;
       background: transparent;
@@ -533,7 +238,7 @@
       margin: auto;
     }
 
-    #subscribe-modal::backdrop {
+    #pack-modal::backdrop {
       background: rgba(71, 16, 68, 0.45);
       backdrop-filter: blur(6px);
     }
@@ -579,11 +284,11 @@
 
     .modal-close:hover { background: var(--surface); border-color: var(--border); }
 
-    #subscribe-form, #rank-form { display: flex; flex-direction: column; gap: 0.75rem; }
+    #pack-form { display: flex; flex-direction: column; gap: 0.75rem; }
 
-    #subscribe-form label, #rank-form label { font-size: 0.85rem; font-weight: 700; }
+    #pack-form label { font-size: 0.85rem; font-weight: 700; }
 
-    #subscribe-form input[type="email"], #rank-form input[type="email"] {
+    #pack-form input[type="email"] {
       font: inherit;
       color: var(--fg);
       padding: 0.75rem 0.9rem;
@@ -593,7 +298,7 @@
       outline: none;
     }
 
-    #subscribe-form input[type="email"]:focus, #rank-form input[type="email"]:focus {
+    #pack-form input[type="email"]:focus {
       border-color: var(--fg);
       background: rgba(255, 255, 255, 0.8);
     }
@@ -608,13 +313,13 @@
       overflow: hidden !important;
     }
 
-    #subscribe-form button[type="submit"], #rank-form button[type="submit"] {
+    #pack-form button[type="submit"] {
       margin-top: 0.25rem;
       font: inherit;
       cursor: pointer;
     }
 
-    #subscribe-form button[type="submit"]:disabled, #rank-form button[type="submit"]:disabled {
+    #pack-form button[type="submit"]:disabled {
       opacity: 0.6;
       cursor: wait;
     }
@@ -622,8 +327,8 @@
     .form-status { font-size: 0.9rem; min-height: 1.2em; }
     .form-status.error { color: #7a1a1a; }
     .form-status.success { color: var(--fg); font-weight: 700; }
-    #subscribe-form.is-done > :not(.form-status) { display: none; }
-    #subscribe-form.is-done .form-status { font-size: 1.1rem; }
+    #pack-form.is-done > :not(.form-status) { display: none; }
+    #pack-form.is-done .form-status { font-size: 1.1rem; }
 
     /* ---- Footer ---- */
     footer {
@@ -644,21 +349,6 @@
 
     /* ---- Responsive ---- */
     @media (max-width: 900px) {
-      .cards,
-      .cards.bands { grid-template-columns: 1fr; }
-
-      .section {
-        padding: 4rem 1.5rem 4rem;
-      }
-
-      #measures {
-        --section-pad: 1.5rem;
-      }
-
-      .average {
-        padding: 0 1.5rem;
-      }
-
       .topbar-inner {
         padding: 0 1.5rem;
       }
@@ -671,33 +361,6 @@
 
       .topbar-inner {
         padding: 0;
-      }
-
-      .nav-toggle {
-        display: inline-flex;
-      }
-
-      .nav {
-        display: none;
-        position: absolute;
-        top: 100%;
-        left: 0;
-        right: 0;
-        flex-direction: column;
-        gap: 0;
-        padding: 0.5rem 1rem 0.75rem;
-        background: rgba(206, 165, 199, 0.72);
-        backdrop-filter: blur(10px);
-        border-bottom: 1px solid var(--border);
-      }
-
-      .nav.open {
-        display: flex;
-      }
-
-      .nav a {
-        font-size: 1rem;
-        padding: 0.75rem 0.7rem;
       }
 
       .hero {
@@ -714,20 +377,14 @@
   <main>
     <header class="topbar">
       <div class="topbar-inner">
-        <a class="brand" href="#top">vibecodedsh*t</a>
-        <button class="nav-toggle" type="button" aria-label="Menu" aria-expanded="false" aria-controls="primary-nav"><span></span></button>
-        <nav class="nav" id="primary-nav" aria-label="Primary">
-          <a href="#measures">What it measures</a>
-          <a href="#run" data-track-click="click_run" data-track-source="nav">Run it</a>
-          <a href="/methodology/" data-track-click="click_methodology" data-track-source="nav">Methodology</a>
-        </nav>
+        <span class="brand">vibecodedsh*t</span>
       </div>
     </header>
 
     <section class="hero">
-      <a id="top"></a>
       <h1>
         <span>VIBE CODED SH*T</span>
+        <span class="no-more">no more</span>
       </h1>
       <div class="copy">
         <p class="headline">Let's make the vibecoded internet a better place.</p>
@@ -738,114 +395,9 @@
           Run one command and get a score. Find out if you shipped software or a vibe.
         </p>
         <div class="actions">
-          <a class="btn primary" id="run-link" href="#run" data-track-click="click_run" data-track-source="hero">Run it</a>
-          <button class="btn" id="subscribe-open" type="button" data-track-click="click_subscribe" data-track-source="hero">Get benchmark updates</button>
+          <button class="btn primary" id="pack-open" type="button" data-track-click="click_get_pack" data-track-source="hero">Get the Pack for free</button>
         </div>
       </div>
-    </section>
-
-    <section class="average" id="average" data-track-section="average" hidden>
-      <div class="average-inner">
-        <span class="average-number" id="average-number"></span>
-        <span class="average-label" id="average-label"></span>
-      </div>
-    </section>
-
-    <section class="section" id="measures" data-track-section="measures">
-      <div class="section-header">
-        <h2>What it measures</h2>
-        <p class="lede">Six dimensions, 30 parameters, one score out of 100. Each dimension asks a plain question about your repo.</p>
-      </div>
-
-      <div class="cards">
-        <article class="card">
-          <h3>Safety net</h3>
-          <p>Will a change break something without anyone noticing?</p>
-        </article>
-        <article class="card">
-          <h3>Type &amp; static rigor</h3>
-          <p>Does the code tell you what it expects before you run it?</p>
-        </article>
-        <article class="card">
-          <h3>Architecture &amp; boundaries</h3>
-          <p>Can you change one part without reading the rest?</p>
-        </article>
-        <article class="card">
-          <h3>Complexity &amp; maintainability</h3>
-          <p>How much does someone have to read to make one change correctly?</p>
-        </article>
-        <article class="card">
-          <h3>Dependency &amp; security hygiene</h3>
-          <p>Is the code built on parts that are known, current and safe?</p>
-        </article>
-        <article class="card">
-          <h3>Operability &amp; feedback loop</h3>
-          <p>Can someone new set it up, check a change and know they're done?</p>
-        </article>
-      </div>
-
-      <h3 class="subhead">Four bands</h3>
-      <div class="cards bands" data-track-section="bands">
-        <article class="card">
-          <span class="pill">0-39</span>
-          <h3>Vibe-coded</h3>
-          <p>Changes break things without anyone noticing. Nobody, human or agent, can work here safely.</p>
-        </article>
-        <article class="card">
-          <span class="pill">40-59</span>
-          <h3>Fragile</h3>
-          <p>It works, but every change is a gamble.</p>
-        </article>
-        <article class="card">
-          <span class="pill">60-79</span>
-          <h3>Stable</h3>
-          <p>Changes are safe with care and review.</p>
-        </article>
-        <article class="card">
-          <span class="pill">80-100</span>
-          <h3>Agent-ready</h3>
-          <p>An agent with no memory of the codebase can make a correct change and verify it alone.</p>
-        </article>
-      </div>
-
-      <p class="more"><a href="/methodology/" data-track-click="click_methodology" data-track-source="measures">Read the methodology →</a></p>
-    </section>
-
-    <section class="section" id="run" data-track-section="run">
-      <div class="section-header">
-        <h2>Run it</h2>
-        <p class="lede">Three steps, inside Claude Code.</p>
-      </div>
-
-      <ol class="steps">
-        <li data-track-source="marketplace">
-          <p>Add the marketplace.</p>
-          <pre><code>/plugin marketplace add Raavn/vibecodedshit.com</code></pre>
-        </li>
-        <li data-track-source="install">
-          <p>Install the plugin.</p>
-          <pre><code>/plugin install codebase-health@vibecodedshit</code></pre>
-        </li>
-        <li data-track-source="run">
-          <p>Run it on your repo.</p>
-          <pre><code>/codebase-health</code></pre>
-        </li>
-      </ol>
-
-      <p class="note">With Docker you get a full score you can compare with other projects. Without Docker the skill runs a preview, marked "not comparable".</p>
-    </section>
-
-    <section class="section" id="rank" data-track-section="rank">
-      <div class="section-header">
-        <h2>Where do you rank</h2>
-      </div>
-
-      <form id="rank-form" novalidate>
-        <label for="rank-email">Email you scanned with</label>
-        <input id="rank-email" name="email" type="email" required maxlength="254" autocomplete="email" inputmode="email" placeholder="you@example.com">
-        <button class="btn primary" type="submit" id="rank-submit">Show my rank</button>
-        <div class="form-status" id="rank-status" role="status" aria-live="polite"></div>
-      </form>
     </section>
 
     <footer data-track-section="footer">
@@ -866,154 +418,39 @@
     </svg>
   </template>
 
-  <dialog id="subscribe-modal" aria-labelledby="subscribe-title">
+  <dialog id="pack-modal" aria-labelledby="pack-title">
     <div class="modal-panel">
-      <button type="button" class="modal-close" id="subscribe-close" aria-label="Close">&times;</button>
-      <h3 id="subscribe-title">Join the list</h3>
-      <p class="modal-lede">Drop your email and we'll tell you when there's a new methodology version.</p>
-      <form id="subscribe-form" novalidate>
-        <label for="subscribe-email">Email</label>
-        <input id="subscribe-email" name="email" type="email" required maxlength="254" autocomplete="email" inputmode="email" placeholder="you@example.com">
+      <button type="button" class="modal-close" id="pack-close" aria-label="Close">&times;</button>
+      <h3 id="pack-title">Get the Pack for free</h3>
+      <p class="modal-lede">We'll send instructions by email.</p>
+      <form id="pack-form" novalidate>
+        <label for="pack-email">Email</label>
+        <input id="pack-email" name="email" type="email" required maxlength="254" autocomplete="email" inputmode="email" placeholder="you@example.com">
         <div class="hp-field" aria-hidden="true">
-          <label for="subscribe-trap">Leave this field empty</label>
-          <input id="subscribe-trap" name="trap_field" type="text" tabindex="-1" autocomplete="off">
+          <label for="pack-trap">Leave this field empty</label>
+          <input id="pack-trap" name="trap_field" type="text" tabindex="-1" autocomplete="off">
         </div>
-        <button class="btn primary" type="submit" id="subscribe-submit">Notify me</button>
-        <div class="form-status" id="subscribe-status" role="status" aria-live="polite"></div>
+        <button class="btn primary" type="submit" id="pack-submit">Send it</button>
+        <div class="form-status" id="pack-status" role="status" aria-live="polite"></div>
       </form>
     </div>
   </dialog>
 
   <script>
-    // ---- Mobile nav toggle ----
+    // ---- Get the Pack dialog ----
     (function () {
       'use strict';
 
-      const toggle = document.querySelector('.nav-toggle');
-      const nav = document.getElementById('primary-nav');
-      if (!toggle || !nav) return;
+      const PACK_URL = 'https://app.vibecodedshit.com/api/keys';
 
-      function setOpen(open) {
-        nav.classList.toggle('open', open);
-        toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
-      }
-
-      toggle.addEventListener('click', function () {
-        setOpen(!nav.classList.contains('open'));
-      });
-      nav.addEventListener('click', function (e) {
-        if (e.target.closest('a')) setOpen(false);
-      });
-      document.addEventListener('keydown', function (e) {
-        if (e.key === 'Escape') setOpen(false);
-      });
-    })();
-  </script>
-
-  <script>
-    // ---- Rank lookup ----
-    (function () {
-      'use strict';
-
-      const RANK_URL = 'https://app.vibecodedshit.com/api/rank?version=1.0';
-
-      const form = document.getElementById('rank-form');
-      const emailInput = document.getElementById('rank-email');
-      const submit = document.getElementById('rank-submit');
-      const status = document.getElementById('rank-status');
-
-      if (!form || !emailInput || !submit || !status || typeof fetch !== 'function') return;
-
-      function show(text, kind) {
-        status.textContent = text;
-        status.className = 'form-status' + (kind ? ' ' + kind : '');
-      }
-
-      form.addEventListener('submit', function (e) {
-        e.preventDefault();
-        const email = emailInput.value.trim();
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-          show('Enter a valid email address.', 'error');
-          return;
-        }
-
-        submit.disabled = true;
-        show('Looking up…', '');
-        const controller = new AbortController();
-        const timer = setTimeout(function () { controller.abort(); }, 5000);
-
-        fetch(RANK_URL, { headers: { 'x-vcs-email': email }, signal: controller.signal })
-          .then(function (res) {
-            if (res.status === 404) { show('No scan found for that email.', 'error'); return null; }
-            if (!res.ok) throw new Error('status ' + res.status);
-            return res.json();
-          })
-          .then(function (data) {
-            if (!data) return;
-            if (!Number.isInteger(data.rank) || !Number.isInteger(data.total) || typeof data.health !== 'number') {
-              throw new Error('bad response');
-            }
-            const top = typeof data.top10Threshold === 'number'
-              ? 'Top 10 starts at ' + data.top10Threshold + '.'
-              : 'Top 10 opens at 10 projects.';
-            show('#' + data.rank + ' of ' + data.total + ' · health ' + data.health + ' (' + data.band + '). ' + top, 'success');
-          })
-          .catch(function () { show('Could not look that up. Try again later.', 'error'); })
-          .finally(function () { clearTimeout(timer); submit.disabled = false; });
-      });
-    })();
-  </script>
-
-  <script>
-    // ---- Live average ----
-    (function () {
-      'use strict';
-
-      const AVERAGE_URL = 'https://app.vibecodedshit.com/api/average?version=1.0';
-
-      const section = document.getElementById('average');
-      const numberEl = document.getElementById('average-number');
-      const labelEl = document.getElementById('average-label');
-
-      if (!section || !numberEl || !labelEl || typeof fetch !== 'function') return;
-
-      const controller = new AbortController();
-      const timer = setTimeout(function () { controller.abort(); }, 5000);
-
-      fetch(AVERAGE_URL, { signal: controller.signal })
-        .then(function (res) {
-          if (!res.ok) throw new Error('status ' + res.status);
-          return res.json();
-        })
-        .then(function (data) {
-          const avg = data && data.average;
-          const count = data && data.count;
-          if (typeof avg !== 'number' || !isFinite(avg) || avg < 0 || avg > 100) return;
-          if (!Number.isInteger(count) || count < 1) return;
-          numberEl.textContent = String(Math.round(avg));
-          labelEl.textContent = 'average health of ' + count + (count === 1 ? ' project' : ' projects');
-          section.hidden = false;
-        })
-        .catch(function () { /* stay hidden */ })
-        .finally(function () { clearTimeout(timer); });
-    })();
-  </script>
-
-  <script>
-    // ---- Subscribe modal ----
-    (function () {
-      'use strict';
-
-      const AIMEKO_API_BASE = 'https://os.aimeko.com';
-
-      const openBtn = document.getElementById('subscribe-open');
-      const modal = document.getElementById('subscribe-modal');
-      const closeBtn = document.getElementById('subscribe-close');
-      const form = document.getElementById('subscribe-form');
-      const emailInput = document.getElementById('subscribe-email');
-      const companyInput = document.getElementById('subscribe-trap');
-      const submitBtn = document.getElementById('subscribe-submit');
-      const statusEl = document.getElementById('subscribe-status');
+      const openBtn = document.getElementById('pack-open');
+      const modal = document.getElementById('pack-modal');
+      const closeBtn = document.getElementById('pack-close');
+      const form = document.getElementById('pack-form');
+      const emailInput = document.getElementById('pack-email');
+      const companyInput = document.getElementById('pack-trap');
+      const submitBtn = document.getElementById('pack-submit');
+      const statusEl = document.getElementById('pack-status');
 
       if (!openBtn || !modal || !form) return;
 
@@ -1031,7 +468,7 @@
         form.classList.remove('is-done');
         form.reset();
         submitBtn.disabled = false;
-        submitBtn.textContent = 'Notify me';
+        submitBtn.textContent = 'Send it';
         if (typeof modal.showModal === 'function') {
           modal.showModal();
         } else {
@@ -1070,7 +507,7 @@
         const controller = new AbortController();
         const timer = setTimeout(function () { controller.abort(); }, 10000);
         try {
-          const res = await fetch(AIMEKO_API_BASE + '/api/public/subscribe/vibecodedshit', {
+          const res = await fetch(PACK_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             signal: controller.signal,
@@ -1086,100 +523,18 @@
             if (res.status === 400) msg = 'That email looks off. Try again?';
             setStatus(msg, 'error');
             submitBtn.disabled = false;
-            submitBtn.textContent = 'Notify me';
+            submitBtn.textContent = 'Send it';
             return;
           }
-          setStatus("You're on the list. We'll be in touch.", 'success');
+          setStatus('Thanks. The Pack is on its way to your inbox.', 'success');
           form.classList.add('is-done');
-          window.dispatchEvent(new CustomEvent('vcs:subscribed'));
+          window.dispatchEvent(new CustomEvent('vcs:pack-requested'));
         } catch (err) {
           clearTimeout(timer);
           setStatus('Network error. Try again?', 'error');
           submitBtn.disabled = false;
-          submitBtn.textContent = 'Notify me';
+          submitBtn.textContent = 'Send it';
         }
-      });
-    })();
-  </script>
-
-  <script>
-    // ---- Hero "Run it": smooth scroll to the install steps ----
-    (function () {
-      const link = document.getElementById('run-link');
-      const run = document.getElementById('run');
-      if (!link || !run) return;
-      link.addEventListener('click', function (e) {
-        e.preventDefault();
-        const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-        run.scrollIntoView({ behavior: reduce ? 'instant' : 'smooth', block: 'start' });
-        history.pushState(null, '', '#run');
-      });
-    })();
-  </script>
-
-  <script>
-    // ---- Copy buttons on the install steps ----
-    (function () {
-      'use strict';
-      const blocks = document.querySelectorAll('.steps pre');
-      const run = document.getElementById('run');
-      if (!blocks.length || !run) return;
-
-      const status = document.createElement('span');
-      status.className = 'visually-hidden';
-      status.setAttribute('role', 'status');
-      status.setAttribute('aria-live', 'polite');
-      run.appendChild(status);
-
-      const isMac = /Mac/.test(navigator.platform || navigator.userAgent);
-      const fallbackLabel = isMac ? 'Press ⌘C' : 'Press Ctrl+C';
-
-      blocks.forEach(function (pre) {
-        const code = pre.querySelector('code');
-        if (!code) return;
-        const text = code.textContent.trim();
-
-        const wrap = document.createElement('div');
-        wrap.className = 'copy-wrap';
-        pre.parentNode.insertBefore(wrap, pre);
-        wrap.appendChild(pre);
-
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'copy-btn';
-        btn.textContent = 'Copy';
-        btn.setAttribute('aria-label', 'Copy command: ' + text);
-        wrap.appendChild(btn);
-
-        let timer = null;
-        function flash(label, announce) {
-          btn.textContent = label;
-          status.textContent = announce || '';
-          clearTimeout(timer);
-          timer = setTimeout(function () {
-            btn.textContent = 'Copy';
-            status.textContent = '';
-          }, 1500);
-        }
-
-        function selectText() {
-          const range = document.createRange();
-          range.selectNodeContents(code);
-          const sel = window.getSelection();
-          sel.removeAllRanges();
-          sel.addRange(range);
-          flash(fallbackLabel, fallbackLabel + ' to copy');
-        }
-
-        btn.addEventListener('click', function () {
-          if (!navigator.clipboard || !navigator.clipboard.writeText) {
-            selectText();
-            return;
-          }
-          navigator.clipboard.writeText(text).then(function () {
-            flash('Copied', 'Copied to clipboard');
-          }, selectText);
-        });
       });
     })();
   </script>
@@ -1275,18 +630,8 @@
         });
       });
 
-      // The copy buttons are created by the script above, so delegate.
-      const runSection = document.getElementById('run');
-      if (runSection) {
-        runSection.addEventListener('click', function (e) {
-          const btn = e.target.closest ? e.target.closest('.copy-btn') : null;
-          const step = btn ? btn.closest('li') : null;
-          if (step) track('click_copy', { source: step.dataset.trackSource });
-        });
-      }
-
-      window.addEventListener('vcs:subscribed', function () {
-        track('subscribe_success');
+      window.addEventListener('vcs:pack-requested', function () {
+        track('get_pack_success');
       });
 
       // Sent once per hidden period: visibilitychange and pagehide often both fire.
