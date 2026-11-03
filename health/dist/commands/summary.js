@@ -18,6 +18,8 @@ export function formatRaw(raw, unit) {
             return unit === 'count' ? formatNumber(raw.value) : `${formatNumber(raw.value)} ${unit}`;
         case 'level':
             return raw.level;
+        case 'failed':
+            return 'install failed';
         case 'components':
             return Object.entries(raw.components)
                 .map(([name, component]) => `${name}=${formatRaw(component, unit) ?? 'n/a'}`)

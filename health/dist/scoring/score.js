@@ -37,6 +37,8 @@ function levelScore(levels, level) {
 }
 /** Score one raw value. A ratio with no denominator scores `raw.when_empty`. */
 export function scoreRaw(def, raw, group) {
+    if (raw.kind === 'failed')
+        return 0;
     const scoring = def.scoring;
     switch (scoring.method) {
         case 'piecewise_linear': {

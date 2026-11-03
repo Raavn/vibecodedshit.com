@@ -1,4 +1,5 @@
 import { failure as checkFailure } from '../exec/findings.js';
+import { withFailedUnits } from '../exec/roots.js';
 import { testFailure, totalCases } from '../exec/tests.js';
 import type { ExecutionResults, StepOutcome } from '../exec/types.js';
 import type { FeedbackLoop } from '../run/schema.js';
@@ -17,8 +18,9 @@ export function feedbackLoop(exec: ExecutionResults): FeedbackLoop {
 
 /**
  * Summed wall-clock seconds of every typecheck, lint and test step. Every (package, group) unit carries the
- * same sum, weighted by logic lines, so the pooled score is the repository's. Failed unless install, typecheck,
- * lint and the test run all worked (`requires` in the YAML).
+ * same sum, weighted by logic lines, so the pooled score is the repository's. Failed unless typecheck, lint
+ * and the test run all worked and some install root installed (`requires` in the YAML); units beneath a root
+ * whose install failed score 0.
  */
 export const p63: Measurer = {
   id: '6.3',
@@ -35,6 +37,6 @@ export const p63: Measurer = {
     const units: UnitRaw[] = [...emptyTallies(logic).values()]
       .sort((a, b) => a.package.localeCompare(b.package) || a.group.localeCompare(b.group))
       .map((t) => ({ package: t.package, group: t.group, weight: t.weight, raw: { kind: 'number' as const, value } }));
-    return { status: 'measured', units };
+    return { status: 'measured', units: withFailedUnits(exec, ctx.scope, units) };
   },
 };

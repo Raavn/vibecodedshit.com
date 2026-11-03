@@ -1,5 +1,6 @@
 import { emptyTallies, tallyUnits, unitId } from '../measure/units.js';
 import { analyzeTsFile } from '../scope/ts-lines.js';
+import { failedRootOf, withFailedUnits } from './roots.js';
 import { coveredLines } from './test-reports/coverage-ranges.js';
 /** Why the test run is a repository failure (1.1 to 1.3, 6.3 score 0), or null when every run has a usable results report. */
 export function testFailure(exec) {
@@ -29,7 +30,7 @@ export function measurePassRate(ctx) {
         return { status: 'failed', reason };
     const logic = ctx.scope.files.filter((f) => f.role === 'logic');
     if (exec.test.invocations.length === 0)
-        return { status: 'measured', units: tallyUnits(emptyTallies(logic)) };
+        return { status: 'measured', units: withFailedUnits(exec, ctx.scope, tallyUnits(emptyTallies(logic))) };
     const units = exec.test.invocations.map((run) => {
         const counts = run.results ?? { passed: 0, failed: 0, errored: 0, skipped: 0 };
         return {
@@ -39,7 +40,7 @@ export function measurePassRate(ctx) {
             raw: { kind: 'ratio', numerator: counts.passed, denominator: counts.passed + counts.failed + counts.errored, scale: 100 },
         };
     });
-    return { status: 'measured', units };
+    return { status: 'measured', units: withFailedUnits(exec, ctx.scope, units) };
 }
 /** Code lines of a TS/JS logic file and how many ran, or null when no invocation's coverage-final.json lists the file. */
 function tsLineCoverage(ctx, exec, file) {
@@ -72,7 +73,7 @@ export function measureCoverage(ctx, kind) {
     const logic = ctx.scope.files.filter((f) => f.role === 'logic');
     const tallies = emptyTallies(logic);
     if (totalCases(exec) === 0)
-        return { status: 'measured', units: tallyUnits(tallies) };
+        return { status: 'measured', units: withFailedUnits(exec, ctx.scope, tallyUnits(tallies)) };
     const merged = new Map();
     for (const run of exec.test.invocations) {
         for (const [file, cov] of run.coverage ?? []) {
@@ -86,7 +87,7 @@ export function measureCoverage(ctx, kind) {
     let missing = 0;
     for (const file of logic) {
         const tally = tallies.get(unitId(file));
-        if (!tally)
+        if (!tally || failedRootOf(exec, file.path, file.group))
             continue;
         if (kind === 'lines' && file.group === 'typescript_javascript') {
             const lines = tsLineCoverage(ctx, exec, file.path);
@@ -113,7 +114,7 @@ export function measureCoverage(ctx, kind) {
     }
     return {
         status: 'measured',
-        units: tallyUnits(tallies),
+        units: withFailedUnits(exec, ctx.scope, tallyUnits(tallies)),
         ...(kind === 'lines' && missing > 0 ? { warnings: [`${missing} logic file(s) missing from the coverage report were counted as 0% covered`] } : {}),
     };
 }

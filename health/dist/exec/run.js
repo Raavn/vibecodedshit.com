@@ -7,7 +7,8 @@ import { readTracked, trackedPaths } from '../scope/tracked.js';
 import { knipRoots } from '../tools/knip.js';
 import { createWorkCopy } from '../tools/workcopy.js';
 import { ToolError } from '../scope/types.js';
-import { planExecution } from './plan.js';
+import { isUnder, planExecution } from './plan.js';
+import { anyRootHealthy, installFailed } from './roots.js';
 import { build } from './steps/build.js';
 import { install } from './steps/install.js';
 import { knip } from './steps/knip.js';
@@ -70,8 +71,8 @@ async function readTest(invocation, outcome) {
     return { ...base, results, coverage, ranges };
 }
 /**
- * Install, then build per install root, then (when every install worked) typecheck per workspace
- * package, lint per install root and knip per knip root. One `docker run` each, run one after another on a temp copy
+ * Install, then build per install root, then typecheck per workspace package, lint per install root and knip
+ * per knip root, for the roots whose install worked (a failed root is skipped, its units score 0). One `docker run` each, run one after another on a temp copy
  * of the tracked files; reports go to a separate temp directory, deleted afterwards. The work copy
  * outlives the call so static tools can read the installed dependencies (`results.workDir`); the
  * caller removes it with `cleanup`. On a throw both are deleted here.
@@ -123,7 +124,9 @@ export async function runExecution(opts) {
             const built = installOk ? await run(build, ctx, root.dir) : null;
             roots.push({ dir: root.dir, group: root.group, weight: root.weight, install: installed?.outcome ?? null, build: built?.outcome ?? null });
         }
-        const checksRan = roots.every((root) => root.install === null || root.install.status === 'ok');
+        const checksRan = anyRootHealthy(roots);
+        const healthy = (dir, group) => !roots.some((r) => installFailed(r) && r.group === group && isUnder(dir, r.dir));
+        const healthyRoots = plan.roots.filter((root) => healthy(root.dir, root.group));
         const typecheckResults = [];
         const lintResults = [];
         const knipResults = [];
@@ -136,20 +139,20 @@ export async function runExecution(opts) {
                 const report = await readFile(path.join(result.outcome.outputDir, result.command.report), 'utf8').catch(() => null);
                 into.push({ tool: result.command.tool, dir: ctx.dir, group: ctx.group, outcome: result.outcome, report });
             };
-            for (const pkg of plan.typecheck)
+            for (const pkg of plan.typecheck.filter((p) => healthy(p.root, p.group)))
                 await collect(typecheck, context(pkg.dir, pkg.group, pkg.sourceFiles), typecheckResults, pkg.root);
-            for (const root of plan.roots)
+            for (const root of healthyRoots)
                 await collect(lint, context(root.dir, root.group, root.sourceFiles), lintResults, root.dir);
-            for (const dir of knipRoots(repoPath)) {
+            for (const dir of knipRoots(repoPath).filter((dir) => healthy(dir, 'typescript_javascript'))) {
                 const result = await run(knip, context(dir, 'typescript_javascript', []), dir);
                 if (result === null || !result.command.report)
                     continue;
                 const report = await readFile(path.join(result.outcome.outputDir, result.command.report), 'utf8').catch(() => null);
                 knipResults.push({ dir, outcome: result.outcome, report });
             }
-            const invocations = detectInvocations({ roots: plan.roots, scope, tracked: trackedSet, read: (rel) => readTracked(repoPath, rel) });
+            const invocations = detectInvocations({ roots: healthyRoots, scope, tracked: trackedSet, read: (rel) => readTracked(repoPath, rel) });
             for (const invocation of invocations) {
-                const files = plan.roots
+                const files = healthyRoots
                     .filter((r) => r.group === invocation.group)
                     .flatMap((r) => r.logicFiles)
                     .filter((file) => invocation.dir === '.' || file.startsWith(`${invocation.dir}/`));

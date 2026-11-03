@@ -8,7 +8,9 @@ export type Raw =
   | { kind: 'ratio'; numerator: number; denominator: number; scale: number; emptyScore?: number }
   | { kind: 'level'; level: string }
   | { kind: 'number'; value: number }
-  | { kind: 'components'; components: Record<string, Raw> };
+  | { kind: 'components'; components: Record<string, Raw> }
+  /** A unit under an install root whose install failed: the step it needs never ran, so it scores 0. */
+  | { kind: 'failed' };
 
 export interface UnitRaw {
   package: string;

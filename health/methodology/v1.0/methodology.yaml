@@ -147,7 +147,11 @@ execution:
     repository_failure: >-
       An install, build, typecheck or test command fails or times out because
       of the repository. Every parameter that requires that step scores 0.
-      A timeout counts as a failure.
+      A timeout counts as a failure. An install that fails in one install
+      root zeroes only the units beneath that root (same language group,
+      package or logic file under the root); the checks of the other roots
+      still run and their units are measured. If the install fails in every
+      root, the parameters that need it score 0 for the whole repository.
     tool_error: >-
       The tool itself fails (a crash in the orchestrator, a missing tool in
       the image, coverage data missing after a test run that produced
@@ -169,7 +173,9 @@ pooling:
   ratio: >-
     Numerators and denominators are summed across languages and packages,
     then the pooled ratio is scored once. Used for counts per 1,000 lines,
-    percentages and pass rates.
+    percentages and pass rates. A unit under an install root whose install
+    failed takes no part in the sums; the pooled score is multiplied by the
+    share of the logic lines that is not failed.
   unit_weighted: >-
     The parameter is scored separately for each language or package, then
     the scores are combined by logic-line weight. Used for configuration and

@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { stringify } from 'smol-toml';
 import { packageOf } from '../scope/packages.js';
-import { isOutcome, runKnip } from '../tools/knip.js';
+import { isOutcome, knipFailed, runKnip } from '../tools/knip.js';
 import { failureReason, unavailable } from '../tools/outcome.js';
 import { createWorkCopy } from '../tools/workcopy.js';
 import { readToml } from '../util/toml.js';
@@ -98,12 +98,18 @@ export const p55 = {
         const units = scopeUnits(ctx);
         const warnings = [];
         const counts = new Map();
+        const failed = new Set();
         if (units.some((u) => u.group === 'typescript_javascript')) {
             const knip = await runKnip(ctx);
             if (!isOutcome(knip))
                 return knip;
             warnings.push(...knip.warnings.map((w) => `5.5: ${w}`));
             for (const unit of units.filter((u) => u.group === 'typescript_javascript')) {
+                const unitFiles = ctx.scope.files.filter((f) => f.role === 'logic' && f.group === unit.group && f.package === unit.package);
+                if (knipFailed(knip, unit.package) || unitFiles.some((f) => knipFailed(knip, f.path))) {
+                    failed.add(`${unit.package}\0${unit.group}`);
+                    continue;
+                }
                 const deps = await unitDeps(ctx, unit.package, unit.group);
                 if (!deps.manifest) {
                     warnings.push(`5.5: ${unit.package} has no package.json`);
@@ -141,6 +147,8 @@ export const p55 = {
         return {
             status: 'measured',
             units: units.map((u) => {
+                if (failed.has(`${u.package}\0${u.group}`))
+                    return { package: u.package, group: u.group, weight: u.weight, raw: { kind: 'failed' } };
                 const c = counts.get(`${u.package}\0${u.group}`) ?? { numerator: 0, denominator: 0 };
                 return { package: u.package, group: u.group, weight: u.weight, raw: { kind: 'ratio', numerator: c.numerator, denominator: c.denominator, scale: 100 } };
             }),

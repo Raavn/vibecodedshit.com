@@ -34,6 +34,14 @@ export interface FeedbackLoop {
   totalSeconds: number;
 }
 
+/** The install of one install root. `install` is null when the root has nothing to install. */
+export interface ExecutionRoot {
+  dir: string;
+  group: Group;
+  install: 'ok' | 'failed' | 'timeout' | null;
+  exitCode: number | null;
+}
+
 export interface RunFile {
   schemaVersion: 1;
   valid: boolean;
@@ -57,8 +65,8 @@ export interface RunFile {
     /** Static tools that ran (name to version). */
     static?: Record<string, string>;
   };
-  /** Full runs: wall-clock seconds of the typecheck, lint and test steps, whose sum is 6.3's raw value. Additive, ignored by recompute and diff. */
-  execution?: { feedbackLoop: FeedbackLoop };
+  /** Full runs: wall-clock seconds of the typecheck, lint and test steps, whose sum is 6.3's raw value, and the install outcome of each install root (absent in older runs). Additive, ignored by recompute and diff. */
+  execution?: { feedbackLoop: FeedbackLoop; roots?: ExecutionRoot[] };
   /** Report-only values, never scored and ignored by recompute. */
   reportOnly?: Record<string, unknown>;
   ignoreSet: {
