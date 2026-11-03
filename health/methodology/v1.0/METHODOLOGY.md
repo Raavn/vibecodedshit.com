@@ -1035,6 +1035,7 @@ These appear in the report and never change the score.
 | Hotspots | Files ranked by churn (commits in the last 12 months) × cognitive complexity | The "fix these first" list. Churn describes how the team works, not the code's state, and would make two runs of the same tree differ. |
 | Secrets in git history | Secrets in past commits | The fix is rotating the key, which the code cannot show. |
 | Development dependency vulnerabilities | Advisories in packages reachable only from development dependencies | They do not ship to production. |
+| Top scares | The first three of a fixed list of consequences the findings trigger, such as a Supabase service-role key in the tree, secrets in the tree or history, known production advisories, or an install that fails | A consequence in plain words, not a measurement. The scan cannot see access rules such as row-level security. |
 | Excluded lines | Percentage of lines excluded by `.healthignore` | Makes exclusions visible to the reader. |
 | Per-package breakdown | Every dimension per workspace package and per language | Shows where the pooled score comes from. |
 

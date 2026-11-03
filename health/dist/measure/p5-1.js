@@ -66,6 +66,8 @@ export const p51 = {
         const weights = new Map(scopeUnits(ctx).map((u) => [`${u.package}\0${u.group}`, u.weight]));
         const perUnit = new Map();
         const devAdvisories = [];
+        const productionAdvisories = [];
+        let productionPoints = 0;
         let devPoints = 0;
         const resolvedPackages = [];
         for (const ref of [...lockfiles.values()].sort((a, b) => a.path.localeCompare(b.path))) {
@@ -77,7 +79,12 @@ export const p51 = {
             const key = `${owner}\0${group}`;
             const unit = perUnit.get(key) ?? { package: owner, group, points: 0 };
             const production = scanned.packages.filter((p) => !p.dev);
-            unit.points += severityPoints(production, ctx.asOf).points;
+            const prod = severityPoints(production, ctx.asOf);
+            unit.points += prod.points;
+            productionPoints += prod.points;
+            for (const a of prod.advisories) {
+                productionAdvisories.push({ package: owner, name: a.name, version: a.version, id: a.id, severity: a.severity });
+            }
             perUnit.set(key, unit);
             const dev = severityPoints(scanned.packages.filter((p) => p.dev), ctx.asOf);
             devPoints += dev.points;
@@ -101,6 +108,7 @@ export const p51 = {
             units,
             warnings,
             reportOnly: {
+                productionDependencyVulnerabilities: { points: productionPoints, advisories: productionAdvisories },
                 devDependencyVulnerabilities: { points: devPoints, advisories: devAdvisories },
                 resolvedPackages,
             },

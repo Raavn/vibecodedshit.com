@@ -4,6 +4,7 @@ import { parseArgs } from 'node:util';
 import { loadMethodology, MethodologyError } from '../methodology/load.js';
 import { renderReport } from '../report/render.js';
 import { roadmapLines } from '../report/roadmap.js';
+import { scareLines } from '../report/scares.js';
 import { readRun, RunReadError } from '../run/read.js';
 import { EXIT } from './common.js';
 const REPORT_USAGE = 'Usage: health report <run.json> [--out <file>]\n';
@@ -31,7 +32,7 @@ export function runReport(argv, io) {
         }
         const methodology = loadMethodology(run.methodology.version);
         writeFileSync(outFile, renderReport(run, methodology), 'utf8');
-        io.stdout(`${[outFile, ...roadmapLines(run, methodology)].join('\n')}\n`);
+        io.stdout(`${[outFile, ...roadmapLines(run, methodology), ...scareLines(run)].join('\n')}\n`);
         return EXIT.ok;
     }
     catch (err) {

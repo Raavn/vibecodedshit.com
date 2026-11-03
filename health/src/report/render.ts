@@ -5,6 +5,7 @@ import type { RunFile } from '../run/schema.js';
 import { escapeHtml as e } from './escape.js';
 import { nearestDescriptor, rawText, scoreText, statusText } from './format.js';
 import { buildRoadmap, gainText, ROADMAP_LIMIT } from './roadmap.js';
+import { NO_SCARES, buildScares, unchecked } from './scares.js';
 import { STYLE } from './style.js';
 
 const HELP_URL = 'https://vibecodedshit.com';
@@ -49,6 +50,16 @@ function header(run: RunFile, methodology: Methodology): string {
   } else {
     parts.push('<p class="muted">no health score</p>');
   }
+  return parts.join('\n');
+}
+
+function scaresSection(run: RunFile): string {
+  const scares = buildScares(run);
+  const parts = ['<h2>Top scares</h2>'];
+  if (scares.length > 0) parts.push(`<ol>${scares.map((s) => `<li>${e(s)}</li>`).join('')}</ol>`);
+  else parts.push(`<p>${e(NO_SCARES)}</p>`);
+  const missing = unchecked(run);
+  if (missing.length > 0) parts.push(`<p class="muted">Not checked in this run: ${e(missing.join(', '))}.</p>`);
   return parts.join('\n');
 }
 
@@ -191,6 +202,7 @@ function hotspotsSection(run: RunFile): string {
 export function renderReport(run: RunFile, methodology: Methodology): string {
   const sections = [
     header(run, methodology),
+    scaresSection(run),
     dimensionsSection(run, methodology),
     roadmapSection(run, methodology),
     parametersSection(run, methodology),
