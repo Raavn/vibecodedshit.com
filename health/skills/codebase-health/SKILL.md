@@ -83,7 +83,7 @@ Run, with `<RUN_DIR>` as the working directory:
 
 `node "${CLAUDE_PLUGIN_ROOT}/dist/bin.js" report "<RUN_DIR>/run.json" --out "<RUN_DIR>/health-report.html"`
 
-The first line it prints is the absolute report path; give the user that path. When the run has a health score, up to 3 more lines follow: the top of the report's Roadmap.
+The first line it prints is the absolute report path; give the user that path. When the run has a health score, up to 3 more lines follow: the top of the report's Roadmap. After those come up to 3 lines starting `Scare: `, the report's Top scares.
 
 Then run, with `<RUN_DIR>` as the working directory:
 
@@ -96,9 +96,10 @@ When this repository was scanned before in the same mode, it writes a PNG card w
 Read `<RUN_DIR>/run.json` and `${CLAUDE_PLUGIN_ROOT}/methodology/v<version>/` (the version is `methodology.version` in run.json). Say, in this order:
 
 1. Health `health.displayed` and the band name (match `health.band`, a key such as `vibe_coded`, to `bands[].name` in `methodology.yaml`), plus the mode. When `comparable` is false, say it is not comparable and give `comparableReason`. List `warnings` in one line when there are any.
-2. The weakest dimension: the lowest non-null `dimensions[].score`. The name comes from `dimension.name` in `dimensions/<id>-*.yaml`.
-3. The top 3 Roadmap lines `health report` printed in step 3, in the same order, restated in plain words. Each line reads `<rank>. <id> <parameter name> (<dimension name>) +<gain> — <target descriptor>`. Gain is the whole health points the health would rise by if that parameter alone reached 100; `+0 · no gain` means none. Do not change any number or descriptor, and never write a descriptor of your own. State Gains as facts, with no imperative wording. When the CLI printed no Roadmap lines, say nothing about a roadmap. In a preview, say that execution-layer parameters were not measured, so they are not ranked.
-4. The absolute report path, and one sentence saying the report has a visual summary and a Roadmap ranked by Gain. When step 3 wrote a card, its absolute path too.
+2. The `Scare: ` lines the CLI printed, copied word for word and stated as facts, with no wording of your own. When there are none, say nothing about scares.
+3. The weakest dimension: the lowest non-null `dimensions[].score`. The name comes from `dimension.name` in `dimensions/<id>-*.yaml`.
+4. The top 3 Roadmap lines `health report` printed in step 3, in the same order, restated in plain words. Each line reads `<rank>. <id> <parameter name> (<dimension name>) +<gain> — <target descriptor>`. Gain is the whole health points the health would rise by if that parameter alone reached 100; `+0 · no gain` means none. Do not change any number or descriptor, and never write a descriptor of your own. State Gains as facts, with no imperative wording. When the CLI printed no Roadmap lines, say nothing about a roadmap. In a preview, say that execution-layer parameters were not measured, so they are not ranked.
+5. The absolute report path, and one sentence saying the report has a visual summary and a Roadmap ranked by Gain. When step 3 wrote a card, its absolute path too.
 
 Stop the explanation there. Do not add next steps or recommendations.
 

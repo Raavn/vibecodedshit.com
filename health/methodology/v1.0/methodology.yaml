@@ -225,6 +225,11 @@ report_only:
     description: Secrets found in git history. The fix is rotating the key.
   - key: dev_dependency_vulnerabilities
     description: Known vulnerabilities in packages reachable only from development dependencies.
+  - key: top_scares
+    description: >-
+      The first three of a fixed list of plain-English consequences that the
+      scan's findings trigger, for example a Supabase service-role key in the
+      tree. Copy lives in code.
   - key: excluded_lines
     description: Percentage of lines excluded by .healthignore.
   - key: per_package_breakdown

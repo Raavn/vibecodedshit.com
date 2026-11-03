@@ -215,7 +215,7 @@ describe('report command', () => {
     const out = await cli(['report', save('roadmap.json', run)], cwd);
     const lines = out.stdout.trimEnd().split('\n');
     expect(lines[0]).toBe(path.join(cwd, 'health-report.html'));
-    expect(lines).toHaveLength(4);
+    expect(lines.filter((l) => !l.startsWith("Scare: "))).toHaveLength(4);
     expect(lines[1]).toMatch(/^1\. \d\.\d .+ \(.+\) (\+\d+|\+0 · no gain)( — .+)?$/);
   });
 

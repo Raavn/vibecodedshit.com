@@ -13,6 +13,7 @@ interface Finding {
   File?: unknown;
   StartLine?: unknown;
   Commit?: unknown;
+  SupabaseRole?: string | null;
 }
 
 function parseFindings(text: string): Finding[] | undefined {
@@ -30,6 +31,37 @@ function relative(file: string, root: string): string {
   const rootPosix = root.split(path.sep).join('/');
   const rel = posix.startsWith(`${rootPosix}/`) ? posix.slice(rootPosix.length + 1) : posix;
   return path.posix.normalize(rel).replace(/^\.\//, '');
+}
+
+const JWT = /eyJ[\w-]+\.(eyJ[\w-]+)\.[\w-]+/;
+
+/**
+ * Report only: the Supabase role a finding's line carries, or null. gitleaks runs with --redact, so the token is read
+ * from the work copy, only the role claim is kept, and neither the token nor the line is ever stored.
+ */
+export function supabaseRoleOf(line: string): string | null {
+  if (/\bsb_secret_[\w-]+/.test(line)) return 'service_role';
+  if (/\bsb_publishable_[\w-]+/.test(line)) return 'anon';
+  const payload = JWT.exec(line)?.[1];
+  if (!payload) return null;
+  try {
+    const claims: unknown = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8'));
+    if (typeof claims !== 'object' || claims === null) return null;
+    const { iss, role } = claims as { iss?: unknown; role?: unknown };
+    return typeof iss === 'string' && iss.includes('supabase') && typeof role === 'string' ? role : null;
+  } catch {
+    return null;
+  }
+}
+
+async function supabaseRole(dir: string, finding: Finding): Promise<string | null> {
+  if (typeof finding.File !== 'string' || typeof finding.StartLine !== 'number') return null;
+  try {
+    const lines = (await readFile(path.join(dir, finding.File), 'utf8')).split('\n');
+    return supabaseRoleOf(lines[finding.StartLine - 1] ?? '');
+  } catch {
+    return null;
+  }
 }
 
 async function scanWorkingTree(ctx: MeasureContext, outDir: string, config: string): Promise<Finding[] | Measurement> {
@@ -54,7 +86,8 @@ async function scanWorkingTree(ctx: MeasureContext, outDir: string, config: stri
     }
     const findings = parseFindings(text);
     if (!findings) return unavailable('gitleaks printed no parseable JSON report');
-    return findings.map((f) => ({ ...f, File: typeof f.File === 'string' ? relative(f.File, copy.dir) : f.File }));
+    const relativeFindings = findings.map((f) => ({ ...f, File: typeof f.File === 'string' ? relative(f.File, copy.dir) : f.File }));
+    return Promise.all(relativeFindings.map(async (f) => ({ ...f, SupabaseRole: await supabaseRole(copy.dir, f) })));
   } finally {
     await copy.cleanup();
   }
@@ -121,7 +154,10 @@ export const p54: Measurer = {
         status: 'measured',
         units: result,
         warnings,
-        ...(history === null ? {} : { reportOnly: { secretsInHistory: history } }),
+        reportOnly: {
+          secretsInTree: findings.map((f) => ({ ruleId: f.RuleID, file: f.File, line: f.StartLine, supabaseRole: f.SupabaseRole ?? null })),
+          ...(history === null ? {} : { secretsInHistory: history }),
+        },
       };
     } finally {
       await rm(outDir, { recursive: true, force: true });
