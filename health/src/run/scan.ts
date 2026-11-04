@@ -4,6 +4,7 @@ import path from 'node:path';
 import ts from 'typescript';
 import { createDockerRunner, imageDigest, type Spawn } from '../exec/docker.js';
 import { runExecution } from '../exec/run.js';
+import { executionRoots, failedRootDirs } from '../exec/roots.js';
 import type { ExecRunner, ExecutionResults } from '../exec/types.js';
 import { feedbackLoop } from '../measure/p6-3.js';
 import { measurers as allMeasurers } from '../measure/registry.js';
@@ -156,9 +157,11 @@ async function measureAll(opts: ScanOptions, methodology: Methodology, repoPath:
         Object.assign(reportOnly, measurement.reportOnly);
         warnings.push(...(measurement.warnings ?? []));
         const pooled = poolParameter(def, measurement.units);
+        const failedDirs = exec ? failedRootDirs(exec, scope, measurement.units) : [];
         parameters.push({
           id: def.id,
           status: 'measured',
+          ...(failedDirs.length > 0 ? { reason: `install failed in ${failedDirs.join(', ')}` } : {}),
           weight: def.weight,
           raw: pooled.raw,
           score: pooled.score,
@@ -202,7 +205,7 @@ async function measureAll(opts: ScanOptions, methodology: Methodology, repoPath:
       ...(scope.pythonVersion === undefined ? {} : { python: scope.pythonVersion }),
       ...(Object.keys(tools.versions()).length === 0 ? {} : { static: tools.versions() }),
     },
-    ...(exec ? { execution: { feedbackLoop: feedbackLoop(exec) } } : {}),
+    ...(exec ? { execution: { feedbackLoop: feedbackLoop(exec), roots: executionRoots(exec) } } : {}),
     ...(Object.keys(reportOnly).length === 0 ? {} : { reportOnly }),
     ignoreSet: {
       healthignoreSha256: scope.healthignoreSha256,

@@ -67,11 +67,24 @@ describe('runKnip', () => {
     ]);
   });
 
-  it('names the failed install in the reason when knip fails', async () => {
-    expect(await runKnip(context(() => ({ exitCode: 2, stdout: '', stderr: 'boom', timedOut: false }), 'full', exec(false, '/w')))).toEqual({
-      status: 'not_measured',
-      reason: 'knip exited with 2: boom (dependency install failed in ., likely cause)',
-    });
+  it('marks the root failed when its install failed and knip then crashes, times out or prints no report', async () => {
+    const failed = async (result: { exitCode: number | null; stdout: string; timedOut: boolean }) => {
+      const outcome = await runKnip(context(() => ({ ...result, stderr: 'boom' }), 'full', exec(false, '/w')));
+      return isOutcome(outcome) ? outcome.failedRoots : outcome;
+    };
+    expect(await failed({ exitCode: 2, stdout: '', timedOut: false })).toEqual(['.']);
+    expect(await failed({ exitCode: null, stdout: '', timedOut: true })).toEqual(['.']);
+    expect(await failed({ exitCode: 0, stdout: 'not json', timedOut: false })).toEqual(['.']);
+  });
+
+  it('stays not_measured when knip cannot start, even after a failed install', async () => {
+    const outcome = await runKnip(context(() => ({ exitCode: null, stdout: '', stderr: '', timedOut: false, spawnError: 'ENOENT' }), 'full', exec(false, '/w')));
+    expect(outcome).toMatchObject({ status: 'not_measured' });
+  });
+
+  it('keeps a knip failure in a root whose install worked not_measured', async () => {
+    const outcome = await runKnip(context(() => ok('{"issues":[]}'), 'full', exec(true, '/w', [step(2, '')])));
+    expect(outcome).toEqual({ status: 'not_measured', reason: 'knip exited with 2 in .' });
   });
 
   it('is not measured in preview, with the config error in the reason', async () => {

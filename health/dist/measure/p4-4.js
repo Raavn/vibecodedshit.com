@@ -1,7 +1,7 @@
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { analyzePythonDeadCode } from '../python/deadcode.js';
-import { isOutcome, runKnip } from '../tools/knip.js';
+import { isOutcome, knipFailed, runKnip } from '../tools/knip.js';
 import { failureReason, unavailable } from '../tools/outcome.js';
 import { createWorkCopy } from '../tools/workcopy.js';
 import { readToml } from '../util/toml.js';
@@ -26,7 +26,8 @@ function joinRel(...parts) {
     return parts.filter((p) => p !== '').join('/');
 }
 // ---- TypeScript and JavaScript ----------------------------------------------------------
-async function measureTypeScript(ctx, tallies, warnings) {
+/** Fills the TS/JS tallies. `failed` collects the units beneath a knip root whose install and knip both failed. */
+async function measureTypeScript(ctx, tallies, warnings, failed) {
     const files = logicFiles(ctx.scope, 'typescript_javascript');
     if (files.length === 0)
         return null;
@@ -36,6 +37,10 @@ async function measureTypeScript(ctx, tallies, warnings) {
     warnings.push(...knip.warnings.map((w) => `4.4: ${w}`));
     const perUnit = new Map();
     for (const file of files) {
+        if (knipFailed(knip, file.path)) {
+            failed.add(unitId(file));
+            continue;
+        }
         const exported = countExportedSymbols(ctx.scope.getTsSourceFile(file.path));
         const issues = knip.files.get(file.path);
         const unused = issues?.unusedFile ? exported : (issues?.exports ?? 0);
@@ -291,12 +296,14 @@ export const p44 = {
     async measure(ctx) {
         const tallies = emptyTallies([...logicFiles(ctx.scope, 'typescript_javascript'), ...logicFiles(ctx.scope, 'python')]);
         const warnings = [];
-        const ts = await measureTypeScript(ctx, tallies, warnings);
+        const failed = new Set();
+        const ts = await measureTypeScript(ctx, tallies, warnings, failed);
         if (ts)
             return ts;
         const py = await measurePython(ctx, tallies, warnings);
         if (py)
             return py;
-        return { status: 'measured', units: tallyUnits(tallies), warnings };
+        const units = tallyUnits(tallies).map((unit) => (failed.has(`${unit.package}\0${unit.group}`) ? { ...unit, raw: { kind: 'failed' } } : unit));
+        return { status: 'measured', units, warnings };
     },
 };

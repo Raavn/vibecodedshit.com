@@ -121,4 +121,30 @@ describe('pooling', () => {
     expect(pooled.raw).toEqual({ kind: 'ratio', numerator: 100, denominator: 1000, scale: 100 });
     expect(pooled.score).toBeCloseTo(75, 6); // 10% is the 75 anchor
   });
+
+  it('scores a failed unit as 0 and leaves it out of the ratio sums, weighting the rest by their share of the lines', () => {
+    const units: UnitRaw[] = [
+      { package: 'a', group: 'typescript_javascript', weight: 300, raw: { kind: 'ratio', numerator: 100, denominator: 100, scale: 100 } },
+      { package: 'b', group: 'python', weight: 100, raw: { kind: 'failed' } },
+    ];
+    const pooled = poolParameter(def('4.2'), units);
+    expect(pooled.raw).toEqual({ kind: 'ratio', numerator: 100, denominator: 100, scale: 100 });
+    expect(pooled.units.map((u) => u.score)).toEqual([0, 0]);
+    expect(pooled.score).toBeCloseTo(0, 6); // 100% unused scores 0 on 4.2, and 3/4 of 0 is 0
+    const healthy = poolParameter(def('1.2'), [
+      { package: 'a', group: 'typescript_javascript', weight: 300, raw: { kind: 'ratio', numerator: 100, denominator: 100, scale: 100 } },
+      { package: 'b', group: 'python', weight: 100, raw: { kind: 'failed' } },
+    ]);
+    expect(healthy.score).toBeCloseTo(75, 6); // 100% coverage scores 100, times 300/400
+  });
+
+  it('scores every unit 0 when all are failed, and pools unit_weighted units with the failed ones at 0', () => {
+    const failed: UnitRaw[] = [{ package: 'a', group: 'python', weight: 10, raw: { kind: 'failed' } }];
+    expect(poolParameter(def('1.2'), failed)).toMatchObject({ raw: null, score: 0 });
+    const units: UnitRaw[] = [
+      { package: 'a', group: 'typescript_javascript', weight: 100, raw: { kind: 'number', value: 30 } },
+      { package: 'b', group: 'python', weight: 100, raw: { kind: 'failed' } },
+    ];
+    expect(poolParameter(def('6.3'), units).score).toBeCloseTo(50, 6); // 30 s scores 100, the failed unit 0
+  });
 });

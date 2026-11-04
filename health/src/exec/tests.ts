@@ -1,6 +1,7 @@
 import type { Measurement, MeasureContext, UnitRaw } from '../measure/types.js';
 import { emptyTallies, tallyUnits, unitId } from '../measure/units.js';
 import { analyzeTsFile } from '../scope/ts-lines.js';
+import { failedRootOf, withFailedUnits } from './roots.js';
 import { coveredLines } from './test-reports/coverage-ranges.js';
 import type { ExecutionResults, FileCoverage } from './types.js';
 
@@ -31,7 +32,7 @@ export function measurePassRate(ctx: MeasureContext): Measurement {
   const reason = testFailure(exec);
   if (reason !== null) return { status: 'failed', reason };
   const logic = ctx.scope.files.filter((f) => f.role === 'logic');
-  if (exec.test.invocations.length === 0) return { status: 'measured', units: tallyUnits(emptyTallies(logic)) };
+  if (exec.test.invocations.length === 0) return { status: 'measured', units: withFailedUnits(exec, ctx.scope, tallyUnits(emptyTallies(logic))) };
   const units: UnitRaw[] = exec.test.invocations.map((run) => {
     const counts = run.results ?? { passed: 0, failed: 0, errored: 0, skipped: 0 };
     return {
@@ -41,7 +42,7 @@ export function measurePassRate(ctx: MeasureContext): Measurement {
       raw: { kind: 'ratio' as const, numerator: counts.passed, denominator: counts.passed + counts.failed + counts.errored, scale: 100 },
     };
   });
-  return { status: 'measured', units };
+  return { status: 'measured', units: withFailedUnits(exec, ctx.scope, units) };
 }
 
 /** Code lines of a TS/JS logic file and how many ran, or null when no invocation's coverage-final.json lists the file. */
@@ -70,7 +71,7 @@ export function measureCoverage(ctx: MeasureContext, kind: 'lines' | 'branches')
   if (reason !== null) return { status: 'failed', reason };
   const logic = ctx.scope.files.filter((f) => f.role === 'logic');
   const tallies = emptyTallies(logic);
-  if (totalCases(exec) === 0) return { status: 'measured', units: tallyUnits(tallies) };
+  if (totalCases(exec) === 0) return { status: 'measured', units: withFailedUnits(exec, ctx.scope, tallyUnits(tallies)) };
 
   const merged = new Map<string, FileCoverage>();
   for (const run of exec.test.invocations) {
@@ -85,7 +86,7 @@ export function measureCoverage(ctx: MeasureContext, kind: 'lines' | 'branches')
   let missing = 0;
   for (const file of logic) {
     const tally = tallies.get(unitId(file));
-    if (!tally) continue;
+    if (!tally || failedRootOf(exec, file.path, file.group)) continue;
     if (kind === 'lines' && file.group === 'typescript_javascript') {
       const lines = tsLineCoverage(ctx, exec, file.path);
       if (lines === null) {
@@ -108,7 +109,7 @@ export function measureCoverage(ctx: MeasureContext, kind: 'lines' | 'branches')
   }
   return {
     status: 'measured',
-    units: tallyUnits(tallies),
+    units: withFailedUnits(exec, ctx.scope, tallyUnits(tallies)),
     ...(kind === 'lines' && missing > 0 ? { warnings: [`${missing} logic file(s) missing from the coverage report were counted as 0% covered`] } : {}),
   };
 }

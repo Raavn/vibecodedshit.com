@@ -3,7 +3,7 @@ const MANIFEST = {
     typescript_javascript: (base) => base === 'package.json',
     python: (base) => base === 'pyproject.toml' || base === 'Pipfile' || base === 'setup.py' || /^requirements.*\.txt$/.test(base),
 };
-function isUnder(dir, parent) {
+export function isUnder(dir, parent) {
     return parent === '.' || dir === parent || dir.startsWith(`${parent}/`);
 }
 /**
