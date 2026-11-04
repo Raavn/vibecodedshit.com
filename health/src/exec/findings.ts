@@ -1,6 +1,7 @@
 import type { Measurement, MeasureContext, UnitRaw } from '../measure/types.js';
 import { emptyTallies, unitId } from '../measure/units.js';
 import { NORMAL_EXIT, parseEslint, parseMypy, parsePyright, parseRuff, parseTsc, type Findings } from './reports.js';
+import { withFailedUnits } from './roots.js';
 import type { CheckResult } from './types.js';
 
 function parse(result: CheckResult): Findings | null {
@@ -30,8 +31,9 @@ export function failure(result: CheckResult): string | null {
 /**
  * Findings per 1,000 source lines for 2.1 and 2.5. Numerator: findings located in in-scope logic and
  * test files (anything elsewhere is dropped). Denominator: source lines of those files, per
- * (package, group) unit. An install that failed, a timeout, or a checker with no usable report
- * is a repository failure: the parameter scores 0.
+ * (package, group) unit. A timeout or a checker with no usable report is a repository failure: the
+ * parameter scores 0. So does an install that failed in every root; when only some roots failed, the units
+ * beneath those roots are failed units and the rest are measured.
  */
 export function measureFindings(ctx: MeasureContext, results: (exec: NonNullable<MeasureContext['exec']>) => CheckResult[]): Measurement {
   const exec = ctx.exec;
@@ -65,5 +67,5 @@ export function measureFindings(ctx: MeasureContext, results: (exec: NonNullable
       weight: t.weight,
       raw: { kind: 'ratio' as const, numerator: t.numerator, denominator: t.denominator, scale: 1000 },
     }));
-  return { status: 'measured', units };
+  return { status: 'measured', units: withFailedUnits(exec, ctx.scope, units) };
 }

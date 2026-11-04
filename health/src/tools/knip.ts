@@ -3,6 +3,8 @@ import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import type { Measurement, MeasureContext } from '../measure/types.js';
+import { isUnder } from '../exec/plan.js';
+import { failedRootOf } from '../exec/roots.js';
 import { failureReason, unavailable } from './outcome.js';
 
 interface KnipFileIssues {
@@ -20,6 +22,13 @@ export interface KnipOutcome {
   files: Map<string, KnipFileIssues>;
   /** For the run.json warnings of 4.4 and 5.5. */
   warnings: string[];
+  /** Knip roots of a full run whose install failed and where knip then failed too: the units beneath them score 0 for 4.4 and 5.5. */
+  failedRoots: string[];
+}
+
+/** Whether the package at `pkg` lies under a knip root where knip failed. */
+export function knipFailed(knip: KnipOutcome, pkg: string): boolean {
+  return knip.failedRoots.some((root) => isUnder(pkg, root));
 }
 
 interface RawEntry {
@@ -82,12 +91,6 @@ export function knipRoots(repoPath: string): string[] {
   return roots;
 }
 
-/** The install root whose dependency install failed in a full run, or undefined. */
-function failedInstall(ctx: MeasureContext): string | undefined {
-  if (ctx.mode !== 'full' || !ctx.exec || ctx.exec.checksRan) return undefined;
-  return ctx.exec.roots.find((root) => root.install !== null && root.install.status !== 'ok')?.dir ?? '.';
-}
-
 /** Adds one knip root's report to `outcome`. Returns why the report cannot be used, or null. */
 function addReport(outcome: KnipOutcome, root: string, stdout: string): string | null {
   let issues: RawIssue[];
@@ -121,9 +124,8 @@ function addReport(outcome: KnipOutcome, root: string, stdout: string): string |
 /** Knip's exit codes for a finished run: 0 no issues, 1 issues found. */
 const KNIP_OK = [0, 1];
 
-/** The knip steps of a full run, which ran in the image on the installed work copy. */
-function fromExecution(exec: NonNullable<MeasureContext['exec']>): KnipOutcome | Measurement {
-  const outcome: KnipOutcome = { files: new Map(), warnings: [] };
+/** Adds the knip steps of a full run, which ran in the image on the installed work copy, to `outcome`. Returns why one cannot be used, or null. */
+function fromExecution(exec: NonNullable<MeasureContext['exec']>, outcome: KnipOutcome): Measurement | null {
   for (const result of exec.knip) {
     if (result.outcome.status === 'timeout') return unavailable(`knip timed out in ${result.dir}`);
     const code = result.outcome.exitCode;
@@ -132,46 +134,61 @@ function fromExecution(exec: NonNullable<MeasureContext['exec']>): KnipOutcome |
     const failure = addReport(outcome, result.dir, result.report);
     if (failure) return unavailable(`${failure} in ${result.dir}`);
   }
-  return outcome;
+  return null;
 }
 
 /**
  * One knip run per scan, shared by 4.4 and 5.5. The repository's own knip config is not used
- * (an empty --config), framework plugins stay enabled. A full run whose installs all worked reads
- * the knip steps the execution layer ran in the image, on the installed work copy, so plugins can
+ * (an empty --config), framework plugins stay enabled. A full run reads the knip steps the execution layer ran
+ * in the image, on the installed work copy, for every knip root whose install worked, so plugins can
  * load configs such as vitest.config.ts and native dependencies match the platform they were
- * installed for. Otherwise knip runs through the tool kit: on the host in the repository for a preview, in the image
- * on the execution work copy for a full run whose install failed.
+ * installed for. A knip root whose install failed is still tried through the tool kit, in the image on the
+ * execution work copy: a report is used with a warning that unused dependencies may be overcounted, and a
+ * crash, timeout or unusable report marks the root failed (`failedRoots`). A knip step failing in a root whose
+ * install worked, or knip not starting at all, is not_measured. A preview runs knip through the tool kit on
+ * the host, in the repository.
  */
 export function runKnip(ctx: MeasureContext): Promise<KnipOutcome | Measurement> {
   return ctx.tools.memo('knip', async () => {
-    if (ctx.mode === 'full' && ctx.exec?.checksRan === true) return fromExecution(ctx.exec);
+    const exec = ctx.mode === 'full' ? ctx.exec : undefined;
+    const outcome: KnipOutcome = { files: new Map(), warnings: [], failedRoots: [] };
+    const roots = knipRoots(ctx.repoPath);
+    let viaTools = roots;
+    if (exec) {
+      const stopped = fromExecution(exec, outcome);
+      if (stopped) return stopped;
+      viaTools = roots.filter((root) => failedRootOf(exec, root, 'typescript_javascript') !== undefined);
+      if (viaTools.length === 0) return outcome;
+    }
     const tool = await ctx.tools.resolve('knip');
     if (!tool) return unavailable(ctx.tools.notFoundReason('knip'));
-    const failed = failedInstall(ctx);
-    const hint = failed === undefined ? '' : ` (dependency install failed in ${failed}, likely cause)`;
     // A full run's tools run in the image, so they read the execution work copy, whose dependencies (if any) were
     // installed there; the repository's own node_modules belong to the host platform.
-    const base = ctx.mode === 'full' && ctx.exec ? ctx.exec.workDir : ctx.repoPath;
-    const outcome: KnipOutcome = { files: new Map(), warnings: [] };
+    const base = exec ? exec.workDir : ctx.repoPath;
     const configDir = await mkdtemp(path.join(tmpdir(), 'health-knip-'));
     try {
       const configFile = path.join(configDir, 'knip.json');
       await writeFile(configFile, '{}');
-      for (const root of knipRoots(ctx.repoPath)) {
+      for (const root of viaTools) {
         const result = await ctx.tools.run(
           tool,
           ['--reporter', 'json', '--no-progress', '--no-config-hints', '--config', configFile],
           { cwd: path.join(base, root), env: { DOTENV_CONFIG_QUIET: 'true' } },
         );
         const failure = failureReason(tool, result, KNIP_OK) ?? addReport(outcome, root, result.stdout);
-        if (failure) return unavailable(`${failure}${hint}`);
+        const installRoot = exec ? failedRootOf(exec, root, 'typescript_javascript') : undefined;
+        if (failure === null) {
+          if (installRoot) {
+            outcome.warnings.push(`knip ran without installed dependencies because the dependency install failed in ${installRoot.dir}; unused dependencies may be overcounted`);
+          }
+        } else if (installRoot && result.spawnError === undefined) {
+          outcome.failedRoots.push(root);
+        } else {
+          return unavailable(failure);
+        }
       }
     } finally {
       await rm(configDir, { recursive: true, force: true });
-    }
-    if (failed !== undefined) {
-      outcome.warnings.push(`knip ran without installed dependencies because the dependency install failed in ${failed}; unused dependencies may be overcounted`);
     }
     return outcome;
   });

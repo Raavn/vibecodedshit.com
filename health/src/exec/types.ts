@@ -135,11 +135,11 @@ export interface TestResult extends TestInvocation {
 export interface ExecutionResults {
   image: { tag: string; digest: string };
   roots: RootResult[];
-  /** False when an install failed, so typecheck and lint did not run. */
+  /** False when the install failed in every root, so no check ran. With some roots failed it stays true and the checks ran for the healthy roots only. */
   checksRan: boolean;
   typecheck: CheckResult[];
   lint: CheckResult[];
-  /** One knip run per knip root, read by 4.4 and 5.5. Empty when the checks did not run. */
+  /** One knip run per knip root whose install worked, read by 4.4 and 5.5. Empty when the checks did not run. */
   knip: KnipResult[];
   /** One entry per test runner invocation. Empty when no supported runner was found or the checks did not run. */
   test: { invocations: TestResult[] };

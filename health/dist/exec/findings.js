@@ -1,5 +1,6 @@
 import { emptyTallies, unitId } from '../measure/units.js';
 import { NORMAL_EXIT, parseEslint, parseMypy, parsePyright, parseRuff, parseTsc } from './reports.js';
+import { withFailedUnits } from './roots.js';
 function parse(result) {
     switch (result.tool) {
         case 'tsc':
@@ -28,8 +29,9 @@ export function failure(result) {
 /**
  * Findings per 1,000 source lines for 2.1 and 2.5. Numerator: findings located in in-scope logic and
  * test files (anything elsewhere is dropped). Denominator: source lines of those files, per
- * (package, group) unit. An install that failed, a timeout, or a checker with no usable report
- * is a repository failure: the parameter scores 0.
+ * (package, group) unit. A timeout or a checker with no usable report is a repository failure: the
+ * parameter scores 0. So does an install that failed in every root; when only some roots failed, the units
+ * beneath those roots are failed units and the rest are measured.
  */
 export function measureFindings(ctx, results) {
     const exec = ctx.exec;
@@ -67,5 +69,5 @@ export function measureFindings(ctx, results) {
         weight: t.weight,
         raw: { kind: 'ratio', numerator: t.numerator, denominator: t.denominator, scale: 1000 },
     }));
-    return { status: 'measured', units };
+    return { status: 'measured', units: withFailedUnits(exec, ctx.scope, units) };
 }

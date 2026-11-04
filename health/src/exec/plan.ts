@@ -31,7 +31,7 @@ export interface ExecutionPlan {
   typecheck: PlannedTypecheck[];
 }
 
-function isUnder(dir: string, parent: string): boolean {
+export function isUnder(dir: string, parent: string): boolean {
   return parent === '.' || dir === parent || dir.startsWith(`${parent}/`);
 }
 

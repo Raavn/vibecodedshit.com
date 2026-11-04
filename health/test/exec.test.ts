@@ -309,6 +309,50 @@ describe('report parsers', () => {
   });
 });
 
+describe('install failure in one root', () => {
+  const files = {
+    'good/pyproject.toml': '[project]\nname = "good"\n',
+    'good/main.py': 'def main():\n    return 1\n',
+    'bad/pyproject.toml': '[project]\nname = "bad"\n',
+    'bad/main.py': 'def main():\n    return 1\n',
+  };
+  const failBad = (spec: StepSpec): FakeStep | undefined => (spec.step === 'install' && spec.cwd === 'bad' ? { exitCode: 1 } : undefined);
+
+  it('runs the checks of the healthy root only and scores the failed root as 0', async () => {
+    const runner = healthy(failBad);
+    const result = await runScan(fullOpts(materializeFixture('blank', {}, files), runner));
+    expect(runner.specs.filter((s) => s.step === 'lint').map((s) => s.cwd)).toEqual(['good']);
+    expect(runner.specs.filter((s) => s.step === 'typecheck').map((s) => s.cwd)).toEqual(['good']);
+    for (const id of ['2.1', '2.5']) {
+      const p = param(result, id);
+      expect(p.status).toBe('measured');
+      expect(p.units?.map((u) => [u.package, u.raw.kind, u.score])).toEqual([
+        ['bad', 'failed', 0],
+        ['good', 'ratio', 100],
+      ]);
+      // The healthy root has no finding (100) and holds half the logic lines.
+      expect(p.score).toBe(50);
+      expect(p.reason).toBe('install failed in bad');
+    }
+    expect(result.execution?.roots).toEqual([
+      { dir: 'bad', group: 'python', install: 'failed', exitCode: 1 },
+      { dir: 'good', group: 'python', install: 'ok', exitCode: 0 },
+    ]);
+  });
+
+  it('keeps a finding of the healthy root counted', async () => {
+    const runner = healthy((spec) => failBad(spec) ?? (spec.step === 'lint' && spec.cwd === 'good' ? { exitCode: 1, files: { 'ruff.json': JSON.stringify([{ filename: '/work/good/main.py', code: 'F401' }]) } } : undefined));
+    const result = await runScan(fullOpts(materializeFixture('blank', {}, files), runner));
+    const raw = param(result, '2.5').units?.find((u) => u.package === 'good')?.raw;
+    expect(raw).toMatchObject({ kind: 'ratio', numerator: 1 });
+  });
+
+  it('fails the parameter outright when every root failed', async () => {
+    const result = await runScan(fullOpts(materializeFixture('blank', {}, files), healthy((spec) => (spec.step === 'install' ? { exitCode: 1 } : undefined))));
+    expect(param(result, '2.5').status).toBe('failed');
+  });
+});
+
 describe('fixtures through a fake runner', () => {
   it('zeroes every execution parameter when the install fails', async () => {
     const dir = materializeFixture('exec-install-fail');
@@ -512,7 +556,7 @@ describe('knip on the installed work copy', () => {
     }
   });
 
-  it('scores the rest of a full run when knip then fails, with 4.4 and 5.5 not measured and the run not comparable', async () => {
+  it('scores 4.4 and 5.5 as 0 when the install failed and knip then fails on the work copy', async () => {
     const dir = materializeFixture('exec-knip-vitest');
     const runner = healthy((spec) => (spec.step === 'install' ? { exitCode: 1 } : undefined));
     const { kit, cwds } = recordingKit();
@@ -520,12 +564,13 @@ describe('knip on the installed work copy', () => {
     expect(result.valid).toBe(true);
     expect(result.health).not.toBeNull();
     for (const id of ['4.4', '5.5']) {
-      expect(param(result, id).status).toBe('not_measured');
-      expect(param(result, id).reason).toContain(want.failedInstallReason);
+      expect(param(result, id).status).toBe('measured');
+      expect(param(result, id).score).toBe(0);
+      expect(param(result, id).units?.every((u) => u.raw.kind === 'failed')).toBe(true);
+      expect(param(result, id).reason).toBe('install failed in .');
     }
     expect(param(result, '6.1').status).toBe('measured');
-    expect(result.comparable).toBe(false);
-    expect(result.comparableReason).toMatch(/4\.4 \(knip exited with 2/);
+    expect(result.comparableReason).not.toMatch(/4\.4|5\.5/);
     expect(cwds.find((c) => c.name === 'knip')?.cwd).toBe(path.join(runner.specs[0]?.workDir as string, '.'));
     expect(existsSync(runner.specs[0]?.workDir as string)).toBe(false);
   });

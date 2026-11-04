@@ -28,6 +28,16 @@ const runFileSchema = z.looseObject({
   execution: z
     .looseObject({
       feedbackLoop: z.looseObject({ typecheckSeconds: z.number(), lintSeconds: z.number(), testSeconds: z.number(), totalSeconds: z.number() }),
+      roots: z
+        .array(
+          z.looseObject({
+            dir: z.string(),
+            group: z.string(),
+            install: z.enum(['ok', 'failed', 'timeout']).nullable(),
+            exitCode: z.number().nullable(),
+          }),
+        )
+        .optional(),
     })
     .optional(),
   reportOnly: z.record(z.string(), z.unknown()).optional(),
@@ -43,7 +53,7 @@ const runFileSchema = z.looseObject({
       status: z.enum(['measured', 'not_applicable', 'not_measured', 'failed']),
       reason: z.string().optional(),
       weight: z.number(),
-      raw: z.looseObject({ kind: z.enum(['ratio', 'level', 'number', 'components']) }).nullable().optional(),
+      raw: z.looseObject({ kind: z.enum(['ratio', 'level', 'number', 'components', 'failed']) }).nullable().optional(),
       score: z.number().optional(),
       units: z.array(z.looseObject({ package: z.string(), group: z.string(), weight: z.number(), raw: z.looseObject({}), score: z.number() })).optional(),
     }),

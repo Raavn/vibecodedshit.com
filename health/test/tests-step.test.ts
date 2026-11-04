@@ -356,7 +356,10 @@ describe('6.3 feedback loop time', () => {
 
   it('records the three durations and their sum in run.json and scores the sum', async () => {
     const result = await runScan(opts(materializeFixture('exec-tests-vitest'), timed()));
-    expect(result.execution).toEqual({ feedbackLoop: { typecheckSeconds: 10, lintSeconds: 20, testSeconds: 90, totalSeconds: 120 } });
+    expect(result.execution).toEqual({
+      feedbackLoop: { typecheckSeconds: 10, lintSeconds: 20, testSeconds: 90, totalSeconds: 120 },
+      roots: [{ dir: '.', group: 'typescript_javascript', install: 'ok', exitCode: 0 }],
+    });
     expect(param(result, '6.3').units?.[0]?.raw).toEqual({ kind: 'number', value: 120 });
     // 60 s scores 100 and 180 s scores 75, so 120 s is 87.5.
     expect(param(result, '6.3').score).toBeCloseTo(87.5, 6);

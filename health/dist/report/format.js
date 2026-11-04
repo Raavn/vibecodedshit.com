@@ -19,6 +19,8 @@ function formatRaw(raw, unit) {
             return raw.level;
         case 'number':
             return `${raw.value} ${unit}`;
+        case 'failed':
+            return 'install failed';
         case 'components':
             return Object.entries(raw.components)
                 .map(([key, part]) => `${key}: ${formatRaw(part, unit)}`)

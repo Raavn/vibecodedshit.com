@@ -113,7 +113,7 @@ There are two kinds of failure:
 
 | Failure | Cause | Result |
 |---|---|---|
-| Repository failure | Install, build, typecheck or tests fail or time out because of the repository | Every parameter that needs that step scores 0. The run is valid. |
+| Repository failure | Install, build, typecheck or tests fail or time out because of the repository | Every parameter that needs that step scores 0. An install that fails in one install root zeroes only the units beneath that root; the other roots are still measured. The run is valid. |
 | Tool error | The scanner itself fails, for example a crash or coverage data missing after a test run that produced results | The run is invalid and produces no score. |
 
 ## 4. Scope
@@ -131,7 +131,7 @@ Full rules are in `scope.yaml`.
 
 A repository always gets one headline score.
 
-- **Ratio parameters** (percentages, counts per 1,000 lines, pass rates) sum numerators and denominators across packages and languages, then score the pooled ratio once.
+- **Ratio parameters** (percentages, counts per 1,000 lines, pass rates) sum numerators and denominators across packages and languages, then score the pooled ratio once. A unit under an install root whose install failed takes no part in the sums; the pooled score is multiplied by the share of the logic lines that is not failed, so a broken package costs its share.
 - **Configuration and level parameters** are scored per language or package and combined by logic-line weight. Example: 2.2 scores 100 for a TypeScript frontend with 8,000 logic lines and 0 for a Python backend with 2,000 logic lines. The pooled 2.2 score is 80.
 
 The report breaks every dimension down per package and per language.
