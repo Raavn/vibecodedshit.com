@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FAQ - vibecodedshit.com</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💩</text></svg>">
+  <link rel="canonical" href="https://vibecodedshit.com/faq/">
+  <meta name="description" content="Answers about vibecodedshit.com: what codebase health is, how to get a score, the six dimensions, the four bands, what is sent and the licences.">
+  <meta property="og:title" content="vibecodedshit.com FAQ">
+  <meta property="og:description" content="Answers about the codebase health benchmark.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://vibecodedshit.com/faq/">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #CEA5C7;
+      --fg: #471044;
+      --fg-muted: rgba(71, 16, 68, 0.6);
+      --border: rgba(71, 16, 68, 0.18);
+      --page-margin: 3rem;
+      --container-max: 1440px;
+    }
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: var(--bg);
+      color: var(--fg);
+      font-family: 'Space Grotesk', system-ui, sans-serif;
+      overflow-x: hidden;
+      line-height: 1.6;
+    }
+    .topbar {
+      position: sticky; top: 0; z-index: 2;
+      padding: 1rem 1.25rem;
+      background: rgba(206, 165, 199, 0.72);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border);
+    }
+    .topbar-inner {
+      max-width: var(--container-max);
+      margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+      padding: 0 var(--page-margin);
+    }
+    .brand { font-weight: 700; letter-spacing: -0.02em; text-decoration: none; color: var(--fg); white-space: nowrap; }
+    .nav { display: flex; gap: 0.75rem; flex-wrap: wrap; justify-content: flex-end; }
+    .nav a {
+      text-decoration: none; color: var(--fg); opacity: 0.6; font-weight: 700; font-size: 0.95rem;
+      padding: 0.45rem 0.7rem; border-radius: 0.5rem; transition: opacity 120ms ease;
+    }
+    .nav a:hover, .nav a[aria-current="page"] { opacity: 1; }
+    .doc { max-width: 960px; margin: 0 auto; padding: 4rem var(--page-margin) 6rem; }
+    .doc h1 {
+      font-size: clamp(2rem, 6vw, 3.5rem);
+      font-weight: 700; text-transform: uppercase; letter-spacing: -0.04em; line-height: 1;
+      margin-bottom: 1.5rem;
+    }
+    .doc h2 {
+      font-size: 1.35rem; font-weight: 700; letter-spacing: -0.01em;
+      margin-top: 2.25rem; margin-bottom: 0.6rem;
+      padding-top: 1.25rem; border-top: 1px solid var(--border);
+    }
+    .doc p { margin-bottom: 1rem; max-width: 75ch; overflow-wrap: anywhere; }
+    footer {
+      text-align: center; padding: 3rem 2rem; font-size: 0.85rem;
+      color: var(--bg); background: var(--fg);
+    }
+    footer .no-frameworks { font-style: italic; margin-bottom: 0.5rem; opacity: 0.75; }
+    @media (max-width: 900px) {
+      .topbar-inner { padding: 0 1.5rem; }
+      .doc { padding: 3rem 1.5rem 4rem; }
+    }
+    @media (max-width: 600px) {
+      .topbar { padding: 0.85rem 1rem; }
+      .topbar-inner { padding: 0; }
+    }
+  </style>
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is vibecodedshit.com?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "vibecodedshit.com is a free, open benchmark for codebase health. It scores how safely and cheaply someone with no memory of a codebase, such as a contractor or an AI agent, can make a correct change."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What does codebase health mean?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Health is how safely and cheaply someone with no memory of a codebase, whether a contractor or an AI agent, can make a correct change."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How do I get a score?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Run the codebase-health Claude Code plugin. Add it with /plugin marketplace add Raavn/vibecodedshit.com, install it with /plugin install codebase-health@vibecodedshit, then run /codebase-health. The Pack is free for an email address."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What does the score measure?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The score covers six dimensions and 30 parameters: Safety net, Type & static rigor, Architecture & boundaries, Complexity & maintainability, Dependency & security hygiene, and Operability & feedback loop."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What are the score bands?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The health score has four bands: 0-39 Vibe-coded, 40-59 Fragile, 60-79 Stable, and 80-100 Agent-ready."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What data is sent?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Scores are sent only with your consent, and you see the exact payload before anything is sent. The repo name is off by default; a hash of the git remote URL is sent instead."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is the static preview?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Without Docker the skill runs a static-only preview. It is marked not comparable and cannot be submitted."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How is it licensed?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The methodology is published under CC BY 4.0. The engine is licensed under the Elastic License 2.0."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Who runs vibecodedshit.com?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "vibecodedshit.com is run by Peter's team at VCS."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Is there an offer for bad scores?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Vibe-coded and Fragile results on TypeScript-only repos end with an offer of a free, non-binding quote from Peter's team at VCS to fix the codebase. Other repos get no offer."
+      }
+    }
+  ]
+}
+  </script>
+</head>
+<body>
+  <main>
+    <header class="topbar">
+      <div class="topbar-inner">
+        <a class="brand" href="/">vibecodedsh*t</a>
+        <nav class="nav" aria-label="Primary">
+          <a href="/methodology/">Methodology</a>
+          <a href="/faq/" aria-current="page">FAQ</a>
+        </nav>
+      </div>
+    </header>
+
+    <article class="doc">
+      <h1>FAQ</h1>
+
+      <h2>What is vibecodedshit.com?</h2>
+      <p>vibecodedshit.com is a free, open benchmark for codebase health. It scores how safely and cheaply someone with no memory of a codebase, such as a contractor or an AI agent, can make a correct change.</p>
+
+      <h2>What does codebase health mean?</h2>
+      <p>Health is how safely and cheaply someone with no memory of a codebase, whether a contractor or an AI agent, can make a correct change.</p>
+
+      <h2>How do I get a score?</h2>
+      <p>Run the codebase-health Claude Code plugin. Add it with /plugin marketplace add Raavn/vibecodedshit.com, install it with /plugin install codebase-health@vibecodedshit, then run /codebase-health. The Pack is free for an email address.</p>
+
+      <h2>What does the score measure?</h2>
+      <p>The score covers six dimensions and 30 parameters: Safety net, Type &amp; static rigor, Architecture &amp; boundaries, Complexity &amp; maintainability, Dependency &amp; security hygiene, and Operability &amp; feedback loop.</p>
+
+      <h2>What are the score bands?</h2>
+      <p>The health score has four bands: 0-39 Vibe-coded, 40-59 Fragile, 60-79 Stable, and 80-100 Agent-ready.</p>
+
+      <h2>What data is sent?</h2>
+      <p>Scores are sent only with your consent, and you see the exact payload before anything is sent. The repo name is off by default; a hash of the git remote URL is sent instead.</p>
+
+      <h2>What is the static preview?</h2>
+      <p>Without Docker the skill runs a static-only preview. It is marked not comparable and cannot be submitted.</p>
+
+      <h2>How is it licensed?</h2>
+      <p>The methodology is published under CC BY 4.0. The engine is licensed under the Elastic License 2.0.</p>
+
+      <h2>Who runs vibecodedshit.com?</h2>
+      <p>vibecodedshit.com is run by Peter's team at VCS.</p>
+
+      <h2>Is there an offer for bad scores?</h2>
+      <p>Vibe-coded and Fragile results on TypeScript-only repos end with an offer of a free, non-binding quote from Peter's team at VCS to fix the codebase. Other repos get no offer.</p>
+    </article>
+
+    <footer>
+      <div class="no-frameworks">No frameworks were harmed in the making of this site.</div>
+      <div>&copy; 2026 vibecodedshit.com · Plain HTML, CSS and JS.</div>
+    </footer>
+  </main>
+</body>
+</html>

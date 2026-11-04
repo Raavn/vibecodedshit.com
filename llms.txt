@@ -1,0 +1,15 @@
+# vibecodedshit.com
+
+> A free, open benchmark for codebase health. Health is how safely and cheaply someone with no memory of a codebase, whether a contractor or an AI agent, can make a correct change. The score has six dimensions, 30 parameters and four bands: Vibe-coded (0-39), Fragile (40-59), Stable (60-79) and Agent-ready (80-100).
+
+## Docs
+
+- [Methodology v1.0](https://vibecodedshit.com/methodology/): how the score is computed. Six dimensions, 30 parameters, fixed rubrics. CC BY 4.0.
+- [FAQ](https://vibecodedshit.com/faq/): what it is, how to get a score, what is sent, licences.
+
+## Get a score
+
+- [Source repository](https://github.com/Raavn/vibecodedshit.com): the methodology and the scoring engine (Elastic License 2.0).
+- Add the plugin to Claude Code: `/plugin marketplace add Raavn/vibecodedshit.com`
+- Install it: `/plugin install codebase-health@vibecodedshit`
+- Run it: `/codebase-health`
