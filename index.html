@@ -368,6 +368,68 @@
     #pack-form.is-done > :not(.form-status) { display: none; }
     #pack-form.is-done .form-status { font-size: 1.1rem; }
 
+    /* ---- Emergency modal ---- */
+    #emergency-modal {
+      border: none;
+      padding: 0;
+      background: transparent;
+      max-width: 460px;
+      width: calc(100% - 2rem);
+      color: var(--fg);
+      margin: auto;
+    }
+
+    #emergency-modal::backdrop {
+      background: rgba(71, 16, 68, 0.45);
+      backdrop-filter: blur(6px);
+    }
+
+    #emergency-form { display: flex; flex-direction: column; gap: 0.75rem; }
+    #emergency-form fieldset { border: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.5rem; }
+    #emergency-form label { font-size: 0.85rem; font-weight: 700; }
+
+    #emergency-form .choice {
+      display: flex;
+      gap: 0.6rem;
+      align-items: flex-start;
+      padding: 0.7rem 0.9rem;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.55);
+      font-weight: 400;
+      font-size: 0.95rem;
+      cursor: pointer;
+    }
+
+    #emergency-form .choice:has(input:checked) { border-color: var(--fg); background: rgba(255, 255, 255, 0.8); }
+
+    #emergency-form input[type="email"],
+    #emergency-form input[type="url"],
+    #emergency-form textarea {
+      font: inherit;
+      color: var(--fg);
+      padding: 0.75rem 0.9rem;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.55);
+      outline: none;
+    }
+
+    #emergency-form textarea { resize: vertical; min-height: 4.5rem; }
+
+    #emergency-form input[type="email"]:focus,
+    #emergency-form input[type="url"]:focus,
+    #emergency-form textarea:focus {
+      border-color: var(--fg);
+      background: rgba(255, 255, 255, 0.8);
+    }
+
+    #emergency-form button[type="submit"],
+    #emergency-form button[type="button"].btn { font: inherit; cursor: pointer; }
+    #emergency-form button[type="submit"]:disabled { opacity: 0.6; cursor: wait; }
+    #emergency-form [hidden] { display: none !important; }
+    .emergency-price { font-size: 0.9rem; color: var(--fg-muted); }
+
     /* ---- Footer ---- */
     footer {
       text-align: center;
@@ -473,6 +535,195 @@
       </form>
     </div>
   </dialog>
+
+  <dialog id="emergency-modal" aria-labelledby="emergency-title">
+    <div class="modal-panel">
+      <button type="button" class="modal-close" id="emergency-close" aria-label="Close">&times;</button>
+      <form id="emergency-form" novalidate>
+        <div id="emergency-step1">
+          <h3 id="emergency-title">What's the emergency?</h3>
+          <fieldset>
+            <legend class="hp-field">What's the emergency?</legend>
+            <label class="choice"><input type="radio" name="scenario" value="PRODUCTION"> <span>I need to get my app to production today / as soon as possible (don't know how safe it is)</span></label>
+            <label class="choice"><input type="radio" name="scenario" value="BREAKING"> <span>I have users and my app keeps breaking</span></label>
+            <label class="choice"><input type="radio" name="scenario" value="INVESTORS"> <span>Investors are asking for technical due diligence</span></label>
+          </fieldset>
+        </div>
+        <div id="emergency-step2" hidden>
+          <h3>We can help.</h3>
+          <p class="emergency-price">The Emergency Save starts at $1,000, flat. We charge for experience and objectives met, not time. Every save is custom.</p>
+          <label for="emergency-email">Email</label>
+          <input id="emergency-email" name="email" type="email" required maxlength="254" autocomplete="email" inputmode="email" placeholder="you@example.com">
+          <label for="emergency-note">What's going on? (optional)</label>
+          <textarea id="emergency-note" name="note" maxlength="500" rows="2"></textarea>
+          <label for="emergency-repo">Repo URL (optional)</label>
+          <input id="emergency-repo" name="repoUrl" type="url" maxlength="300" placeholder="https://github.com/you/your-app">
+          <div class="hp-field" aria-hidden="true">
+            <label for="emergency-trap">Leave this field empty</label>
+            <input id="emergency-trap" name="trap_field" type="text" tabindex="-1" autocomplete="off">
+          </div>
+          <button class="btn primary" type="submit" id="emergency-submit">Send it</button>
+        </div>
+        <div id="emergency-step3" hidden>
+          <h3>We can help.</h3>
+          <p>Someone will reach out within 24 hours. If it can't wait 24 hours, book the call.</p>
+          <button class="btn primary" type="button" id="emergency-book-open" hidden>I have a real emergency right now</button>
+        </div>
+        <div class="form-status" id="emergency-status" role="status" aria-live="polite"></div>
+      </form>
+    </div>
+  </dialog>
+
+  <script>
+    // ---- Emergency questionnaire dialog ----
+    (function () {
+      'use strict';
+
+      const EMERGENCY_URL = 'https://app.vibecodedshit.com/api/emergency-requests';
+
+      const openBtn = document.getElementById('emergency-open'); // owned by the hero CTA task; may not exist yet
+      const modal = document.getElementById('emergency-modal');
+      const closeBtn = document.getElementById('emergency-close');
+      const form = document.getElementById('emergency-form');
+      const step1 = document.getElementById('emergency-step1');
+      const step2 = document.getElementById('emergency-step2');
+      const step3 = document.getElementById('emergency-step3');
+      const emailInput = document.getElementById('emergency-email');
+      const noteInput = document.getElementById('emergency-note');
+      const repoInput = document.getElementById('emergency-repo');
+      const trapInput = document.getElementById('emergency-trap');
+      const submitBtn = document.getElementById('emergency-submit');
+      const bookBtn = document.getElementById('emergency-book-open');
+      const statusEl = document.getElementById('emergency-status');
+
+      if (!modal || !form) return;
+
+      let renderedAt = Date.now();
+
+      function setStatus(text, kind) {
+        statusEl.textContent = text || '';
+        statusEl.classList.remove('error', 'success');
+        if (kind) statusEl.classList.add(kind);
+      }
+
+      function showStep(n) {
+        step1.hidden = n !== 1;
+        step2.hidden = n !== 2;
+        step3.hidden = n !== 3;
+      }
+
+      // Monday-Friday, 09:00 up to but not including 18:00 in Europe/Prague.
+      function isWorkHoursInPrague() {
+        try {
+          const parts = new Intl.DateTimeFormat('en-GB', {
+            timeZone: 'Europe/Prague',
+            weekday: 'short',
+            hour: '2-digit',
+            hourCycle: 'h23',
+          }).formatToParts(new Date());
+          const weekday = parts.find(function (p) { return p.type === 'weekday'; }).value;
+          const hour = Number(parts.find(function (p) { return p.type === 'hour'; }).value);
+          return ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'].indexOf(weekday) !== -1 && hour >= 9 && hour < 18;
+        } catch (err) {
+          return false;
+        }
+      }
+
+      function openModal() {
+        setStatus('', null);
+        form.reset();
+        renderedAt = Date.now();
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Send it';
+        bookBtn.hidden = true;
+        showStep(1);
+        if (typeof modal.showModal === 'function') {
+          modal.showModal();
+        } else {
+          modal.setAttribute('open', '');
+        }
+      }
+
+      function closeModal() {
+        if (typeof modal.close === 'function') {
+          modal.close();
+        } else {
+          modal.removeAttribute('open');
+        }
+      }
+
+      if (openBtn) openBtn.addEventListener('click', openModal);
+      closeBtn.addEventListener('click', closeModal);
+
+      modal.addEventListener('click', function (e) {
+        if (e.target === modal) closeModal();
+      });
+
+      form.addEventListener('change', function (e) {
+        if (e.target && e.target.name === 'scenario') {
+          showStep(2);
+          setTimeout(function () { emailInput.focus(); }, 30);
+        }
+      });
+
+      form.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const checked = form.querySelector('input[name="scenario"]:checked');
+        const email = (emailInput.value || '').trim();
+        if (!checked) {
+          showStep(1);
+          return;
+        }
+        if (!email) {
+          setStatus('Please enter an email.', 'error');
+          return;
+        }
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Sending…';
+        setStatus('', null);
+
+        const payload = {
+          email: email,
+          scenario: checked.value,
+          company: trapInput.value || '',
+          renderedAt: renderedAt,
+        };
+        const note = (noteInput.value || '').trim();
+        const repoUrl = (repoInput.value || '').trim();
+        if (note) payload.note = note;
+        if (repoUrl) payload.repoUrl = repoUrl;
+
+        const controller = new AbortController();
+        const timer = setTimeout(function () { controller.abort(); }, 10000);
+        try {
+          const res = await fetch(EMERGENCY_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            signal: controller.signal,
+            body: JSON.stringify(payload),
+          });
+          clearTimeout(timer);
+          if (!res.ok) {
+            let msg = 'Something went wrong. Try again in a moment.';
+            if (res.status === 400) msg = 'Check the email and repo URL (it must start with http:// or https://).';
+            if (res.status === 429) msg = 'Too many requests from this email. Try again tomorrow.';
+            setStatus(msg, 'error');
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Send it';
+            return;
+          }
+          bookBtn.hidden = !isWorkHoursInPrague();
+          showStep(3);
+          window.dispatchEvent(new CustomEvent('vcs:emergency-requested'));
+        } catch (err) {
+          clearTimeout(timer);
+          setStatus('Network error. Try again?', 'error');
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Send it';
+        }
+      });
+    })();
+  </script>
 
   <script>
     // ---- Get the Pack dialog ----
