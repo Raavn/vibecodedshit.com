@@ -18,6 +18,8 @@ const MESSAGES = {
   stay_30s: `⏱️ Stayed 30s+ on ${PAGE}`,
   scroll_footer: `🔚 Reached the footer on ${PAGE}`,
   click_get_pack: `📦 Opened "Get the Pack for free" on ${PAGE}`,
+  click_emergency_book: `🚨 Opened the emergency booking dialog on ${PAGE}`,
+  click_book_call: `📞 Clicked the emergency call booking link on ${PAGE}`,
   get_pack_success: `✅ Requested the Pack on ${PAGE}`,
   leave_page: `🚪 Left ${PAGE}`,
 };
