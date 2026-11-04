@@ -243,6 +243,36 @@
       backdrop-filter: blur(6px);
     }
 
+
+    #booking-modal {
+      border: none;
+      padding: 0;
+      background: transparent;
+      max-width: 460px;
+      width: calc(100% - 2rem);
+      color: var(--fg);
+      margin: auto;
+    }
+
+    #booking-modal::backdrop {
+      background: rgba(71, 16, 68, 0.45);
+      backdrop-filter: blur(6px);
+    }
+
+    #booking-modal ul {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 1rem;
+    }
+
+    #booking-modal li {
+      font-size: 0.98rem;
+      color: var(--fg-muted);
+      margin-bottom: 0.6rem;
+    }
+
+    #booking-modal a.btn { display: inline-block; text-align: center; text-decoration: none; }
+
     .modal-panel {
       background: var(--surface-strong);
       border: 1px solid var(--border);
@@ -436,6 +466,93 @@
     </div>
   </dialog>
 
+  <dialog id="booking-modal" aria-labelledby="booking-title">
+    <div class="modal-panel">
+      <button type="button" class="modal-close" id="booking-close" aria-label="Close">&times;</button>
+      <h3 id="booking-title">Book an emergency call</h3>
+      <ul>
+        <li>$100 for a 60-minute emergency call, paid when you book. The fee is for the call, not the minutes.</li>
+        <li>You get a written diagnosis after the call.</li>
+        <li>Non-refundable once booked. You can reschedule within the next 2 business days; after that the fee is kept. We try to accommodate last-minute changes.</li>
+        <li>The Emergency Save is separate: it starts at $1,000, flat.</li>
+        <li id="booking-hours">No weekend slots. Calls run on workdays, 09:00-18:00 Prague time.</li>
+        <li id="booking-next" hidden></li>
+      </ul>
+      <a class="btn primary" id="booking-link" href="#" target="_blank" rel="noopener" data-track-click="click_book_call">Book and pay $100</a>
+    </div>
+  </dialog>
+
+  <script>
+    // ---- Emergency booking dialog ----
+    (function () {
+      'use strict';
+
+      // Hosted calendar link with $100 payment at booking. Set by hand; empty hides the button.
+      const BOOKING_URL = '';
+      // Plain string, edited by hand, e.g. 'Monday, 10 November'. Empty omits the line.
+      const NEXT_SAVE_DAY = '';
+
+      const openBtn = document.getElementById('emergency-book-open');
+      const modal = document.getElementById('booking-modal');
+      const closeBtn = document.getElementById('booking-close');
+      const link = document.getElementById('booking-link');
+      if (!modal || !link) return;
+
+      if (!BOOKING_URL) {
+        if (openBtn) openBtn.hidden = true;
+        return;
+      }
+      link.href = BOOKING_URL;
+
+      if (NEXT_SAVE_DAY) {
+        const next = document.getElementById('booking-next');
+        next.textContent = 'Next open Emergency Save day: ' + NEXT_SAVE_DAY;
+        next.hidden = false;
+      }
+
+      // Show the Prague window in the visitor's own time zone.
+      try {
+        const now = new Date();
+        const pragueOffset = function (date) {
+          const parts = new Intl.DateTimeFormat('en-US', { timeZone: 'Europe/Prague', hourCycle: 'h23', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' }).formatToParts(date);
+          const get = function (type) { return Number(parts.find(function (p) { return p.type === type; }).value); };
+          return Date.UTC(get('year'), get('month') - 1, get('day'), get('hour'), get('minute'), get('second')) - date.getTime();
+        };
+        const offset = pragueOffset(now);
+        const pragueDay = new Date(now.getTime() + offset);
+        const at = function (hour) {
+          return new Date(Date.UTC(pragueDay.getUTCFullYear(), pragueDay.getUTCMonth(), pragueDay.getUTCDate(), hour) - offset);
+        };
+        const fmt = new Intl.DateTimeFormat([], { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
+        document.getElementById('booking-hours').textContent =
+          'No weekend slots. Calls run on workdays, 09:00-18:00 Prague time, which is ' + fmt.format(at(9)) + '-' + fmt.format(at(18)) + ' for you.';
+      } catch (err) { /* keep the Prague-only text */ }
+
+      function openModal() {
+        window.dispatchEvent(new CustomEvent('vcs:emergency-book-open'));
+        if (typeof modal.showModal === 'function') {
+          modal.showModal();
+        } else {
+          modal.setAttribute('open', '');
+        }
+      }
+
+      function closeModal() {
+        if (typeof modal.close === 'function') {
+          modal.close();
+        } else {
+          modal.removeAttribute('open');
+        }
+      }
+
+      if (openBtn) openBtn.addEventListener('click', openModal);
+      closeBtn.addEventListener('click', closeModal);
+      modal.addEventListener('click', function (e) {
+        if (e.target === modal) closeModal();
+      });
+    })();
+  </script>
+
   <script>
     // ---- Get the Pack dialog ----
     (function () {
@@ -628,6 +745,10 @@
         el.addEventListener('click', function () {
           track(el.dataset.trackClick, { source: el.dataset.trackSource });
         });
+      });
+
+      window.addEventListener('vcs:emergency-book-open', function () {
+        track('click_emergency_book');
       });
 
       window.addEventListener('vcs:pack-requested', function () {
