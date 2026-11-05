@@ -612,6 +612,7 @@
       <button type="button" class="modal-close" id="booking-close" aria-label="Close">&times;</button>
       <h3 id="booking-title">Book an emergency call</h3>
       <ul>
+        <li>A paid call is a fixed slot both of us keep. You skip the line, and the call happens.</li>
         <li>$100 for a 60-minute emergency call, paid when you book. The fee is for the call, not the minutes.</li>
         <li>You get a written diagnosis after the call.</li>
         <li>Non-refundable once booked. You can reschedule within the next 2 business days; after that the fee is kept. We try to accommodate last-minute changes.</li>
@@ -653,8 +654,8 @@
         </div>
         <div id="emergency-step3" hidden>
           <h3>We can help.</h3>
-          <p>Someone will reach out within 24 hours. If it can't wait 24 hours, book the call.</p>
-          <button class="btn primary" type="button" id="emergency-book-open" hidden>I have a real emergency right now</button>
+          <p>Someone will reach out within 24 hours. Want a fixed time instead? Book a $100 call: you pick the slot, and we both show up.</p>
+          <button class="btn primary" type="button" id="emergency-book-open" hidden>Skip the line</button>
         </div>
         <div class="form-status" id="emergency-status" role="status" aria-live="polite"></div>
       </form>
@@ -697,23 +698,6 @@
         step1.hidden = n !== 1;
         step2.hidden = n !== 2;
         step3.hidden = n !== 3;
-      }
-
-      // Monday-Friday, 09:00 up to but not including 18:00 in Europe/Prague.
-      function isWorkHoursInPrague() {
-        try {
-          const parts = new Intl.DateTimeFormat('en-GB', {
-            timeZone: 'Europe/Prague',
-            weekday: 'short',
-            hour: '2-digit',
-            hourCycle: 'h23',
-          }).formatToParts(new Date());
-          const weekday = parts.find(function (p) { return p.type === 'weekday'; }).value;
-          const hour = Number(parts.find(function (p) { return p.type === 'hour'; }).value);
-          return ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'].indexOf(weekday) !== -1 && hour >= 9 && hour < 18;
-        } catch (err) {
-          return false;
-        }
       }
 
       function openModal() {
@@ -799,7 +783,7 @@
             submitBtn.textContent = 'Send it';
             return;
           }
-          bookBtn.hidden = !isWorkHoursInPrague() || bookBtn.dataset.bookingOff === 'true';
+          bookBtn.hidden = bookBtn.dataset.bookingOff === 'true';
           showStep(3);
           window.dispatchEvent(new CustomEvent('vcs:emergency-requested'));
         } catch (err) {
