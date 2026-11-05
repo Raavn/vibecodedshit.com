@@ -445,7 +445,11 @@
 
     #emergency-form { display: flex; flex-direction: column; gap: 0.75rem; }
     #emergency-form fieldset { border: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.5rem; }
-    #emergency-form label { font-size: 0.85rem; font-weight: 700; }
+    #emergency-form label { display: block; font-size: 0.85rem; font-weight: 700; }
+    /* Each step stacks: label on its own line above its field, button last */
+    #emergency-step1, #emergency-step2, #emergency-step3 { display: flex; flex-direction: column; gap: 0.4rem; }
+    #emergency-step2 label:not(:first-of-type) { margin-top: 0.5rem; }
+    #emergency-step2 button[type="submit"] { margin-top: 0.75rem; }
 
     #emergency-form .choice {
       display: flex;
@@ -488,7 +492,7 @@
     #emergency-form button[type="button"].btn { font: inherit; cursor: pointer; }
     #emergency-form button[type="submit"]:disabled { opacity: 0.6; cursor: wait; }
     #emergency-form [hidden] { display: none !important; }
-    .emergency-price { font-size: 0.9rem; color: var(--fg-muted); }
+    .emergency-price { font-size: 0.9rem; color: var(--fg-muted); margin-bottom: 0.75rem; }
 
     /* ---- Footer ---- */
     footer {
