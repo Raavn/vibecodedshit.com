@@ -69,6 +69,9 @@
       --bg: #CEA5C7;
       --fg: #471044;
       --fg-muted: rgba(71, 16, 68, 0.6);
+      /* DESIGN.md error colour, used only for the emergency light */
+      --alert: #ba1a1a;
+      --alert-glow: rgba(186, 26, 26, 0.55);
 
       /* Supporting design tokens (keep minimal, no framework) */
       --surface: rgba(255, 255, 255, 0.22);
@@ -265,6 +268,29 @@
       transform: scale(0.95);
     }
 
+    /* Emergency CTA: a red light that blinks, steady under reduced motion */
+    .btn.emergency { gap: 0.6rem; cursor: pointer; font: inherit; font-weight: 700; }
+    #pack-open { cursor: pointer; font: inherit; font-weight: 700; }
+
+    .emergency-light {
+      width: 0.7rem;
+      height: 0.7rem;
+      border-radius: var(--radius-full);
+      background: var(--alert);
+      box-shadow: 0 0 0 0 var(--alert-glow);
+      flex: 0 0 auto;
+      animation: emergency-blink 1.2s ease-in-out infinite;
+    }
+
+    @keyframes emergency-blink {
+      0%, 100% { opacity: 1; box-shadow: 0 0 0 0 var(--alert-glow); }
+      50% { opacity: 0.25; box-shadow: 0 0 0 0.45rem rgba(186, 26, 26, 0); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .emergency-light { animation: none; }
+    }
+
     /* ---- Subscribe modal ---- */
     #pack-modal {
       border: none;
@@ -297,13 +323,15 @@
       backdrop-filter: blur(6px);
     }
 
-    #booking-modal ul {
+    #booking-modal ul,
+    #pack-modal ul {
       list-style: none;
       padding: 0;
       margin: 0 0 1rem;
     }
 
-    #booking-modal li {
+    #booking-modal li,
+    #pack-modal li {
       font-size: 0.98rem;
       color: var(--fg-muted);
       margin-bottom: 0.6rem;
@@ -525,7 +553,8 @@
           Run one command and get a score. Find out if you shipped software or a vibe.
         </p>
         <div class="actions">
-          <button class="btn primary" id="pack-open" type="button" data-track-click="click_get_pack" data-track-source="hero">Get the Pack for free</button>
+          <button class="btn primary" id="pack-open" type="button" data-track-click="click_get_pack" data-track-source="hero">Check how my app is doing</button>
+          <button class="btn emergency" id="emergency-open" type="button" data-track-click="click_emergency_open" data-track-source="hero"><span class="emergency-light" aria-hidden="true"></span>I have an emergency</button>
         </div>
       </div>
     </section>
@@ -553,6 +582,12 @@
       <button type="button" class="modal-close" id="pack-close" aria-label="Close">&times;</button>
       <h3 id="pack-title">Get the Pack for free</h3>
       <p class="modal-lede">We'll send instructions by email.</p>
+      <ul>
+        <li>It runs as a plugin in Claude Code.</li>
+        <li>Everything runs on your machine.</li>
+        <li>Claude only runs the scan and explains it.</li>
+        <li>Nothing is sent without your consent.</li>
+      </ul>
       <form id="pack-form" novalidate>
         <label for="pack-email">Email</label>
         <input id="pack-email" name="email" type="email" required maxlength="254" autocomplete="email" inputmode="email" placeholder="you@example.com">
@@ -627,7 +662,7 @@
 
       const EMERGENCY_URL = 'https://app.vibecodedshit.com/api/emergency-requests';
 
-      const openBtn = document.getElementById('emergency-open'); // owned by the hero CTA task; may not exist yet
+      const openBtn = document.getElementById('emergency-open'); // hero "I have an emergency" button
       const modal = document.getElementById('emergency-modal');
       const closeBtn = document.getElementById('emergency-close');
       const form = document.getElementById('emergency-form');
