@@ -28,6 +28,7 @@ This rule applies to vibecodedshit.com only. The benchmark code in `health/` is 
 ## Repository layout
 - Repository root: the static site (`index.html`, `DESIGN.md`, this file). Vercel deploys it from the root with no build step. The landing page is a hero and a footer only. The hero has two CTAs: "Check how my app is doing" opens the Pack email dialog, which posts to app.vibecodedshit.com `/api/keys` and emails the Pack install instructions; "I have an emergency" (a blinking red light, steady under reduced motion) opens the emergency questionnaire.
 - `methodology/index.html`: the public copy of `health/methodology/v<version>/METHODOLOGY.md`, served at `/methodology/` (`health/` is not deployed). Hand-copied, so update it whenever the methodology changes.
+- `terms/index.html`: the public Emergency Save terms, served at `/terms/` and linked from the booking dialog. Hand-written from the Distro offer and the agreement draft in Mind 271f3dbf; update it whenever either changes.
 - `api/track.js`: zero-dependency Vercel function that turns visitor-tracking events from `index.html` into Telegram pings via x.aimeko.com notify. Needs `AIMEKO_TOKEN` on the Vercel project.
 - `health/`: the codebase-health benchmark. `health/methodology/v1.0/` holds the versioned methodology; the `health` CLI and the Claude Code plugin are built there. It moved here on 2026-10-04 from the local-only `vibevibevibe.com` folder.
 
