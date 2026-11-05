@@ -6,6 +6,7 @@
 
 - [Methodology v1.0](https://vibecodedshit.com/methodology/): how the score is computed. Six dimensions, 30 parameters, fixed rubrics. CC BY 4.0.
 - [FAQ](https://vibecodedshit.com/faq/): what it is, how to get a score, what is sent, licences.
+- [Emergency Save terms](https://vibecodedshit.com/terms/): the $100 emergency call and the one-day Emergency Save.
 
 ## Get a score
 
