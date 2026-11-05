@@ -17,7 +17,8 @@ const MESSAGES = {
   stay_15s: `⏱️ Stayed 15s+ on ${PAGE}`,
   stay_30s: `⏱️ Stayed 30s+ on ${PAGE}`,
   scroll_footer: `🔚 Reached the footer on ${PAGE}`,
-  click_get_pack: `📦 Opened "Get the Pack for free" on ${PAGE}`,
+  click_get_pack: `📦 Opened "Check how my app is doing" (Pack) on ${PAGE}`,
+  click_emergency_open: `🚨 Clicked "I have an emergency" on ${PAGE}`,
   click_emergency_book: `🚨 Opened the emergency booking dialog on ${PAGE}`,
   click_book_call: `📞 Clicked the emergency call booking link on ${PAGE}`,
   get_pack_success: `✅ Requested the Pack on ${PAGE}`,
@@ -28,8 +29,10 @@ const SOURCES = ["hero"];
 // Matches the data-track-section names in index.html, in page order.
 const SECTIONS = ["hero", "footer"];
 
-const isInt = (value, min, max) => Number.isInteger(value) && value >= min && value <= max;
+/** @type {(value: unknown, min: number, max: number) => boolean} */
+const isInt = (value, min, max) => Number.isInteger(value) && Number(value) >= min && Number(value) <= max;
 
+/** @param {any} body */
 function parse(body) {
   if (typeof body === "string") {
     try {
@@ -51,12 +54,14 @@ function parse(body) {
   return { event, visitorId, source, scrollDepth, secondsOnPage, furthestSection };
 }
 
+/** @param {number} totalSeconds */
 function formatDuration(totalSeconds) {
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = totalSeconds % 60;
   return minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`;
 }
 
+/** @param {string} message */
 async function sendNotification(message) {
   const token = process.env.AIMEKO_TOKEN;
   if (!token) throw new Error("Missing AIMEKO_TOKEN");
@@ -73,6 +78,10 @@ async function sendNotification(message) {
   }
 }
 
+/**
+ * @param {{ method?: string, headers: Record<string, string | undefined>, body: unknown }} req
+ * @param {{ setHeader: (name: string, value: string) => void, status: (code: number) => { json: (body: unknown) => unknown } }} res
+ */
 module.exports = async function handler(req, res) {
   if (req.method !== "POST") {
     res.setHeader("Allow", "POST");
@@ -90,7 +99,7 @@ module.exports = async function handler(req, res) {
   }
 
   const { event, visitorId, source, scrollDepth, secondsOnPage, furthestSection } = payload;
-  let message = MESSAGES[event];
+  let message = MESSAGES[/** @type {keyof typeof MESSAGES} */ (event)];
   if (source) message += `\nSource: ${source}`;
   if (scrollDepth !== undefined) message += `\nScroll depth: ${scrollDepth}%`;
   if (furthestSection) message += `\nFurthest section: ${furthestSection}`;
