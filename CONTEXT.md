@@ -32,6 +32,8 @@ This rule applies to vibecodedshit.com only. The benchmark code in `health/` is 
 - `health/`: the codebase-health benchmark. `health/methodology/v1.0/` holds the versioned methodology; the `health` CLI and the Claude Code plugin are built there. It moved here on 2026-10-04 from the local-only `vibevibevibe.com` folder.
 
 ## Glossary
+- **Emergency call**: the $100, 60-minute paid call that starts the Emergency Save. The fee buys a booked slot both sides keep: the founder skips the line, and paying means they show up. It is not sold on speed. Free replies within 24 hours still happen; they just get ignored and no-showed, which the fee prevents. _Avoid_: "if it can't wait 24 hours", "real emergency right now", urgency fee.
+- **Emergency Save**: one working day of done-for-you work on one objective agreed on the Emergency call, at a fixed price quoted on that call (minimum $1,000). _Avoid_: rescue, sprint.
 - **Gain**: the whole health points the displayed health would rise by if that one parameter alone reached 100. Zero shows as `+0 · no gain`. Gains are independent and do not add up, because the dimension means and the cap interact.
 - **Roadmap**: the parameters ranked by Gain. The report shows the top 10; `health report` prints the top 3 after the report path.
 - **Submission**: one repo's latest full, comparable run for one methodology version, sent with the user's consent. A repo has at most one Submission per methodology version; a newer run replaces it. _Avoid_: score, entry, result.
