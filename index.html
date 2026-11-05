@@ -76,6 +76,7 @@
       /* Supporting design tokens (keep minimal, no framework) */
       --surface: rgba(255, 255, 255, 0.22);
       --surface-strong: rgba(255, 255, 255, 0.35);
+      --panel: #fff7f9;
       --border: rgba(71, 16, 68, 0.18);
       /* Editorial Shadow (DESIGN.md) */
       --shadow: 0 24px 48px rgba(44, 17, 43, 0.06);
@@ -340,11 +341,11 @@
     #booking-modal a.btn { display: inline-block; text-align: center; text-decoration: none; }
 
     .modal-panel {
-      background: var(--surface-strong);
+      /* Solid so dialog text stays readable over the page (DESIGN.md surface) */
+      background: var(--panel);
       border: 1px solid var(--border);
       border-radius: var(--radius-lg);
       box-shadow: var(--shadow);
-      backdrop-filter: blur(14px);
       padding: 1.5rem 1.4rem 1.3rem;
       position: relative;
     }
@@ -449,7 +450,7 @@
     #emergency-form .choice {
       display: flex;
       gap: 0.6rem;
-      align-items: flex-start;
+      align-items: center;
       padding: 0.7rem 0.9rem;
       border-radius: var(--radius-md);
       border: 1px solid var(--border);
@@ -459,6 +460,7 @@
       cursor: pointer;
     }
 
+    #emergency-form .choice input { margin: 0; flex: 0 0 auto; }
     #emergency-form .choice:has(input:checked) { border-color: var(--fg); background: rgba(255, 255, 255, 0.8); }
 
     #emergency-form input[type="email"],
