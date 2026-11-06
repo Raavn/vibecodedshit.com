@@ -5,10 +5,14 @@ import { parse } from 'yaml';
 import { IMAGE_REVISION_LABEL } from '../../src/exec/docker.js';
 
 const pluginRoot = path.resolve(import.meta.dirname, '../..');
-const skill = readFileSync(path.join(pluginRoot, 'skills/codebase-health/SKILL.md'), 'utf8');
+const claudeSkill = readFileSync(path.join(pluginRoot, 'skills/codebase-health/SKILL.md'), 'utf8');
+const codexSkill = readFileSync(path.join(pluginRoot, 'codex/skills/codebase-health/SKILL.md'), 'utf8');
 const methodology = parse(readFileSync(path.join(pluginRoot, 'methodology/v1.0/methodology.yaml'), 'utf8')) as { version: string };
 
-describe('SKILL.md', () => {
+describe.each([
+  ['Claude Code', claudeSkill, '${CLAUDE_PLUGIN_DATA}'],
+  ['Codex', codexSkill, '${PLUGIN_DATA}'],
+])('%s SKILL.md', (_client, skill, dataVar) => {
   it('forbids Claude from computing scores', () => {
     expect(skill).toContain('You never measure, compute, estimate, round or adjust a score. Every number you state is copied from run.json, the methodology YAML or the health CLI\'s output.');
   });
@@ -79,11 +83,6 @@ describe('SKILL.md', () => {
     expect(skill).toContain("I'm going to take you through the health scan of");
   });
 
-  it('is started only by the user and takes a path', () => {
-    expect(skill).toContain('disable-model-invocation: true');
-    expect(skill).toContain('argument-hint: "[path]"');
-  });
-
   it('checks for the image tag of the bundled methodology', () => {
     expect(skill).toContain(`health:${methodology.version}`);
   });
@@ -95,7 +94,7 @@ describe('SKILL.md', () => {
   });
 
   it('writes the card against the plugin run history', () => {
-    expect(skill).toContain('card "<RUN_DIR>/run.json" --history "${CLAUDE_PLUGIN_DATA}/runs" --out "<RUN_DIR>/health-card.png"');
+    expect(skill).toContain(`card "<RUN_DIR>/run.json" --history "${dataVar}/runs" --out "<RUN_DIR>/health-card.png"`);
   });
 
   it('scans the latest main in a separate worktree unless the user names a branch', () => {
@@ -111,5 +110,28 @@ describe('SKILL.md', () => {
     const pkg = JSON.parse(readFileSync(path.join(pluginRoot, 'package.json'), 'utf8')) as { scripts: Record<string, string> };
     expect(pkg.scripts['image:build']).toBeDefined();
     expect(skill).toContain('run image:build');
+  });
+});
+
+describe('Claude Code SKILL.md frontmatter', () => {
+  it('is started only by the user and takes a path', () => {
+    expect(claudeSkill).toContain('disable-model-invocation: true');
+    expect(claudeSkill).toContain('argument-hint: "[path]"');
+  });
+});
+
+describe('Codex SKILL.md', () => {
+  it('names no Claude-only construct', () => {
+    expect(codexSkill).not.toMatch(/CLAUDE_PLUGIN|AskUserQuestion|\$ARGUMENTS|claude -p|claude plugin|Claude Code/);
+  });
+
+  it('keeps unattended runs from writing or sending anything', () => {
+    expect(codexSkill).toContain('`codex exec`');
+    expect(codexSkill).toContain('Never submit from an unattended run.');
+  });
+
+  it('uses the Codex update command and manifest', () => {
+    expect(codexSkill).toContain('codex plugin marketplace upgrade vibecodedshit');
+    expect(codexSkill).toContain('${PLUGIN_ROOT}/.codex-plugin/plugin.json');
   });
 });

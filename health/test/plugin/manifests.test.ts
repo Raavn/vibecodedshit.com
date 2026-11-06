@@ -21,6 +21,16 @@ const pluginSchema = z.object({
   license: z.string().min(1),
 });
 
+const codexMarketplaceSchema = z.object({
+  name: z.literal('vibecodedshit'),
+  plugins: z.array(z.object({
+    name: z.literal('codebase-health'),
+    source: z.object({ source: z.literal('git-subdir'), url: z.string().url(), path: z.string().startsWith('./'), ref: z.string().optional() }),
+    policy: z.object({ installation: z.string(), authentication: z.string() }),
+    category: z.string().min(1),
+  })).length(1),
+});
+
 describe('plugin manifests', () => {
   const marketplace = marketplaceSchema.parse(readJson(path.join(repoRoot, '.claude-plugin/marketplace.json')));
   const plugin = pluginSchema.parse(readJson(path.join(pluginRoot, '.claude-plugin/plugin.json')));
@@ -62,6 +72,32 @@ describe('plugin manifests', () => {
     for (const match of text.matchAll(/\$\{CLAUDE_PLUGIN_ROOT\}\/([\w./-]+)/g)) {
       const rel = (match[1] ?? '').replace(/\.$/, '');
       if (rel.endsWith('/v')) continue; // methodology/v<version>/ placeholder
+      expect(existsSync(path.join(pluginRoot, rel)), rel).toBe(true);
+    }
+  });
+
+  it('has a Codex manifest with the same version and a skill folder that exists', () => {
+    const codex = pluginSchema.extend({ skills: z.string().startsWith('./') }).parse(readJson(path.join(pluginRoot, '.codex-plugin/plugin.json')));
+    expect(codex.version).toBe(pkg.version);
+    expect(codex.version).toBe(plugin.version);
+    expect(existsSync(path.join(pluginRoot, codex.skills, 'codebase-health/SKILL.md'))).toBe(true);
+  });
+
+  it('points the Codex marketplace entry at the plugin root', () => {
+    const codexMarketplace = codexMarketplaceSchema.parse(readJson(path.join(repoRoot, '.agents/plugins/marketplace.json')));
+    const source = codexMarketplace.plugins[0]?.source.path ?? '';
+    expect(path.resolve(repoRoot, source)).toBe(pluginRoot);
+  });
+
+  it('has a Codex skill with frontmatter and existing plugin paths', () => {
+    const text = readFileSync(path.join(pluginRoot, 'codex/skills/codebase-health/SKILL.md'), 'utf8');
+    const front = /^---\n([\s\S]*?)\n---/.exec(text);
+    expect(front).not.toBeNull();
+    const meta = z.object({ name: z.literal('codebase-health'), description: z.string().min(1) }).passthrough().parse(parse(front?.[1] ?? ''));
+    expect(meta.name).toBe('codebase-health');
+    for (const match of text.matchAll(/\$\{PLUGIN_ROOT\}\/([\w./-]+)/g)) {
+      const rel = (match[1] ?? '').replace(/\.$/, '');
+      if (rel.endsWith('/v') || rel.startsWith('.codex-plugin')) continue;
       expect(existsSync(path.join(pluginRoot, rel)), rel).toBe(true);
     }
   });

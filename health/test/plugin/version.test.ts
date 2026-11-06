@@ -12,6 +12,10 @@ describe('version.json', () => {
     expect(published.plugin).toBe(readJson(path.join(pluginRoot, '.claude-plugin/plugin.json')).version);
   });
 
+  it('equals the Codex plugin version', () => {
+    expect(published.plugin).toBe(readJson(path.join(pluginRoot, '.codex-plugin/plugin.json')).version);
+  });
+
   it('equals the current methodology version', () => {
     expect(published.methodology).toBe(CURRENT_METHODOLOGY_VERSION);
   });

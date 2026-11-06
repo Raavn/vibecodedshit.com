@@ -1,0 +1,22 @@
+{
+  "name": "vibecodedshit",
+  "interface": {
+    "displayName": "VibeCodedShit"
+  },
+  "plugins": [
+    {
+      "name": "codebase-health",
+      "source": {
+        "source": "git-subdir",
+        "url": "https://github.com/Raavn/vibecodedshit.com.git",
+        "path": "./health",
+        "ref": "main"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Developer Tools"
+    }
+  ]
+}
