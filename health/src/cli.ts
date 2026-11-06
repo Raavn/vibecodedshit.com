@@ -4,6 +4,7 @@ import { runCard } from './commands/card.js';
 import { EXIT, type CliIo } from './commands/common.js';
 import { runDiff } from './commands/diff.js';
 import { runReport } from './commands/report.js';
+import { runRoute } from './commands/route.js';
 import { runSubmit, type SubmitDeps } from './commands/submit.js';
 import { summarize } from './commands/summary.js';
 import { CURRENT_METHODOLOGY_VERSION, loadMethodology, MethodologyError, type Methodology } from './methodology/load.js';
@@ -18,6 +19,8 @@ export { summarize } from './commands/summary.js';
 const USAGE = `Usage: health scan <path> [--preview] [--as-of YYYY-MM-DD] [--out <file>] [--methodology <version>]
        health report <run.json> [--out <file>]
        health diff <before.json> <after.json> [--json]
+       health route <run.json> --out <dir>
+       health route --check <dir> <run.json>
        health card <run.json> --history <dir> [--out <file>]
        health submit <run.json> --email <addr> [--confirm] [--newsletter] [--include-repo-name] [--summary-file <path>]
 
@@ -30,6 +33,7 @@ export type CliDeps = Pick<ScanOptions, 'execRunner' | 'imageDigest' | 'tools' |
 export async function run(argv: string[], io: CliIo, deps: CliDeps = {}): Promise<number> {
   if (argv[0] === 'report') return runReport(argv.slice(1), io);
   if (argv[0] === 'diff') return runDiff(argv.slice(1), io);
+  if (argv[0] === 'route') return runRoute(argv.slice(1), io);
   if (argv[0] === 'card') return runCard(argv.slice(1), io);
   if (argv[0] === 'submit') return runSubmit(argv.slice(1), io, { git: deps.git, fetch: deps.fetch });
   let parsed;

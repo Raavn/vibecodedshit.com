@@ -15,8 +15,9 @@ Scan a repository with the Codebase Health benchmark and explain the result. The
 - Send nothing anywhere except a payload the user has seen and confirmed in this run. Submitting a result is opt-in (the Submit step). Never pass --confirm before the user has answered yes in this conversation. Never submit from an unattended run.
 - A preview result is not comparable; say so.
 - Make the quote offer only when health.band is vibe_coded or fragile and `reportOnly.pythonInScope` in run.json is `false`.
-- Never change, delete or update anything on your own. That includes old runs and the plugin itself.
+- Never change, delete or update anything on your own. That includes old runs and the plugin itself. The one exception is the Slices of Step 5, written into the user's repository only after a yes, never committed.
 - This is a scan. Its job is to finish the scan and report the result. Never start fixing the codebase yourself. The only offer you make is the free quote in the last step.
+- Never write into the scanned repository except the Slices (`<target>/docs/health-route/`), and only after the user said yes in Step 5. Never commit them. Never write them in an unattended run (`claude -p`, a scheduled task, a subagent).
 - Assume the user does not know Docker or the terminal. Never hand them a command to run. Never install Docker or start its daemon yourself; ask the user to do that.
 - Narrate in plain words, tailored to this repository. The wording below is guidance, not a script.
 - Sorting stored values is allowed. Recomputing or estimating a score is not.
@@ -91,6 +92,14 @@ Then run, with `<RUN_DIR>` as the working directory:
 
 When this repository was scanned before in the same mode, it writes a PNG card with the previous score, the new score and the band under each, and prints the card's absolute path; give the user that path. When it prints nothing on stdout, this is the first such run: say nothing about a card.
 
+### 3b. Route
+
+Run, with `<RUN_DIR>` as the working directory, and keep its stdout for Step 4:
+
+`node "${CLAUDE_PLUGIN_ROOT}/dist/bin.js" route "<RUN_DIR>/run.json" --out "<RUN_DIR>/route"`
+
+It writes the Route into `<RUN_DIR>/route` (ROUTE.md and one Slice file per Step) and prints `Route to <band>: N Slices, X -> Y`, plus an out-of-reach line when the Target band cannot be reached. A preview run prints one line and writes nothing; an Agent-ready repo prints nothing and writes nothing. When `<RUN_DIR>/route` was not written, skip Step 4b.
+
 ### 4. Explain
 
 Read `<RUN_DIR>/run.json` and `${CLAUDE_PLUGIN_ROOT}/methodology/v<version>/` (the version is `methodology.version` in run.json). Say, in this order:
@@ -99,9 +108,20 @@ Read `<RUN_DIR>/run.json` and `${CLAUDE_PLUGIN_ROOT}/methodology/v<version>/` (t
 2. The `Scare: ` lines the CLI printed, copied word for word and stated as facts, with no wording of your own. When there are none, say nothing about scares.
 3. The weakest dimension: the lowest non-null `dimensions[].score`. The name comes from `dimension.name` in `dimensions/<id>-*.yaml`.
 4. The top 3 Roadmap lines `health report` printed in step 3, in the same order, restated in plain words. Each line reads `<rank>. <id> <parameter name> (<dimension name>) +<gain> — <target descriptor>`. Gain is the whole health points the health would rise by if that parameter alone reached 100; `+0 · no gain` means none. Do not change any number or descriptor, and never write a descriptor of your own. State Gains as facts, with no imperative wording. When the CLI printed no Roadmap lines, say nothing about a roadmap. In a preview, say that execution-layer parameters were not measured, so they are not ranked.
-5. The absolute report path, and one sentence saying the report has a visual summary and a Roadmap ranked by Gain. When step 3 wrote a card, its absolute path too.
+5. The Route line, when the CLI printed one in step 3b: `Route to <band>: N Slices, X -> Y`, copied word for word. When it printed the "Install Docker for a full run to get your Route" line, say that instead. Copy the out-of-reach line too when there is one. When it printed nothing, say nothing about a Route.
+6. The absolute report path, and one sentence saying the report has a visual summary, a Roadmap ranked by Gain and a Route to the next band. When step 3 wrote a card, its absolute path too.
 
 Stop the explanation there. Do not add next steps or recommendations.
+
+### 4b. Write the Slices
+
+Skip this step when no user can answer (`claude -p`, a scheduled task, a subagent) or when `<RUN_DIR>/route` was not written. Never write Slices unattended.
+
+1. Ask once with AskUserQuestion: "Write the Route as N Slices into <target>/docs/health-route/, one goal per Slice for your Claude Code agent? Nothing is committed. Default: Yes." Options: "Yes" first, then "No". Only an explicit "No" skips the rest of this step.
+2. Fill every Task. Each file in `<RUN_DIR>/route` (the Slices, not ROUTE.md) ends with a `## Task` section holding only `<!-- health:task -->`. Replace that placeholder, with the Edit tool, in EVERY Slice. Do not touch anything above `## Task`, and do not edit ROUTE.md. Write a full task description an agent can carry out from the repository and that file alone: which files and symbols to change (no line numbers), what to verify first, and how to tell it worked. Use the Where list and the Goal in the file; read the code in CHECKOUT to be specific. Do not state or change any number.
+3. Run `node "${CLAUDE_PLUGIN_ROOT}/dist/bin.js" route --check "<RUN_DIR>/route" "<RUN_DIR>/run.json"`. On exit code 0 continue. On any other exit code, show its stderr and stop this step: report the failure, never repair the files by hand, and write nothing into the repository.
+4. Write the folder into the user's own working tree, never into CHECKOUT: delete `<original target>/docs/health-route/` if it exists (a re-run rewrites it), then copy the files from `<RUN_DIR>/route` there. Do not run `git add` or `git commit`.
+5. Tell the user in one line that the Slices are in `docs/health-route/`, start with ROUTE.md, and nothing was committed.
 
 ### 5. Submit (opt-in)
 
@@ -143,5 +163,7 @@ Make this the last step, after the update check. Skip it, and print nothing, whe
 6. After "Send it", run:
    `curl -sS --max-time 30 -X POST -H 'Content-Type: application/json' --data-binary @"<RUN_DIR>/quote-request.json" -w '\nHTTP %{http_code}' https://app.vibecodedshit.com/api/quote-requests`
    HTTP 201 is success: say in one line that Peter's team has been notified and will reply by email. Anything else, or a curl error: show the error text and point to https://vibecodedshit.com.
+
+When the Slices were written, say one sentence before asking, framing the quote as the alternative to doing the Slices yourself (for example: "You can work through the Slices with your agent, or Peter's team can do it for you."). The question text itself stays as written.
 
 Call it a "quote request", never a submission or an entry. It does not subscribe anyone to the newsletter.

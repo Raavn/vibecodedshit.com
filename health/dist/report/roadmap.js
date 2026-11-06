@@ -1,41 +1,12 @@
-import { dimensionScore, healthScore, roundHalfUp } from '../scoring/aggregate.js';
+import { roundHalfUp } from '../scoring/aggregate.js';
+import { healthWith, nextCandidate } from '../scoring/what-if.js';
 import { rawText } from './format.js';
 export const ROADMAP_LIMIT = 10;
 const STDOUT_LIMIT = 3;
-function weighted(def, param, override) {
-    if (override?.id === def.id)
-        return { weight: def.weight, score: override.score };
-    if (param?.status === 'failed')
-        return { weight: def.weight, score: 0 };
-    if (param?.status === 'measured')
-        return { weight: def.weight, score: param.score ?? 0 };
-    return { weight: def.weight, score: null };
-}
-function healthWith(run, methodology, override) {
-    const dimension = new Map();
-    for (const dim of methodology.dimensions) {
-        dimension.set(dim.id, dimensionScore(dim.parameters.map((def) => weighted(def, run.parameters.find((p) => p.id === def.id), override))));
-    }
-    return { health: healthScore([...dimension.values()], methodology.capMargin), dimension };
-}
+const NO_OVERRIDES = new Map();
 /** The descriptor of the lowest-scoring anchor or level above `score`. Null when there is none or the parameter has no descriptors. */
 export function targetDescriptor(def, score) {
-    const scoring = def.scoring;
-    let candidates;
-    if (scoring.method === 'piecewise_linear')
-        candidates = scoring.anchors;
-    else if (scoring.method === 'levels')
-        candidates = Array.isArray(scoring.levels) ? scoring.levels : Object.values(scoring.levels).flat();
-    else
-        return null;
-    let best;
-    for (const candidate of candidates) {
-        if (!candidate.descriptor || candidate.score <= score + 1e-9)
-            continue;
-        if (!best || candidate.score < best.score)
-            best = candidate;
-    }
-    return best?.descriptor?.replace(/\s+/g, ' ').trim() ?? null;
+    return nextCandidate(def, score)?.descriptor ?? null;
 }
 /**
  * The parameters ranked by Gain: the whole health points the displayed health would rise by if that one parameter
@@ -45,7 +16,7 @@ export function targetDescriptor(def, score) {
 export function buildRoadmap(run, methodology) {
     if (!run.health)
         return [];
-    const base = healthWith(run, methodology, null);
+    const base = healthWith(run, methodology, NO_OVERRIDES);
     if (base.health === null)
         return [];
     const items = [];
@@ -58,7 +29,7 @@ export function buildRoadmap(run, methodology) {
             const score = param.status === 'failed' ? 0 : (param.score ?? 0);
             if (score >= 100)
                 continue;
-            const after = healthWith(run, methodology, { id: def.id, score: 100 }).health ?? base.health;
+            const after = healthWith(run, methodology, new Map([[def.id, 100]])).health ?? base.health;
             items.push({
                 id: def.id,
                 name: def.name,
