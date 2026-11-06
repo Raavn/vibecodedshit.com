@@ -1,6 +1,7 @@
 import { SHALLOW_WARNING } from '../report-only/hotspots.js';
 import { escapeHtml as e } from './escape.js';
 import { nearestDescriptor, rawText, scoreText, statusText } from './format.js';
+import { buildRoute, routeLines } from '../route/select.js';
 import { buildRoadmap, gainText, ROADMAP_LIMIT } from './roadmap.js';
 import { NO_SCARES, buildScares, unchecked } from './scares.js';
 import { STYLE } from './style.js';
@@ -93,6 +94,21 @@ function roadmapSection(run, methodology) {
     }
     return parts.join('\n');
 }
+function routeSection(run, methodology) {
+    const plan = buildRoute(run, methodology);
+    if (plan.kind === 'none')
+        return '';
+    const lines = routeLines(plan);
+    if (plan.kind === 'preview')
+        return `<h2>Route</h2>\n<p class="muted">${e(lines.join(' '))}</p>`;
+    const parts = [`<h2>Route to ${e(plan.target.name)}</h2>`, ...lines.map((line) => `<p>${e(line)}</p>`)];
+    if (plan.unmeasured.length > 0)
+        parts.push(`<p class="muted">Not measured in this run, so the Route leaves them out: ${e(plan.unmeasured.join(', '))}.</p>`);
+    if (plan.slices.length > 0) {
+        parts.push(table([{ text: '#', num: true }, { text: 'Step' }, { text: 'Score', num: true }, { text: 'Health after', num: true }, { text: 'Target' }], plan.slices.map((s) => [String(s.position), `${e(s.id)} ${e(s.name)}`, e(`${scoreText(s.fromScore)} → ${scoreText(s.toScore)}`), e(s.healthAfter), e(s.descriptor)])));
+    }
+    return parts.join('\n');
+}
 function parametersSection(run, methodology) {
     const defs = new Map(methodology.dimensions.flatMap((d) => d.parameters).map((p) => [p.id, p]));
     const rows = run.parameters.map((param) => {
@@ -172,6 +188,7 @@ export function renderReport(run, methodology) {
         scaresSection(run),
         dimensionsSection(run, methodology),
         roadmapSection(run, methodology),
+        routeSection(run, methodology),
         parametersSection(run, methodology),
         breakdownSection(run, methodology),
         excludedSection(run),
@@ -188,7 +205,7 @@ export function renderReport(run, methodology) {
 </head>
 <body>
 <main>
-${sections.join('\n')}
+${sections.filter((section) => section !== '').join('\n')}
 </main>
 </body>
 </html>

@@ -1,11 +1,13 @@
 import type { Methodology } from '../methodology/load.js';
 import type { ParameterDef } from '../methodology/schema.js';
-import type { RunFile, RunParameter } from '../run/schema.js';
-import { dimensionScore, healthScore, roundHalfUp, type WeightedScore } from '../scoring/aggregate.js';
+import type { RunFile } from '../run/schema.js';
+import { roundHalfUp } from '../scoring/aggregate.js';
+import { healthWith, nextCandidate } from '../scoring/what-if.js';
 import { rawText } from './format.js';
 
 export const ROADMAP_LIMIT = 10;
 const STDOUT_LIMIT = 3;
+const NO_OVERRIDES = new Map<string, number>();
 
 export interface RoadmapItem {
   id: string;
@@ -22,34 +24,9 @@ export interface RoadmapItem {
   target: string | null;
 }
 
-function weighted(def: ParameterDef, param: RunParameter | undefined, override: { id: string; score: number } | null): WeightedScore {
-  if (override?.id === def.id) return { weight: def.weight, score: override.score };
-  if (param?.status === 'failed') return { weight: def.weight, score: 0 };
-  if (param?.status === 'measured') return { weight: def.weight, score: param.score ?? 0 };
-  return { weight: def.weight, score: null };
-}
-
-function healthWith(run: RunFile, methodology: Methodology, override: { id: string; score: number } | null): { health: number | null; dimension: Map<number, number | null> } {
-  const dimension = new Map<number, number | null>();
-  for (const dim of methodology.dimensions) {
-    dimension.set(dim.id, dimensionScore(dim.parameters.map((def) => weighted(def, run.parameters.find((p) => p.id === def.id), override))));
-  }
-  return { health: healthScore([...dimension.values()], methodology.capMargin), dimension };
-}
-
 /** The descriptor of the lowest-scoring anchor or level above `score`. Null when there is none or the parameter has no descriptors. */
 export function targetDescriptor(def: ParameterDef, score: number): string | null {
-  const scoring = def.scoring;
-  let candidates: { score: number; descriptor?: string | undefined }[];
-  if (scoring.method === 'piecewise_linear') candidates = scoring.anchors;
-  else if (scoring.method === 'levels') candidates = Array.isArray(scoring.levels) ? scoring.levels : Object.values(scoring.levels).flat();
-  else return null;
-  let best: { score: number; descriptor?: string | undefined } | undefined;
-  for (const candidate of candidates) {
-    if (!candidate.descriptor || candidate.score <= score + 1e-9) continue;
-    if (!best || candidate.score < best.score) best = candidate;
-  }
-  return best?.descriptor?.replace(/\s+/g, ' ').trim() ?? null;
+  return nextCandidate(def, score)?.descriptor ?? null;
 }
 
 /**
@@ -59,7 +36,7 @@ export function targetDescriptor(def: ParameterDef, score: number): string | nul
  */
 export function buildRoadmap(run: RunFile, methodology: Methodology): RoadmapItem[] {
   if (!run.health) return [];
-  const base = healthWith(run, methodology, null);
+  const base = healthWith(run, methodology, NO_OVERRIDES);
   if (base.health === null) return [];
   const items: RoadmapItem[] = [];
   const dimensionOf = new Map<string, number>();
@@ -69,7 +46,7 @@ export function buildRoadmap(run: RunFile, methodology: Methodology): RoadmapIte
       if (!param || (param.status !== 'measured' && param.status !== 'failed')) continue;
       const score = param.status === 'failed' ? 0 : (param.score ?? 0);
       if (score >= 100) continue;
-      const after = healthWith(run, methodology, { id: def.id, score: 100 }).health ?? base.health;
+      const after = healthWith(run, methodology, new Map([[def.id, 100]])).health ?? base.health;
       items.push({
         id: def.id,
         name: def.name,
