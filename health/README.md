@@ -23,6 +23,16 @@ The CLI ships as a Claude Code plugin with a `/codebase-health` skill. The plugi
 
 The namespaced form `/codebase-health:codebase-health` also works. The skill runs a full scan when Docker and the `health:1.0` image are available. When Docker is running but the image is missing, it builds the image in the background while it runs a preview scan, then runs the full scan. When Docker is missing or not running, it asks whether to run a preview scan, which is not comparable, or wait while you install or start Docker. It then renders the HTML report, and from the second scan of a repository on (same mode) a PNG card with the previous and new score and their bands, and explains `run.json`: the health score and band, the weakest dimension and the three parameters most worth fixing. Claude only reads the scores. It never computes or adjusts them, and it sends something only after you have seen the exact payload and said yes.
 
+## Codex plugin
+
+The same package ships as a Codex plugin. The manifest is `.codex-plugin/plugin.json` in this directory, the skill is `codex/skills/codebase-health/SKILL.md`, and the marketplace file is `.agents/plugins/marketplace.json` at the repository root. It runs the same `dist/bin.js`, `health:1.0` image and methodology as the Claude Code plugin, and submits through the same API.
+
+```
+codex plugin marketplace add Raavn/vibecodedshit.com
+```
+
+Then install codebase-health from the Plugins Directory and run `$codebase-health [path]`. Update with `codex plugin marketplace upgrade vibecodedshit`. Runs and checkouts are kept in `${CODEX_HOME:-~/.codex}/codebase-health/`.
+
 ## Submitting a result
 
 Submission is opt-in. `health submit <run.json> --email <addr> [--confirm] [--newsletter] [--include-repo-name] [--summary-file <path>]` prints the full payload and sends it to app.vibecodedshit.com only with `--confirm`. The skill shows the payload and asks, with No as the default. Privacy page: https://app.vibecodedshit.com/privacy

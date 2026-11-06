@@ -14,3 +14,5 @@
 - Add the plugin to Claude Code: `/plugin marketplace add Raavn/vibecodedshit.com`
 - Install it: `/plugin install codebase-health@vibecodedshit`
 - Run it: `/codebase-health`
+- Add the plugin to Codex: `codex plugin marketplace add Raavn/vibecodedshit.com`, then install codebase-health from the Plugins Directory
+- Run it in Codex: `$codebase-health`
