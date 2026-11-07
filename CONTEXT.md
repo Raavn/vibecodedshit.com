@@ -30,6 +30,7 @@ This rule applies to vibecodedshit.com only. The benchmark code in `health/` is 
 - `methodology/index.html`: the public copy of `health/methodology/v<version>/METHODOLOGY.md`, served at `/methodology/` (`health/` is not deployed). Hand-copied, so update it whenever the methodology changes.
 - `terms/index.html`: the public Emergency Save terms, served at `/terms/` and linked from the booking dialog. Hand-written from the Distro offer and the agreement draft in Mind 271f3dbf; update it whenever either changes.
 - `api/track.js`: zero-dependency Vercel function that turns visitor-tracking events from `index.html` into Telegram pings via x.aimeko.com notify. Needs `AIMEKO_TOKEN` on the Vercel project.
+- `middleware.js`: zero-dependency Vercel Routing Middleware that pings Telegram (via x.aimeko.com notify) when an AI agent or AI crawler requests a page, rate-limited to 1 ping per agent per 30 minutes. It runs on the request because `api/track.js` only sees JS-running visitors. Needs `AIMEKO_TOKEN` on the Vercel project.
 - `health/`: the codebase-health benchmark. `health/methodology/v1.0/` holds the versioned methodology; the `health` CLI and the Claude Code plugin are built there. It moved here on 2026-10-04 from the local-only `vibevibevibe.com` folder.
 
 ## Glossary
