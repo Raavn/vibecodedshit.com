@@ -106,6 +106,7 @@ export const scopeFileSchema = z.object({
     minified: globList,
     migrations: globList,
     declarations: globList,
+    test_data: globList,
   }),
   file_roles: z.object({
     test: z.object({ typescript_javascript: globList, python: globList }),

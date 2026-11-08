@@ -121,8 +121,8 @@ There are two kinds of failure:
 Full rules are in `scope.yaml`.
 
 - **Files.** The scan starts from `git ls-files` and keeps TypeScript, JavaScript and Python files.
-- **Fixed exclusions.** Vendored code, build output, generated files, minified files, migrations and `.d.ts` files are excluded.
-- **File roles.** Each remaining file is a test file, a config file or a logic file. A logic file defines at least one function, method or class. Barrels, type-only files and constants-only files are not logic files.
+- **Fixed exclusions.** Vendored code, build output, generated files, minified files, migrations, `.d.ts` files and test data (fixtures, snapshots, testdata) are excluded.
+- **File roles.** Each remaining file is a test file, a config file or a logic file. Test directories (`test`, `tests`, `e2e`) are recognised at any depth. A logic file defines at least one function, method or class. Barrels, type-only files and constants-only files are not logic files.
 - **Tests.** Test files are scored in D1, and also in 2.1 (typecheck errors) and 2.5 (lint findings), because broken tests are a real problem. They are excluded from every other static metric.
 - **Line counts.** *Logic lines* are non-blank, non-comment lines in logic files; Python docstrings count as comments. *Source lines* add test files. Per-1,000-line parameters use one or the other, as each parameter states.
 - **`.healthignore`.** A repository can exclude more paths with gitignore syntax. The report shows the percentage of lines excluded, and `health diff` refuses to compare runs with different ignore files. `.healthignore` does not apply to the secret scan (5.4).
