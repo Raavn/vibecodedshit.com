@@ -63,6 +63,7 @@ export async function buildScope(repoPath, methodology) {
         ...cfg.exclusions.minified,
         ...cfg.exclusions.migrations,
         ...cfg.exclusions.declarations,
+        ...cfg.exclusions.test_data,
     ].filter((entry) => !/\s/.test(entry));
     const isFixedExcluded = picomatch(fixedGlobs, { dot: true });
     const isTest = {

@@ -39,6 +39,15 @@ exclusions:
     - "**/drizzle/**/*.sql"
   declarations:
     - "**/*.d.ts"
+  test_data:
+    - "**/__fixtures__/**"
+    - "**/__snapshots__/**"
+    - "**/testdata/**"
+    - "**/test-data/**"
+    - "**/test/**/fixtures/**"
+    - "**/tests/**/fixtures/**"
+    - "**/__tests__/**/fixtures/**"
+    - "**/e2e/**/fixtures/**"
 
 file_roles:
   test:
@@ -47,12 +56,13 @@ file_roles:
       - "**/*.spec.{ts,tsx,mts,cts,js,jsx,mjs,cjs}"
       - "**/__tests__/**"
       - "**/__mocks__/**"
-      - "test/**"
-      - "tests/**"
-      - "e2e/**"
+      - "**/test/**"
+      - "**/tests/**"
+      - "**/e2e/**"
     python:
       - "**/test_*.py"
       - "**/*_test.py"
+      - "**/test/**"
       - "**/tests/**"
       - "**/conftest.py"
   config:

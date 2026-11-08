@@ -129,6 +129,20 @@ describe('scope rules', () => {
     expect(scope.healthignoreSha256).toMatch(/^[0-9a-f]{64}$/);
   });
 
+  it('excludes test data under nested test directories and keeps nested test helpers as test files', async () => {
+    const fn = 'export function f() {\n  return 1;\n}\n';
+    const dir = materializeFixture('typescript', {}, {
+      'pkg/test/fixtures/broken/a.ts': fn,
+      'pkg/test/fixtures/broken/package.json': '{"name":"broken"}\n',
+      'pkg/test/helper.ts': fn,
+      'pkg/__snapshots__/s.ts': fn,
+    });
+    const scope = await buildScope(dir, methodology);
+    expect(scope.files.some((f) => f.path.includes('fixtures') || f.path.includes('__snapshots__'))).toBe(false);
+    expect(scope.files.find((f) => f.path === 'pkg/test/helper.ts')?.role).toBe('test');
+    expect(scope.packages.some((p) => p.includes('fixtures'))).toBe(false);
+  });
+
   it('counts an unparsable Python file by non-blank lines not starting with # and warns', async () => {
     const dir = materializeFixture('python', {}, { 'app/broken.py': 'def (:\n# comment\nx = 1\n\n' });
     const scope = await buildScope(dir, methodology);
