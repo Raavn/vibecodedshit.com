@@ -25,3 +25,20 @@ jobs:
       - run: npm --prefix health run typecheck
       - run: npm --prefix health run lint
       - run: npm --prefix health run test
+
+  outbound:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            health/package-lock.json
+            outbound/package-lock.json
+      - run: npm ci --prefix health
+      - run: npm ci --prefix outbound
+      - run: npm --prefix outbound run typecheck
+      - run: npm --prefix outbound run lint
+      - run: npm --prefix outbound run test
