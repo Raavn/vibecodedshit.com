@@ -2,12 +2,24 @@
 
 Codebase Health benchmark. See `methodology/v1.0/METHODOLOGY.md` for how scores work.
 
+## Run it with npx
+
+```
+npx vibecodedshit scan .
+```
+
+Needs Node 22 or later and `git`. No clone, no plugin, no repository access for anyone. With Docker and the `health:1.0` image the scan is a full run. Without them it falls back to a preview scan, prints why and which parameters it skipped (they need Docker), and writes `run.json`. The scan runs on your machine. Your code is not uploaded; it only looks up your dependencies' names and versions on the public npm and PyPI registries (and OSV, if osv-scanner is installed). To get the full run, build the image with `docker build -t health:1.0 -f <package>/docker/Dockerfile <package>/docker` (the scan prints the exact command).
+
+Submitting is opt-in: `npx vibecodedshit submit run.json --email <you@example.com>` prints the payload and sends it only with `--confirm`. Only full, comparable runs can be submitted.
+
+## From a clone
+
 ```
 npm install
 npm run health -- scan <path> --preview [--as-of YYYY-MM-DD] [--out run.json]
 ```
 
-A preview scan runs the static layer only, measures the parameters implemented so far (currently 4.2 Lines in large files) and writes a run.json marked "preview, not comparable". Without `--preview` the scan is a full run: install, build, typecheck, lint, the tests and every static analysis tool run in the pinned `health:1.0` image (`npm run image:build`, Docker needed, no other tool on the host), which adds 6.1, 2.1 and 2.5. A full run is not comparable until 1.1 to 1.3 and 6.3 are measured. Full runs keep the package managers' downloads in `~/.cache/health/packages` (or `$XDG_CACHE_HOME/health/packages`) so a second scan does not download them again. Set `HEALTH_PACKAGE_CACHE` to another directory, or to `off` to download everything on every scan.
+A preview scan runs the static layer only, measures every parameter that needs no execution (not 1.1 to 1.3, 2.1, 2.5, 6.1, 6.3) and writes a run.json marked "preview, not comparable". Without `--preview` the scan is a full run: install, build, typecheck, lint, the tests and every static analysis tool run in the pinned `health:1.0` image (`npm run image:build`, Docker needed, no other tool on the host), which adds 6.1, 2.1 and 2.5. A full run is not comparable until 1.1 to 1.3 and 6.3 are measured. Full runs keep the package managers' downloads in `~/.cache/health/packages` (or `$XDG_CACHE_HOME/health/packages`) so a second scan does not download them again. Set `HEALTH_PACKAGE_CACHE` to another directory, or to `off` to download everything on every scan.
 
 Needs Node 22 or later, `git`, and `python3` for repositories with Python files.
 
@@ -47,3 +59,7 @@ Submission is opt-in. `health submit <run.json> --email <addr> [--confirm] [--ne
 Installing by the GitHub slug works only for users whose git credentials can read the repository.
 
 Development: `dist/` is committed because plugin installs don't run a build. Run `npm run build` and commit `dist/` with any change under `src/`. `npm run verify` fails if `dist/` is stale. When you bump `version` in `package.json`, bump it in `.claude-plugin/plugin.json` too.
+
+## Publishing
+
+The package is `vibecodedshit` (public, Elastic-2.0). To release: bump `version` in `package.json`, `.claude-plugin/plugin.json`, `.codex-plugin/plugin.json` and `../version.json` together, then run `npm publish`. `prepublishOnly` builds `dist/` and runs `npm run verify`. Check the tarball first with `npm pack --dry-run`. Publishing needs an npm login with 2FA.

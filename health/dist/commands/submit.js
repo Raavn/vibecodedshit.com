@@ -8,7 +8,7 @@ import { buildPayload, PayloadError } from '../submit/payload.js';
 import { repoIdentity, RepoIdentityError } from '../submit/repo-identity.js';
 import { sendPayload } from '../submit/send.js';
 import { EXIT } from './common.js';
-export const SUBMIT_USAGE = 'Usage: health submit <run.json> --email <addr> [--confirm] [--newsletter] [--include-repo-name] [--summary-file <path>]\n';
+export const SUBMIT_USAGE = 'Usage: vibecodedshit submit <run.json> --email <addr> [--confirm] [--newsletter] [--include-repo-name] [--summary-file <path>]\n';
 export const defaultGit = (repoPath, args) => new Promise((resolve) => {
     execFile('git', ['-C', repoPath, ...args], { encoding: 'utf8' }, (err, stdout) => resolve(err ? null : stdout));
 });
