@@ -41,3 +41,11 @@ export async function postLead(lead: LeadPayload, token: string, base: string, f
   });
   if (!res.ok) throw new Error(`POST /api/ai/leads ${res.status}: ${(await res.text()).slice(0, 300)}`);
 }
+
+/** Repo full names already in the lead queue (any status), so the finder never scans a repo twice. */
+export async function listLeadNames(token: string, base: string, fetchImpl: typeof fetch = fetch): Promise<Set<string>> {
+  const res = await fetchImpl(`${base.replace(/\/$/, '')}/api/ai/leads?limit=500`, { headers: { 'x-ai-token': token } });
+  if (!res.ok) throw new Error(`GET /api/ai/leads ${res.status}: ${(await res.text()).slice(0, 300)}`);
+  const body = (await res.json()) as { leads?: { repoFullName?: unknown }[] };
+  return new Set((body.leads ?? []).map((l) => l.repoFullName).filter((n): n is string => typeof n === 'string'));
+}
