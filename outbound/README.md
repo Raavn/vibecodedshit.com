@@ -20,3 +20,11 @@ Rules:
 - Contact comes from the owner's public GitHub profile and the live homepage. Commit emails are never read.
 - A found secret is never tested against its provider, and its value is never stored (gitleaks runs redacted).
 - This repo is public: no lead data, repo names or findings are committed. They live only in the app database.
+
+## Own repos to the leaderboard
+
+```
+npm --prefix outbound run own -- --email <addr>
+```
+
+Full-scans every git clone under `~/ServerRoot` (`--root` to change): each folder at depth 1, and depth 2 inside folders that are not clones. Linked worktrees, `node_modules` and folders with "archive" in the name are skipped, and a remote is scanned once even with several clones. Each comparable run is submitted to the leaderboard with `--email` (or `VCS_SUBMIT_EMAIL`) and the repo hash only, never the repo name. `--dry-run` scans and submits nothing. The email is passed at run time: this repo is public.
