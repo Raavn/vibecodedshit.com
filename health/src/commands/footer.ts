@@ -11,13 +11,15 @@ export function imageBuildCommand(packageRoot: string, tag: string): string {
 }
 
 /** Lines printed after the scan summary: what a preview skipped, that nothing was uploaded, and how to submit. */
-export function footer(run: RunFile, outFile: string): string {
+export function footer(run: RunFile, outFile: string, interactive = false): string {
   const lines: string[] = [];
   if (run.mode === 'preview') {
     const skipped = run.parameters.filter((p) => p.status === 'not_measured' && p.reason?.startsWith('execution layer')).map((p) => p.id);
     if (skipped.length > 0) lines.push(`Skipped (needs Docker): ${skipped.join(', ')}. Run a full scan with Docker to measure them.`);
   }
   lines.push(PRIVACY);
+  // An interactive scan asks about the leaderboard next instead of printing the command.
+  if (interactive) return `${lines.join('\n')}\n`;
   if (run.valid && run.comparable && run.mode === 'full') {
     lines.push(`To compare your result on app.vibecodedshit.com, run: npx vibecodedshit submit ${outFile} --email <you@example.com>`);
     lines.push('It prints the payload first and sends nothing unless you add --confirm.');

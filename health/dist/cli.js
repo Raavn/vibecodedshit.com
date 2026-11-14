@@ -7,7 +7,10 @@ import { footer, imageBuildCommand } from './commands/footer.js';
 import { imageDigest } from './exec/docker.js';
 import { runReport } from './commands/report.js';
 import { runRoute } from './commands/route.js';
-import { runSubmit } from './commands/submit.js';
+import { defaultGit, runSubmit } from './commands/submit.js';
+import { afterScan } from './interactive/after-scan.js';
+import { setUpDocker } from './interactive/docker-setup.js';
+import { hostSystem } from './interactive/system.js';
 import { summarize } from './commands/summary.js';
 import { CURRENT_METHODOLOGY_VERSION, loadMethodology, MethodologyError, packageRoot } from './methodology/load.js';
 import { invalidRun, NoLogicFilesError, runScan } from './run/scan.js';
@@ -86,20 +89,34 @@ export async function run(argv, io, deps = {}) {
     if (opts.mode === 'full' && !deps.execRunner && deps.imageDigest === undefined) {
         // No Docker, or no usable image: fall back to the static layer so `scan .` works from an npx install.
         const tag = methodology.execution.runner.image;
-        try {
-            opts.imageDigest = await imageDigest(tag);
+        if (io.prompt) {
+            const setup = await setUpDocker(tag, { io, prompt: io.prompt, system: deps.system ?? hostSystem, packageRoot, imageDigest: deps.inspectImage ?? imageDigest });
+            if ('digest' in setup)
+                opts.imageDigest = setup.digest;
+            else {
+                opts.mode = 'preview';
+                io.stderr(`${setup.previewReason}\nRunning a preview scan (static layer only, not comparable).\n`);
+            }
         }
-        catch (err) {
-            if (!(err instanceof ToolError))
-                throw err;
-            opts.mode = 'preview';
-            io.stderr(`${err.message}\nRunning a preview scan (static layer only, not comparable). For a full run: ${imageBuildCommand(packageRoot, tag)}\n`);
+        else {
+            try {
+                opts.imageDigest = await imageDigest(tag);
+            }
+            catch (err) {
+                if (!(err instanceof ToolError))
+                    throw err;
+                opts.mode = 'preview';
+                io.stderr(`${err.message}\nRunning a preview scan (static layer only, not comparable). For a full run: ${imageBuildCommand(packageRoot, tag)}\n`);
+            }
         }
     }
     try {
         const result = await runScan(opts, methodology);
         writeRun(outFile, result);
-        io.stdout(summarize(result, methodology) + footer(result, outFile));
+        io.stdout(summarize(result, methodology) + footer(result, outFile, io.prompt !== undefined));
+        if (io.prompt) {
+            await afterScan(result, methodology, { io, prompt: io.prompt, git: deps.git ?? defaultGit, fetch: deps.fetch ?? fetch });
+        }
         return EXIT.ok;
     }
     catch (err) {

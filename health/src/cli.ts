@@ -7,7 +7,11 @@ import { footer, imageBuildCommand } from './commands/footer.js';
 import { imageDigest } from './exec/docker.js';
 import { runReport } from './commands/report.js';
 import { runRoute } from './commands/route.js';
-import { runSubmit, type SubmitDeps } from './commands/submit.js';
+import { defaultGit, runSubmit, type SubmitDeps } from './commands/submit.js';
+import { afterScan } from './interactive/after-scan.js';
+import { setUpDocker } from './interactive/docker-setup.js';
+import { hostSystem, type System } from './interactive/system.js';
+import type { FetchLike } from './submit/send.js';
 import { summarize } from './commands/summary.js';
 import { CURRENT_METHODOLOGY_VERSION, loadMethodology, MethodologyError, packageRoot, type Methodology } from './methodology/load.js';
 import { invalidRun, NoLogicFilesError, runScan, type ScanOptions } from './run/scan.js';
@@ -30,7 +34,12 @@ Exit codes: 0 ok, 1 usage or unreadable input, 2 methodology error, 3 no logic f
 `;
 
 /** Test seams: the execution runner, image digest, static tool kit and parameters a scan uses. */
-export type CliDeps = Pick<ScanOptions, 'execRunner' | 'imageDigest' | 'tools' | 'measurers'> & SubmitDeps;
+export type CliDeps = Pick<ScanOptions, 'execRunner' | 'imageDigest' | 'tools' | 'measurers'> &
+  SubmitDeps & {
+    /** Host commands for the interactive Docker setup, and the image check it repeats after a build. */
+    system?: System;
+    inspectImage?: (tag: string) => Promise<string>;
+  };
 
 export async function run(argv: string[], io: CliIo, deps: CliDeps = {}): Promise<number> {
   if (argv[0] === 'report') return runReport(argv.slice(1), io);
@@ -89,19 +98,31 @@ export async function run(argv: string[], io: CliIo, deps: CliDeps = {}): Promis
   if (opts.mode === 'full' && !deps.execRunner && deps.imageDigest === undefined) {
     // No Docker, or no usable image: fall back to the static layer so `scan .` works from an npx install.
     const tag = methodology.execution.runner.image;
-    try {
-      opts.imageDigest = await imageDigest(tag);
-    } catch (err) {
-      if (!(err instanceof ToolError)) throw err;
-      opts.mode = 'preview';
-      io.stderr(`${err.message}\nRunning a preview scan (static layer only, not comparable). For a full run: ${imageBuildCommand(packageRoot, tag)}\n`);
+    if (io.prompt) {
+      const setup = await setUpDocker(tag, { io, prompt: io.prompt, system: deps.system ?? hostSystem, packageRoot, imageDigest: deps.inspectImage ?? imageDigest });
+      if ('digest' in setup) opts.imageDigest = setup.digest;
+      else {
+        opts.mode = 'preview';
+        io.stderr(`${setup.previewReason}\nRunning a preview scan (static layer only, not comparable).\n`);
+      }
+    } else {
+      try {
+        opts.imageDigest = await imageDigest(tag);
+      } catch (err) {
+        if (!(err instanceof ToolError)) throw err;
+        opts.mode = 'preview';
+        io.stderr(`${err.message}\nRunning a preview scan (static layer only, not comparable). For a full run: ${imageBuildCommand(packageRoot, tag)}\n`);
+      }
     }
   }
 
   try {
     const result = await runScan(opts, methodology);
     writeRun(outFile, result);
-    io.stdout(summarize(result, methodology) + footer(result, outFile));
+    io.stdout(summarize(result, methodology) + footer(result, outFile, io.prompt !== undefined));
+    if (io.prompt) {
+      await afterScan(result, methodology, { io, prompt: io.prompt, git: deps.git ?? defaultGit, fetch: deps.fetch ?? (fetch as unknown as FetchLike) });
+    }
     return EXIT.ok;
   } catch (err) {
     if (err instanceof NoLogicFilesError) {

@@ -8,9 +8,18 @@ Codebase Health benchmark. See `methodology/v1.0/METHODOLOGY.md` for how scores 
 npx vibecodedshit scan .
 ```
 
-Needs Node 22 or later and `git`. No clone, no plugin, no repository access for anyone. With Docker and the `health:1.0` image the scan is a full run. Without them it falls back to a preview scan, prints why and which parameters it skipped (they need Docker), and writes `run.json`. The scan runs on your machine. Your code is not uploaded; it only looks up your dependencies' names and versions on the public npm and PyPI registries (and OSV, if osv-scanner is installed). To get the full run, build the image with `docker build -t health:1.0 -f <package>/docker/Dockerfile <package>/docker` (the scan prints the exact command).
+Needs Node 22 or later and `git`. No clone, no plugin, no repository access for anyone. In a terminal the scan walks you through it:
 
-Submitting is opt-in: `npx vibecodedshit submit run.json --email <you@example.com>` prints the payload and sends it only with `--confirm`. Only full, comparable runs can be submitted.
+1. Docker not installed: asks whether to install and start it (Homebrew on macOS, get.docker.com on Linux, winget on Windows).
+2. Docker installed but not running: asks whether to start it.
+3. Scan image `health:1.0` missing or out of date: asks whether to build it (5 to 10 minutes the first time).
+4. Runs the scan and writes `run.json`. Any No above runs a preview scan instead (static layer only, not comparable).
+5. Asks whether to submit the score to the global leaderboard (full, comparable runs only). Sends your scores, a hash of the repository URL and your email; no code, no file paths.
+6. For a Vibe-coded or Fragile result, asks whether you want a quote from Peter for fixing the app. Sends your name, email, run.json and the HTML report.
+
+Every question defaults to No, and nothing leaves your machine without a yes. The scan itself only looks up your dependencies' names and versions on the public npm and PyPI registries (and OSV, if osv-scanner is installed).
+
+Without a terminal (CI, `CI` set, or piped output) nothing is asked: the scan falls back to a preview when Docker or the image is missing, prints the image build command, and submitting stays the explicit `npx vibecodedshit submit run.json --email <you@example.com> --confirm`.
 
 ## From a clone
 
