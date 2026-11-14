@@ -104,6 +104,8 @@ export function topFinding(run: RunFile): Finding | null {
 
 /** What the lead row stores of a run (step 6 aggregate): scores and statuses only, no paths, no repo name. */
 export function runSummary(run: RunFile, signal: string): Record<string, unknown> {
+  // A reason can quote a path inside the temp clone; keep it relative so no host path is stored.
+  const relative = (reason: string): string => reason.split(`${run.repo.path}/`).join('').split(run.repo.path).join('.');
   return {
     signal,
     methodology: run.methodology.version,
@@ -116,6 +118,7 @@ export function runSummary(run: RunFile, signal: string): Record<string, unknown
       status: p.status,
       weight: p.weight,
       ...(p.score === undefined ? {} : { score: p.score }),
+      ...(p.reason ? { reason: relative(p.reason) } : {}),
     })),
   };
 }

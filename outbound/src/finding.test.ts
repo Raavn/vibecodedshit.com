@@ -75,4 +75,13 @@ describe('runSummary', () => {
     expect(summary).not.toContain('secret-path');
     expect(summary).toContain('LOVABLE');
   });
+  it('keeps failure reasons, with the clone path made relative', () => {
+    const summary = runSummary(
+      run({}, [{ id: '6.1', status: 'failed', weight: 25, score: 0, reason: 'install failed in /tmp/secret-path/apps/web' }]),
+      'V0',
+    );
+    const params = summary.parameters as { id: string; reason?: string }[];
+    expect(params.find((p) => p.id === '6.1')?.reason).toBe('install failed in apps/web');
+    expect(params.find((p) => p.id === '5.4')).not.toHaveProperty('reason');
+  });
 });
