@@ -1,5 +1,6 @@
 export const SUBMIT_URL = 'https://app.vibecodedshit.com/api/submissions';
 export const PRIVACY_URL = 'https://app.vibecodedshit.com/privacy';
+export const QUOTE_URL = 'https://app.vibecodedshit.com/api/quote-requests';
 /** The server rejects larger bodies. */
 export const MAX_PAYLOAD_BYTES = 65536;
 /** The server rejects longer summaries. */
