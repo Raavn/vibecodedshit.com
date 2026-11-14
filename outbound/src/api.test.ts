@@ -2,7 +2,7 @@ import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { loadToken, postLead, type LeadPayload } from './api.js';
+import { listLeadNames, loadToken, postLead, type LeadPayload } from './api.js';
 
 describe('loadToken', () => {
   it('prefers the environment', () => {
@@ -31,5 +31,21 @@ describe('postLead', () => {
   });
   it('throws on a non-2xx answer', async () => {
     await expect(postLead(lead, 't', 'http://x', (async () => new Response('bad', { status: 400 })) as unknown as typeof fetch)).rejects.toThrow('400');
+  });
+});
+
+describe('listLeadNames', () => {
+  it('returns the repo names already queued, sending x-ai-token', async () => {
+    let seen: { url: string; init: RequestInit } | undefined;
+    const names = await listLeadNames('t', 'http://x/', (async (url: string, init: RequestInit) => {
+      seen = { url, init };
+      return Response.json({ leads: [{ repoFullName: 'a/b' }, { repoFullName: 'c/d' }, {}], count: 3 });
+    }) as unknown as typeof fetch);
+    expect([...names]).toEqual(['a/b', 'c/d']);
+    expect(seen?.url).toBe('http://x/api/ai/leads?limit=500');
+    expect((seen?.init.headers as Record<string, string>)['x-ai-token']).toBe('t');
+  });
+  it('throws on a non-2xx answer', async () => {
+    await expect(listLeadNames('t', 'http://x', (async () => new Response('no', { status: 401 })) as unknown as typeof fetch)).rejects.toThrow('401');
   });
 });

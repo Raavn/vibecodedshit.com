@@ -97,7 +97,7 @@ export async function discover(gh: Gh, signals: Signal[], since: string, perSign
   return [...byName.values()];
 }
 
-/** More than `min` commits, read as one page of `min + 1` because a depth-1 clone cannot count them. */
+/** More than `min` commits, read as one page of `min + 1` through the API, before anything is cloned. */
 export async function hasMoreCommits(gh: Gh, fullName: string, min: number): Promise<boolean> {
   try {
     const commits = JSON.parse(await gh([`repos/${fullName}/commits`, '-X', 'GET', '-f', `per_page=${min + 1}`])) as unknown[];
