@@ -1,15 +1,26 @@
 {
-  "name": "health",
+  "name": "vibecodedshit",
   "version": "0.2.0",
   "description": "Codebase Health benchmark CLI",
-  "private": true,
   "license": "Elastic-2.0",
   "type": "module",
   "engines": {
     "node": ">=22"
   },
   "bin": {
-    "health": "dist/bin.js"
+    "vibecodedshit": "dist/bin.js"
+  },
+  "files": [
+    "dist",
+    "methodology",
+    "python",
+    "assets",
+    "docker",
+    "LICENSE",
+    "README.md"
+  ],
+  "publishConfig": {
+    "access": "public"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
@@ -21,6 +32,7 @@
     "image:build": "docker build -t health:1.0 -f docker/Dockerfile docker",
     "verify": "npm run typecheck && npm run lint && npm run test",
     "build": "tsc -p tsconfig.build.json",
+    "prepublishOnly": "npm run build && npm run verify",
     "health": "tsx src/bin.ts"
   },
   "dependencies": {

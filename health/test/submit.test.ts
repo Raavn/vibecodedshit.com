@@ -246,7 +246,7 @@ describe('submit: refusals', () => {
     let stderr = '';
     const code = await run(['submit'], { stdout: () => undefined, stderr: (t) => (stderr += t), cwd: dir });
     expect(code).toBe(EXIT.usage);
-    expect(stderr).toContain('Usage: health submit');
+    expect(stderr).toContain('Usage: vibecodedshit submit');
   });
 });
 

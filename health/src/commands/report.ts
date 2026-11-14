@@ -8,7 +8,7 @@ import { scareLines } from '../report/scares.js';
 import { readRun, RunReadError } from '../run/read.js';
 import { EXIT, type CliIo } from './common.js';
 
-const REPORT_USAGE = 'Usage: health report <run.json> [--out <file>]\n';
+const REPORT_USAGE = 'Usage: vibecodedshit report <run.json> [--out <file>]\n';
 
 export function runReport(argv: string[], io: CliIo): number {
   let parsed;

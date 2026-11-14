@@ -7,7 +7,7 @@ import { buildRouteFiles } from '../route/files.js';
 import { buildRoute, routeLines } from '../route/select.js';
 import { writeRouteFiles } from '../route/write.js';
 import { EXIT } from './common.js';
-const ROUTE_USAGE = 'Usage: health route <run.json> --out <dir>\n       health route --check <dir> <run.json>\n';
+const ROUTE_USAGE = 'Usage: vibecodedshit route <run.json> --out <dir>\n       vibecodedshit route --check <dir> <run.json>\n';
 export function runRoute(argv, io) {
     let parsed;
     try {

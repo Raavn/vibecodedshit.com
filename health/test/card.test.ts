@@ -103,6 +103,6 @@ describe('card: command', () => {
     const history = mkdtempSync(path.join(tmpdir(), 'health-card-'));
     const result = await cli(['card', save(history, 'a', makeRun({ repo }), 1)], history);
     expect(result.code).toBe(EXIT.usage);
-    expect(result.stderr).toContain('Usage: health card');
+    expect(result.stderr).toContain('Usage: vibecodedshit card');
   });
 });

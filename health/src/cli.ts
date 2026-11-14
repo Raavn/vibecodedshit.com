@@ -3,11 +3,13 @@ import { parseArgs } from 'node:util';
 import { runCard } from './commands/card.js';
 import { EXIT, type CliIo } from './commands/common.js';
 import { runDiff } from './commands/diff.js';
+import { footer, imageBuildCommand } from './commands/footer.js';
+import { imageDigest } from './exec/docker.js';
 import { runReport } from './commands/report.js';
 import { runRoute } from './commands/route.js';
 import { runSubmit, type SubmitDeps } from './commands/submit.js';
 import { summarize } from './commands/summary.js';
-import { CURRENT_METHODOLOGY_VERSION, loadMethodology, MethodologyError, type Methodology } from './methodology/load.js';
+import { CURRENT_METHODOLOGY_VERSION, loadMethodology, MethodologyError, packageRoot, type Methodology } from './methodology/load.js';
 import { invalidRun, NoLogicFilesError, runScan, type ScanOptions } from './run/scan.js';
 import { writeRun } from './run/write.js';
 import { NotAGitRepositoryError } from './scope/build.js';
@@ -16,13 +18,13 @@ import { ToolError } from './scope/types.js';
 export { EXIT, type CliIo } from './commands/common.js';
 export { summarize } from './commands/summary.js';
 
-const USAGE = `Usage: health scan <path> [--preview] [--as-of YYYY-MM-DD] [--out <file>] [--methodology <version>]
-       health report <run.json> [--out <file>]
-       health diff <before.json> <after.json> [--json]
-       health route <run.json> --out <dir>
-       health route --check <dir> <run.json>
-       health card <run.json> --history <dir> [--out <file>]
-       health submit <run.json> --email <addr> [--confirm] [--newsletter] [--include-repo-name] [--summary-file <path>]
+const USAGE = `Usage: vibecodedshit scan <path> [--preview] [--as-of YYYY-MM-DD] [--out <file>] [--methodology <version>]
+       vibecodedshit report <run.json> [--out <file>]
+       vibecodedshit diff <before.json> <after.json> [--json]
+       vibecodedshit route <run.json> --out <dir>
+       vibecodedshit route --check <dir> <run.json>
+       vibecodedshit card <run.json> --history <dir> [--out <file>]
+       vibecodedshit submit <run.json> --email <addr> [--confirm] [--newsletter] [--include-repo-name] [--summary-file <path>]
 
 Exit codes: 0 ok, 1 usage or unreadable input, 2 methodology error, 3 no logic file, 4 tool error, 5 diff refused, 6 submit failed.
 `;
@@ -84,10 +86,22 @@ export async function run(argv: string[], io: CliIo, deps: CliDeps = {}): Promis
     throw err;
   }
 
+  if (opts.mode === 'full' && !deps.execRunner && deps.imageDigest === undefined) {
+    // No Docker, or no usable image: fall back to the static layer so `scan .` works from an npx install.
+    const tag = methodology.execution.runner.image;
+    try {
+      opts.imageDigest = await imageDigest(tag);
+    } catch (err) {
+      if (!(err instanceof ToolError)) throw err;
+      opts.mode = 'preview';
+      io.stderr(`${err.message}\nRunning a preview scan (static layer only, not comparable). For a full run: ${imageBuildCommand(packageRoot, tag)}\n`);
+    }
+  }
+
   try {
     const result = await runScan(opts, methodology);
     writeRun(outFile, result);
-    io.stdout(summarize(result, methodology));
+    io.stdout(summarize(result, methodology) + footer(result, outFile));
     return EXIT.ok;
   } catch (err) {
     if (err instanceof NoLogicFilesError) {

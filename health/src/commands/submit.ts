@@ -9,7 +9,7 @@ import { type GitRunner, repoIdentity, RepoIdentityError } from '../submit/repo-
 import { type FetchLike, sendPayload } from '../submit/send.js';
 import { EXIT, type CliIo } from './common.js';
 
-export const SUBMIT_USAGE = 'Usage: health submit <run.json> --email <addr> [--confirm] [--newsletter] [--include-repo-name] [--summary-file <path>]\n';
+export const SUBMIT_USAGE = 'Usage: vibecodedshit submit <run.json> --email <addr> [--confirm] [--newsletter] [--include-repo-name] [--summary-file <path>]\n';
 
 /** Test seams: the git runner and `fetch`. */
 export interface SubmitDeps {
