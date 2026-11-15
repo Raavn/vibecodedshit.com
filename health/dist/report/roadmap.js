@@ -1,5 +1,6 @@
 import { roundHalfUp } from '../scoring/aggregate.js';
 import { healthWith, nextCandidate } from '../scoring/what-if.js';
+import { consequenceFor } from './consequences.js';
 import { rawText } from './format.js';
 export const ROADMAP_LIMIT = 10;
 const STDOUT_LIMIT = 3;
@@ -40,6 +41,7 @@ export function buildRoadmap(run, methodology) {
                 gain: roundHalfUp(after) - run.health.displayed,
                 gainPrecise: after - base.health,
                 target: targetDescriptor(def, score),
+                consequence: consequenceFor(def.id),
             });
             dimensionOf.set(def.id, base.dimension.get(dim.id) ?? 0);
         }
@@ -54,5 +56,5 @@ export function gainText(gain) {
 export function roadmapLines(run, methodology) {
     return buildRoadmap(run, methodology)
         .slice(0, STDOUT_LIMIT)
-        .map((item, i) => `${i + 1}. ${item.id} ${item.name} (${item.dimensionName}) ${gainText(item.gain)}${item.target ? ` — ${item.target}` : ''}`);
+        .map((item, i) => `${i + 1}. ${item.id} ${item.name} (${item.dimensionName}) ${gainText(item.gain)}${item.target ? ` — ${item.target}` : ''}${item.consequence ? ` Consequence: ${item.consequence}` : ''}`);
 }

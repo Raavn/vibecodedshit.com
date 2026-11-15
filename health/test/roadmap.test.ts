@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { loadMethodology } from '../src/methodology/load.js';
+import { CONSEQUENCES } from '../src/report/consequences.js';
 import { buildRoadmap, gainText, roadmapLines, targetDescriptor } from '../src/report/roadmap.js';
 import type { RunParameter } from '../src/run/schema.js';
 import { makeRun } from './helpers/run.js';
@@ -85,11 +86,19 @@ describe('roadmap: stdout lines', () => {
     const run = makeRun({ scores: [50, 50, 50, 50, 50, 50], parameters: defs.map((d) => measured(d.id, 50)) });
     const lines = roadmapLines(run, methodology);
     expect(lines).toHaveLength(3);
-    expect(lines[0]).toMatch(/^1\. \d\.\d .+ \(.+\) (\+\d+|\+0 · no gain)( — .+)?$/);
+    expect(lines[0]).toMatch(/^1\. \d\.\d .+ \(.+\) (\+\d+|\+0 · no gain)( — .+?)?( Consequence: .+)?$/);
+    expect(lines[0]).toContain(' Consequence: ');
     expect(lines[2]?.startsWith('3. ')).toBe(true);
   });
 
   it('gives none without a health score', () => {
     expect(roadmapLines(makeRun({ health: null }), methodology)).toEqual([]);
+  });
+});
+
+describe('roadmap: consequences', () => {
+  it('has one sentence for every parameter in the methodology', () => {
+    const ids = methodology.dimensions.flatMap((d) => d.parameters.map((p) => p.id)).sort();
+    expect(Object.keys(CONSEQUENCES).sort()).toEqual(ids);
   });
 });
