@@ -3,6 +3,7 @@ import type { ParameterDef } from '../methodology/schema.js';
 import type { RunFile } from '../run/schema.js';
 import { roundHalfUp } from '../scoring/aggregate.js';
 import { healthWith, nextCandidate } from '../scoring/what-if.js';
+import { consequenceFor } from './consequences.js';
 import { rawText } from './format.js';
 
 export const ROADMAP_LIMIT = 10;
@@ -22,6 +23,8 @@ export interface RoadmapItem {
   gainPrecise: number;
   /** The descriptor of the next anchor or level above the current score, quoted from the YAML. */
   target: string | null;
+  /** One fixed plain-English sentence on what a weak score here costs. Null for an id with no sentence. */
+  consequence: string | null;
 }
 
 /** The descriptor of the lowest-scoring anchor or level above `score`. Null when there is none or the parameter has no descriptors. */
@@ -57,6 +60,7 @@ export function buildRoadmap(run: RunFile, methodology: Methodology): RoadmapIte
         gain: roundHalfUp(after) - run.health.displayed,
         gainPrecise: after - base.health,
         target: targetDescriptor(def, score),
+        consequence: consequenceFor(def.id),
       });
       dimensionOf.set(def.id, base.dimension.get(dim.id) ?? 0);
     }
@@ -73,5 +77,5 @@ export function gainText(gain: number): string {
 export function roadmapLines(run: RunFile, methodology: Methodology): string[] {
   return buildRoadmap(run, methodology)
     .slice(0, STDOUT_LIMIT)
-    .map((item, i) => `${i + 1}. ${item.id} ${item.name} (${item.dimensionName}) ${gainText(item.gain)}${item.target ? ` — ${item.target}` : ''}`);
+    .map((item, i) => `${i + 1}. ${item.id} ${item.name} (${item.dimensionName}) ${gainText(item.gain)}${item.target ? ` — ${item.target}` : ''}${item.consequence ? ` Consequence: ${item.consequence}` : ''}`);
 }

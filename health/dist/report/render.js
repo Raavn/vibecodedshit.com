@@ -78,7 +78,7 @@ function roadmapSection(run, methodology) {
         parts.push('<p class="muted">no parameter is below 100</p>');
     else {
         const top = Math.max(1, ...items.map((i) => i.gain));
-        parts.push(table([{ text: '#', num: true }, { text: 'Parameter' }, { text: 'Dimension' }, { text: 'Raw value' }, { text: 'Score', num: true }, { text: 'Gain', num: true }, { text: '' }, { text: 'Next anchor' }], items.map((item, i) => [
+        parts.push(table([{ text: '#', num: true }, { text: 'Parameter' }, { text: 'Dimension' }, { text: 'Raw value' }, { text: 'Score', num: true }, { text: 'Gain', num: true }, { text: '' }, { text: 'Next anchor' }, { text: 'What it costs you' }], items.map((item, i) => [
             String(i + 1),
             `${e(item.id)} ${e(item.name)}`,
             e(item.dimensionName),
@@ -87,6 +87,7 @@ function roadmapSection(run, methodology) {
             e(gainText(item.gain)),
             bar((item.gain / top) * 100),
             item.target ? e(item.target) : '–',
+            item.consequence ? e(item.consequence) : '–',
         ])));
     }
     if (run.health.band === 'vibe_coded' || run.health.band === 'fragile') {

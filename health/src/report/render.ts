@@ -93,7 +93,7 @@ function roadmapSection(run: RunFile, methodology: Methodology): string {
     const top = Math.max(1, ...items.map((i) => i.gain));
     parts.push(
       table(
-        [{ text: '#', num: true }, { text: 'Parameter' }, { text: 'Dimension' }, { text: 'Raw value' }, { text: 'Score', num: true }, { text: 'Gain', num: true }, { text: '' }, { text: 'Next anchor' }],
+        [{ text: '#', num: true }, { text: 'Parameter' }, { text: 'Dimension' }, { text: 'Raw value' }, { text: 'Score', num: true }, { text: 'Gain', num: true }, { text: '' }, { text: 'Next anchor' }, { text: 'What it costs you' }],
         items.map((item, i) => [
           String(i + 1),
           `${e(item.id)} ${e(item.name)}`,
@@ -103,6 +103,7 @@ function roadmapSection(run: RunFile, methodology: Methodology): string {
           e(gainText(item.gain)),
           bar((item.gain / top) * 100),
           item.target ? e(item.target) : '–',
+          item.consequence ? e(item.consequence) : '–',
         ]),
       ),
     );
