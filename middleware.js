@@ -47,17 +47,18 @@ function describeUserAgent(userAgent) {
   return userAgent.trim().split(/[\s/]/)[0] || "Unknown bot";
 }
 
-// One ping per agent label per 30 minutes. In memory and per instance, so a
-// cold start can ping again (same as theloop's botVisitRateLimiter).
+// One ping per agent label per page per 30 minutes. In memory and per instance,
+// so a cold start can ping again (same as theloop's botVisitRateLimiter).
 /** @type {Map<string, number>} */
 const lastPingAt = new Map();
 
-/** @param {string} label */
-function rateLimited(label) {
+/** @param {string} label @param {string} pathname */
+function rateLimited(label, pathname) {
+  const key = `${label} ${pathname}`;
   const now = Date.now();
-  const last = lastPingAt.get(label);
+  const last = lastPingAt.get(key);
   if (last !== undefined && now - last < RATE_LIMIT_MS) return true;
-  lastPingAt.set(label, now);
+  lastPingAt.set(key, now);
   return false;
 }
 
@@ -97,9 +98,10 @@ export default function middleware(request, context) {
   const userAgent = request.headers.get("user-agent") || "";
   if (!AI_AGENT_USER_AGENT_REGEX.test(userAgent)) return;
 
-  if (rateLimited(describeUserAgent(userAgent))) return;
+  const url = new URL(request.url);
+  if (rateLimited(describeUserAgent(userAgent), url.pathname)) return;
 
-  context.waitUntil(notifyAgentVisit(userAgent, new URL(request.url).pathname));
+  context.waitUntil(notifyAgentVisit(userAgent, (url.pathname + url.search).slice(0, 300)));
 }
 
 export const config = {
